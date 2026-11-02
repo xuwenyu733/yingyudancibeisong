@@ -1,0 +1,17 @@
+{
+    "version" : "1.0",
+    "configurations" : [
+        {
+            "playground" : "standard",
+            "type" : "uni-app:h5"
+        },
+        {
+            "playground" : "standard",
+            "type" : "uni-app:mp-weixin"
+        },
+        {
+            "playground" : "standard",
+            "type" : "uni-app:app-android"
+        }
+    ]
+}

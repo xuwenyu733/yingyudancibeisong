@@ -1,0 +1,128 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "今日闯关"
+      }
+    },
+    {
+      "path": "pages/library/index",
+      "style": {
+        "navigationBarTitleText": "词库"
+      }
+    },
+    {
+      "path": "pages/pet/index",
+      "style": {
+        "navigationBarTitleText": "学习小屋"
+      }
+    },
+    {
+      "path": "pages/parent/index",
+      "style": {
+        "navigationBarTitleText": "家长中心"
+      }
+    },
+    {
+      "path": "pages/wrong/index",
+      "style": {
+        "navigationBarTitleText": "错词本"
+      }
+    },
+    {
+      "path": "pages/shop/index",
+      "style": {
+        "navigationBarTitleText": "积分商城"
+      }
+    },
+    {
+      "path": "pages/bag/index",
+      "style": {
+        "navigationBarTitleText": "我的背包"
+      }
+    },
+    {
+      "path": "pages/room/index",
+      "style": {
+        "navigationBarTitleText": "我的房间",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/auth/login",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/child/create",
+      "style": {
+        "navigationBarTitleText": "孩子档案"
+      }
+    },
+    {
+      "path": "pages/study/play",
+      "style": {
+        "navigationBarTitleText": "闯关"
+      }
+    },
+    {
+      "path": "pages/study/result",
+      "style": {
+        "navigationBarTitleText": "闯关结果"
+      }
+    },
+    {
+      "path": "pages/member/index",
+      "style": {
+        "navigationBarTitleText": "开通会员"
+      }
+    },
+    {
+      "path": "pages/report/index",
+      "style": {
+        "navigationBarTitleText": "学习周报",
+        "enableShareAppMessage": true
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "单词小闯关",
+    "navigationBarBackgroundColor": "#EAF6FF",
+    "backgroundColor": "#EAF6FF"
+  },
+  "tabBar": {
+    "color": "#8A94A6",
+    "selectedColor": "#FF6B6B",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "学习",
+        "iconPath": "static/tab/home.png",
+        "selectedIconPath": "static/tab/home-on.png"
+      },
+      {
+        "pagePath": "pages/library/index",
+        "text": "词库",
+        "iconPath": "static/tab/book.png",
+        "selectedIconPath": "static/tab/book-on.png"
+      },
+      {
+        "pagePath": "pages/pet/index",
+        "text": "家园",
+        "iconPath": "static/tab/pet.png",
+        "selectedIconPath": "static/tab/pet-on.png"
+      },
+      {
+        "pagePath": "pages/parent/index",
+        "text": "家长",
+        "iconPath": "static/tab/parent.png",
+        "selectedIconPath": "static/tab/parent-on.png"
+      }
+    ]
+  }
+}

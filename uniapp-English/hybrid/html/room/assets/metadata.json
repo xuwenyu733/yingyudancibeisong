@@ -1,0 +1,75 @@
+{
+  "id": "original-apricot-fox-v2",
+  "displayName": "杏橘狐",
+  "forwardAxis": "+Z",
+  "height": 1,
+  "triangles": 7168,
+  "source": "original-procedural-geometry",
+  "rigType": "articulated-object-joints",
+  "design": {
+    "targetAudience": "6-14岁儿童",
+    "appeal": [
+      "round-silhouette",
+      "large-eyes",
+      "clear-facial-signals",
+      "high-saturation",
+      "animal-type"
+    ],
+    "appearance": "kid",
+    "paletteKeys": [
+      "fur",
+      "furShade",
+      "cream",
+      "ear",
+      "shirt",
+      "shirtShade",
+      "shorts",
+      "eye",
+      "nose",
+      "blush",
+      "pupil"
+    ]
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "duration": 3,
+      "channels": 2,
+      "loop": true
+    },
+    {
+      "name": "walk",
+      "duration": 1,
+      "channels": 19,
+      "loop": true
+    },
+    {
+      "name": "sit",
+      "duration": 1.45,
+      "channels": 19,
+      "loop": false
+    },
+    {
+      "name": "stand",
+      "duration": 1.2,
+      "channels": 19,
+      "loop": false
+    }
+  ],
+  "format": "glTF 2.0 binary",
+  "file": "original-fox.glb",
+  "bytes": 146368,
+  "contactY": 0.09703657683241554,
+  "sampleRate": 30,
+  "externalTextures": false,
+  "animationPlacement": {
+    "sitAndStandIncludeRootSeatOffset": true,
+    "runtimeFactoryUsesExternalSeatOffset": true
+  },
+  "notes": [
+    "原创程序几何，未使用旧仓鼠模型、贴图或形状。",
+    "刚性分部关节动画，无蒙皮；具名节点可在其他程序中编辑。",
+    "GLB转为纯色PBR材质；Three.js运行时仍使用卡通材质。",
+    "idle/walk首尾闭合，sit/stand播一次并保持末帧。"
+  ]
+}

@@ -1,0 +1,287 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Parent {
+  id             String           @id
+  openid         String           @unique
+  nickname       String
+  currentChildId String?
+  createdAt      DateTime         @default(now())
+  children       Child[]
+  membership     Membership?
+  orders         Order[]
+  reminder       ReminderSetting?
+  reminderLogs   ReminderLog[]
+}
+
+model Child {
+  id                 String          @id
+  parentId           String
+  nickname           String
+  grade              Int
+  textbookId         String?
+  newWordsPerDay     Int             @default(10)
+  reviewLimitPerDay  Int             @default(40)
+  createdAt          DateTime        @default(now())
+  parent             Parent          @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  attempts           StudyAttempt[]
+  wrongWords         WrongWord[]
+  reviewStates       ReviewState[]
+  wallet             Wallet?
+  ledger             WalletLedger[]
+  inventory          InventoryItem[]
+  checkIns           DailyCheckIn[]
+  taskClaims         DailyTaskClaim[]
+}
+
+/// 每日签到（按上海日历一天一次）
+model DailyCheckIn {
+  childId   String
+  day       String
+  streak    Int      @default(1)
+  reward    Int
+  createdAt DateTime @default(now())
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@id([childId, day])
+  @@index([childId, day])
+}
+
+/// 每日任务配置（可运营改奖励/目标）
+model DailyTaskDef {
+  id       String           @id
+  key      String           @unique
+  title    String
+  desc     String
+  metric   String
+  target   Int
+  reward   Int
+  sort     Int              @default(0)
+  active   Boolean          @default(true)
+  claims   DailyTaskClaim[]
+}
+
+model DailyTaskClaim {
+  childId   String
+  taskId    String
+  day       String
+  reward    Int
+  createdAt DateTime     @default(now())
+  child     Child        @relation(fields: [childId], references: [id], onDelete: Cascade)
+  task      DailyTaskDef @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@id([childId, taskId, day])
+  @@index([childId, day])
+}
+
+model Wallet {
+  childId   String   @id
+  balance   Int      @default(0)
+  updatedAt DateTime @updatedAt
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+}
+
+/// 积分流水；eventId 全局唯一，保证发币/扣币幂等
+model WalletLedger {
+  id           String   @id
+  childId      String
+  eventId      String   @unique
+  delta        Int
+  balanceAfter Int
+  reason       String
+  createdAt    DateTime @default(now())
+  child        Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId, createdAt])
+}
+
+model ShopItem {
+  id          String          @id
+  name        String
+  category    String
+  price       Int
+  desc        String
+  roomAction  String
+  active      Boolean         @default(true)
+  inventory   InventoryItem[]
+}
+
+model InventoryItem {
+  childId   String
+  itemId    String
+  equipped  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  item      ShopItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([childId, itemId])
+}
+
+model Textbook {
+  id        String @id
+  name      String
+  publisher String
+  grade     Int
+  volume    String
+  units     Unit[]
+}
+
+model Unit {
+  id         String   @id
+  textbookId String
+  title      String
+  order      Int
+  free       Boolean
+  textbook   Textbook @relation(fields: [textbookId], references: [id], onDelete: Cascade)
+  words      Word[]
+}
+
+model Word {
+  id           String         @id
+  unitId       String
+  spelling     String
+  phonetic     String
+  meaning      String
+  example      String
+  unit         Unit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  attempts     StudyAttempt[]
+  wrongWords   WrongWord[]
+  reviewStates ReviewState[]
+}
+
+model Membership {
+  parentId String   @id
+  planId   String
+  startAt  DateTime
+  endAt    DateTime
+  parent   Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id            String    @id
+  parentId      String
+  planId        String
+  amount        Int
+  status        String
+  outTradeNo    String?   @unique
+  channel       String    @default("mock")
+  prepayId      String?
+  transactionId String?
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+  parent        Parent    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, createdAt])
+}
+
+model StudyAttempt {
+  id        String   @id
+  childId   String
+  wordId    String
+  correct   Boolean
+  rating    Int      @default(0)
+  day       String
+  createdAt DateTime @default(now())
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  word      Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@index([childId, day])
+}
+
+model WrongWord {
+  childId    String
+  wordId     String
+  wrongCount Int
+  updatedAt  DateTime @updatedAt
+  child      Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  word       Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@id([childId, wordId])
+}
+
+/// 五格记忆 / SRS 调度状态
+model ReviewState {
+  childId       String
+  wordId        String
+  box           Int      @default(1)
+  intervalDays  Int      @default(0)
+  ease          Float    @default(2.5)
+  nextReviewAt  DateTime
+  lapses        Int      @default(0)
+  lastRating    Int      @default(1)
+  lastStudiedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  child         Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  word          Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@id([childId, wordId])
+  @@index([childId, nextReviewAt])
+}
+
+model ReminderSetting {
+  parentId    String    @id
+  enabled     Boolean   @default(false)
+  accepted    Boolean   @default(false)
+  acceptedAt  DateTime?
+  lastSentAt  DateTime?
+  lastSentDay String?
+  parent      Parent    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+}
+
+model ReminderLog {
+  id        String   @id
+  parentId  String
+  day       String
+  status    String
+  reason    String?
+  createdAt DateTime @default(now())
+  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, day])
+}
+
+/// 运营后台账号（与 C 端 Parent 分离）
+model AdminUser {
+  id           String   @id
+  username     String   @unique
+  passwordHash String
+  role         String
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// 会员套餐价格覆盖（未配置则回落 seed PLANS）
+model PlanOverride {
+  planId    String   @id
+  name      String
+  price     Int
+  days      Int
+  highlight Boolean  @default(false)
+  desc      String
+  updatedAt DateTime @updatedAt
+}
+
+/// 运营后台操作审计
+model AdminAuditLog {
+  id         String   @id
+  adminId    String?
+  username   String
+  role       String
+  method     String
+  path       String
+  action     String
+  detail     String   @default("")
+  ip         String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([adminId, createdAt])
+}

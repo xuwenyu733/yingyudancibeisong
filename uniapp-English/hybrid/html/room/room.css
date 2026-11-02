@@ -1,0 +1,37 @@
+.pet-room-view {position:relative;width:100%;height:100%;min-height:240px;overflow:hidden;isolation:isolate;background:#f6e9c9;font-family:system-ui,sans-serif;}
+.pet-room-view * { box-sizing: border-box; }
+.pet-room-view canvas { width:100%; height:100%; display:block; touch-action:none; outline:none; }
+.pet-room-view [data-room-control="loading"] { position:absolute; inset:0; display:grid; place-content:center; text-align:center; gap:12px; color:#896746; font:16px/1.7 system-ui,sans-serif; background:#f6e9c9; transition:opacity .4s; }
+.pet-room-view [data-room-control="loading"]::before { content:' '; width:24px; height:24px; border:3px solid #e4cea0; border-top-color:#a97d4c; border-radius:50%; margin:auto; animation:pet-room-spin 1s linear infinite; }
+.pet-room-view [data-room-control="loading"].error::before { display:none; }
+.pet-room-view .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+@keyframes pet-room-spin { to { transform:rotate(360deg); } }
+.pet-room-view button, .pet-room-view input { font:inherit; }
+.pet-room-view button { cursor:pointer; }
+.pet-room-view button:disabled { cursor:default;opacity:.48; }
+.pet-room-view .edit-button { border:1px solid #c9aa7a; border-radius:13px;background:#fff8e8;color:#765b3c;padding:10px 16px;box-shadow:0 3px 12px #8d6d3420;font:600 14px system-ui,sans-serif; }
+.pet-room-view [data-room-control="decorate"]:not(.room-shop__decorate) { position:absolute;right:18px;top:max(18px,env(safe-area-inset-top)); }
+.pet-room-view [data-room-control="decorate"].room-shop__decorate { position:static;margin:0;min-height:42px; }
+.pet-room-view [data-room-control="decoration-panel"] { position:absolute;left:18px;top:max(72px,calc(env(safe-area-inset-top) + 54px));width:min(286px,calc(100vw - 36px));padding:16px;border:1px solid #d8bd90;border-radius:18px;background:#fff9ebf5;box-shadow:0 8px 30px #795a3526;color:#755d41;font:13px/1.6 system-ui,sans-serif;max-height:calc(100% - 105px);overflow:auto; }
+.pet-room-view [hidden] { display:none!important; }
+.pet-room-view [data-room-control="decoration-panel"] h2 { font-size:16px;margin:0 0 8px; }
+.pet-room-view [data-room-control="decoration-panel"] p { margin:7px 0; }
+.pet-room-view .edit-actions { display:flex;gap:8px;margin-top:12px; }
+.pet-room-view .edit-actions button { flex:1; }
+.pet-room-view .edit-primary { color:#fffaf1;background:#a6804a; }
+.pet-room-view [data-room-control="selected-name"] { font-weight:650;font-size:15px; }
+.pet-room-view .owned-furniture-block { margin:0; }
+.pet-room-view .owned-furniture-title { font-weight:650;font-size:13px;margin:0 0 6px;color:#755d41; }
+.pet-room-view .owned-furniture-list { display:flex;flex-wrap:wrap;gap:6px; }
+.pet-room-view .owned-furniture-chip { appearance:none;border:1px solid #d7c4a7;border-radius:11px;background:#fffdf6;color:#755d41;padding:7px 10px;font:600 12px/1.3 system-ui,sans-serif;cursor:pointer;max-width:100%;text-align:left; }
+.pet-room-view .owned-furniture-chip:hover { filter:brightness(.98);border-color:#c9aa7a; }
+.pet-room-view .owned-furniture-chip.is-selected { background:#a6804a;border-color:#a6804a;color:#fffaf1; }
+.pet-room-view .owned-furniture-empty { margin:0;color:#a38b6e;font-size:12px;line-height:1.55; }
+.pet-room-view [data-room-control="decoration-panel"] label { display:flex;align-items:center;gap:6px; }
+.pet-room-view [data-room-control="decoration-panel"] summary { cursor:pointer;font-weight:600;margin:12px 0 7px; }
+.pet-room-view .box-fields { display:grid;grid-template-columns:repeat(3,1fr);gap:7px; }
+.pet-room-view .box-fields label { display:grid!important;gap:2px!important;font-size:12px; }
+.pet-room-view .box-fields input { width:100%;min-width:0;border:1px solid #d7c4a7;border-radius:7px;padding:5px;color:#755d41;background:#fffdf6; }
+.pet-room-view .edit-small { color:#a38b6e;font-size:12px; }
+.pet-room-view [data-room-control="edit-feedback"] { position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);max-width:calc(100vw - 32px);padding:10px 18px;background:#fff9ebf0;border:1px solid #d7bd94;border-radius:12px;color:#755d41;font:13px/1.6 system-ui,sans-serif;box-shadow:0 4px 20px #795a3514;text-align:center;pointer-events:none; }
+@media(max-width:600px) {.pet-room-view [data-room-control="decoration-panel"] {padding:12px;max-height:min(55vh,calc(100% - 105px));} .pet-room-view .edit-button {padding:8px 12px;} }

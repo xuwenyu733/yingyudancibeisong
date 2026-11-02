@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6e9c9">
+  <title>仓鼠的小房间</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#f6e9c9; }
+    canvas { width:100%; height:100%; display:block; touch-action:none; outline:none; }
+    #loading { position:fixed; inset:0; display:grid; place-content:center; text-align:center; gap:12px; color:#896746; font:16px/1.7 system-ui,sans-serif; background:#f6e9c9; transition:opacity .4s; }
+    #loading::before { content:' '; width:24px; height:24px; border:3px solid #e4cea0; border-top-color:#a97d4c; border-radius:50%; margin:auto; animation:spin 1s linear infinite; }
+    #loading.error::before { display:none; }
+    .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { cursor:default;opacity:.48; }
+    .edit-button { border:1px solid #c9aa7a; border-radius:13px;background:#fff8e8;color:#765b3c;padding:10px 16px;box-shadow:0 3px 12px #8d6d3420;font:600 14px system-ui,sans-serif; }
+    #decorate { position:fixed;right:18px;top:max(18px,env(safe-area-inset-top)); }
+    #decoration-panel { position:fixed;right:18px;top:max(18px,env(safe-area-inset-top));width:min(286px,calc(100vw - 36px));padding:16px;border:1px solid #d8bd90;border-radius:18px;background:#fff9ebf5;box-shadow:0 8px 30px #795a3526;color:#755d41;font:13px/1.6 system-ui,sans-serif;max-height:calc(100vh - 125px);overflow:auto; }
+    [hidden] { display:none!important; }
+    #decoration-panel h2 { font-size:16px;margin:0 0 8px; }
+    #decoration-panel p { margin:7px 0; }
+    .edit-actions { display:flex;gap:8px;margin-top:12px; }
+    .edit-actions button { flex:1; }
+    .edit-primary { color:#fffaf1;background:#a6804a; }
+    #selected-name { font-weight:650;font-size:15px; }
+    #decoration-panel label { display:flex;align-items:center;gap:6px; }
+    #decoration-panel summary { cursor:pointer;font-weight:600;margin:12px 0 7px; }
+    .box-fields { display:grid;grid-template-columns:repeat(3,1fr);gap:7px; }
+    .box-fields label { display:grid!important;gap:2px!important;font-size:12px; }
+    .box-fields input { width:100%;min-width:0;border:1px solid #d7c4a7;border-radius:7px;padding:5px;color:#755d41;background:#fffdf6; }
+    .edit-small { color:#a38b6e;font-size:12px; }
+    #edit-feedback { position:fixed;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);max-width:calc(100vw - 32px);padding:10px 18px;background:#fff9ebf0;border:1px solid #d7bd94;border-radius:12px;color:#755d41;font:13px/1.6 system-ui,sans-serif;box-shadow:0 4px 20px #795a3514;text-align:center;pointer-events:none; }
+    @media(max-width:600px) {#decoration-panel {padding:12px;max-height:55vh;} .edit-button {padding:8px 12px;} }
+  </style>
+  <script type="importmap">{"imports":{"three":"./vendor/three/three.module.js","three/addons/":"./vendor/addons/"}}</script>
+</head>
+<body>
+  <canvas id="room" tabindex="0" aria-label="仓鼠房间。点击灯开关暖光，点击沙发坐下或起立，点击地面行走。方向键或WASD移动，空格停下。"></canvas>
+  <div id="loading" role="status">正在布置仓鼠的小房间…</div>
+  <output id="scene-status" class="sr-only" aria-live="polite"></output>
+  <button id="decorate" class="edit-button" disabled>装修</button>
+  <section id="decoration-panel" aria-label="装修模式" hidden>
+    <h2>布置小房间</h2>
+    <p>拖动家具摆放，不可用的位置会自动回退。</p>
+    <label><input id="snap-grid" type="checkbox" checked> 摆放吸附（0.1米）</label>
+    <hr style="border:0;border-top:1px solid #e9dbc5;margin:12px 0">
+    <div id="selected-name">点击一件家具</div>
+    <button id="rotate-furniture" class="edit-button" disabled style="margin-top:8px">旋转90°</button>
+    <details id="collider-settings">
+      <summary>碰撞盒设置</summary>
+      <p class="edit-small">单位：米。单独调整盒子，不改变家具模型。</p>
+      <div class="box-fields">
+        <label>宽 X<input id="box-size-x" type="number" min="0.04" max="10" step="0.05" aria-label="碰撞盒宽度"></label>
+        <label>高 Y<input id="box-size-y" type="number" min="0.02" max="10" step="0.05" aria-label="碰撞盒高度"></label>
+        <label>深 Z<input id="box-size-z" type="number" min="0.04" max="10" step="0.05" aria-label="碰撞盒深度"></label>
+        <label>偏移 X<input id="box-center-x" type="number" min="-8" max="8" step="0.05" aria-label="碰撞盒X偏移"></label>
+        <label>偏移 Y<input id="box-center-y" type="number" min="-8" max="8" step="0.05" aria-label="碰撞盒Y偏移"></label>
+        <label>偏移 Z<input id="box-center-z" type="number" min="-8" max="8" step="0.05" aria-label="碰撞盒Z偏移"></label>
+      </div>
+      <label style="margin-top:8px"><input id="box-blocks-navigation" type="checkbox"> 阻挡仓鼠行走</label>
+      <label><input id="box-blocks-placement" type="checkbox"> 参与家具摆放碰撞</label>
+    </details>
+    <div class="edit-actions"><button id="cancel-decoration" class="edit-button">取消</button><button id="finish-decoration" class="edit-button edit-primary">完成保存</button></div>
+  </section>
+  <div id="edit-feedback" role="status" hidden></div>
+  <script type="module" src="./room.js"></script>
+</body>
+</html>

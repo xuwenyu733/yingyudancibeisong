@@ -1,0 +1,12 @@
+{
+  "name": "word-quest",
+  "private": true,
+  "scripts": {
+    "dev:server": "npm run start:dev --prefix backend-English",
+    "dev:frontend": "npm run dev --prefix frontend-English",
+    "dev:admin": "npm run dev --prefix admin-English",
+    "dev:mp": "npm run dev:mp-weixin --prefix uniapp-English",
+    "db:push": "npm run db:push --prefix backend-English",
+    "prisma:generate": "npm run prisma:generate --prefix backend-English"
+  }
+}
