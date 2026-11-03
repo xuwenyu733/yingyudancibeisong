@@ -1,0 +1,99 @@
+.pet-room-view .room-profile-avatar { width:88px;height:88px;box-shadow:0 4px 16px #8a6b3315; }
+.pet-room-view .room-profile-avatar-photo { width:100%;height:100%;object-fit:cover;display:block; }
+.pet-room-view .room-profile-avatar-actions { min-width:0;display:flex;flex-wrap:wrap;gap:7px;align-items:center; }
+.pet-room-view .room-profile-avatar-help { flex-basis:100%;font-size:10px;line-height:1.6;color:var(--room-text-soft,#8a795a); }
+.pet-room-view .room-profile-identity-status { min-height:18px;margin:8px 0;font-size:11px;line-height:1.6;color:var(--room-text-soft,#85704f); }
+.pet-room-view .room-profile-file[hidden] { display:none!important; }
+.pet-room-view .room-profile-hud-emblem { width:34px;height:37px;display:block;flex:none;margin:-5px -2px -7px -5px; }
+.pet-room-view .room-profile-hud-emblem svg { width:100%;height:100%;display:block; }
+.pet-room-view .room-profile-level { gap:6px; }
+.pet-room-view .room-profile-level[data-tier="silver"] { border-color:#b6ccd9;background:#f3f9fe; }
+.pet-room-view .room-profile-level[data-tier="gold"] { border-color:#e7c36c;background:linear-gradient(135deg,#fffbed,#fff0bf); }
+.pet-room-view .room-profile-level[data-tier="crystal"] { border-color:#c5b2e8;background:linear-gradient(135deg,#fff,#ede6ff); }
+.pet-room-view .room-profile-level[data-tier="royal"] { border-color:#d6b55c;background:linear-gradient(130deg,#fff4c8,#f1e8ff);box-shadow:0 2px 14px #b49b602c; }
+.pet-room-view .room-profile-level-title { align-items:center;gap:10px; }
+.pet-room-view .room-profile-main-emblem { width:76px;height:84px;display:block;flex:none; }
+.pet-room-view .room-profile-main-emblem svg { width:100%;height:100%; }
+.pet-room-view .room-profile-tier-name { font-size:11px;line-height:1.6;color:var(--room-text-soft,#8a795a);margin:10px 0 6px; }
+.pet-room-view .room-profile-gender-hint { font-size:11px;line-height:1.7;color:#a2774e;background:#faf3dd;border:1px dashed #e3cf9e;border-radius:12px;padding:7px 10px;margin:4px 0 8px; }
+.pet-room-view .room-profile-gender-hint--wall { margin:6px 0 10px;text-align:center;background:#fdf6e4; }
+.pet-room-view .room-profile-tier-preview { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;padding-top:8px; }
+.pet-room-view .room-profile-tier-step { min-width:0;padding:5px 2px;border:1px dashed var(--room-line,#d9cfb8);border-radius:10px;text-align:center;opacity:1; }
+.pet-room-view .room-profile-tier-step.reached { filter:none;opacity:1; }
+.pet-room-view .room-profile-tier-step.current { opacity:1;border-color:#ccb57e;background:linear-gradient(155deg,#fffaf0,#efe4cb);box-shadow:0 2px 9px #89754410; }
+.pet-room-view .room-profile-tier-preview[data-gender="male"] .room-profile-tier-step.current { border-color:#9bb4c5;background:linear-gradient(155deg,#fbfcf7,#e1eaf0); }
+.pet-room-view .room-profile-tier-preview[data-gender="female"] .room-profile-tier-step.current { border-color:#d4b1c2;background:linear-gradient(155deg,#fffaf5,#f5e4ed); }
+.pet-room-view .room-profile-tier-step svg { display:block;width:50px;max-width:100%;height:55px;margin:auto; }
+.pet-room-view .room-profile-tier-step span { display:block;font-size:9px;color:var(--room-text-soft,#8a795a);margin-top:2px; }
+.pet-room-view .room-profile-badge-mark { height:86px;margin:0 auto 4px;width:78px;max-width:100%; }
+.pet-room-view .room-profile-badge-mark svg { width:100%;height:100%;display:block; }
+.pet-room-view .room-profile-badge.locked { filter:none;background:var(--room-bg,#f7f4ea);border-style:dashed; }
+.pet-room-view .room-profile-badge.locked .room-profile-badge-mark { filter:none;opacity:1; }
+.pet-room-view .room-profile-badge.locked .room-profile-badge-name { color:var(--room-text,#554d3e); }
+.pet-room-view .room-profile-tier-state { display:block;margin-top:3px;font-size:9px;color:var(--room-text-soft,#81735d); }
+.pet-room-view .room-profile-tier-step.reached .room-profile-tier-state { color:var(--room-accent,#587a65); }
+.pet-room-view .room-profile-unlock-goal { display:flex;gap:12px;margin-top:14px;padding:14px 12px;border-radius:16px;border:1px solid var(--room-line,#d8cda7);background:var(--room-card,#fffdf4); }
+.pet-room-view .room-profile-unlock-goal[hidden] { display:none; }
+.pet-room-view .room-profile-unlock-art { flex:0 0 78px;align-self:center; }
+.pet-room-view .room-profile-unlock-art svg { display:block;width:78px;height:88px; }
+.pet-room-view .room-profile-unlock-copy { min-width:0;flex:1; }
+.pet-room-view .room-profile-unlock-eyebrow { display:block;font-size:10px;color:var(--room-accent,#587a65);margin-bottom:5px;letter-spacing:.05em; }
+.pet-room-view .room-profile-unlock-title { display:block;font-size:12px;line-height:1.6;color:var(--room-text,#554d3e); }
+.pet-room-view .room-profile-unlock-text { margin:4px 0 8px;font-size:10px;line-height:1.7;color:var(--room-text-soft,#81735d); }
+.pet-room-view .room-profile-unlock-track { height:6px;overflow:hidden;border-radius:6px;background:var(--room-line,#e5dfce); }
+.pet-room-view .room-profile-unlock-track>span { display:block;height:100%;background:var(--room-accent,#7e9f86);border-radius:inherit; }
+.pet-room-view .room-profile-unlock-action { margin-top:10px;font-size:10px;padding:6px 9px; }
+.pet-room-view .room-profile-collection-goal { display:grid;gap:4px;margin-top:9px;padding:10px;border-radius:10px;background:var(--room-bg,#f4f2e7);color:var(--room-text,#554d3e);font-size:11px;line-height:1.6; }
+.pet-room-view .room-profile-collection-goal>span { color:var(--room-text-soft,#81735d);font-size:10px; }
+.pet-room-view .room-profile-badge-state { display:inline-block;padding:2px 6px;margin:3px 0;font-size:9px;border-radius:7px;color:var(--room-accent,#587a65);background:var(--room-bg,#f0f3e9); }
+.pet-room-view .room-profile-badge.locked .room-profile-badge-state { color:var(--room-text-soft,#81735d); }
+.pet-room-view .room-profile-badge-goal-hint { display:block;margin-top:4px;color:var(--room-accent,#587a65);font-size:9px;line-height:1.5; }
+.pet-room-view .room-profile-achievement-style{margin:5px 0 12px;color:var(--room-text-soft,#81735d);font-size:11px;line-height:1.7;}
+.pet-room-view .room-profile-badge-progress{grid-column:1/-1;}
+.pet-room-view .room-profile-badge-milestone{margin:3px 0;color:var(--room-text-soft,#81735d);font-size:9px;line-height:1.5;}
+.pet-room-view .room-profile-badge-detail{display:flex;align-items:center;gap:12px;padding:12px;}
+.pet-room-view .room-profile-achievement-detail-art{display:block;flex:0 0 110px;}
+.pet-room-view .room-profile-achievement-detail-art svg{display:block;width:110px;height:121px;}
+.pet-room-view .room-profile-achievement-detail-copy{min-width:0;flex:1;}
+.pet-room-view .room-profile-achievement-detail-copy strong{font-size:13px;}
+.pet-room-view .room-profile-achievement-detail-copy p{font-size:11px;margin:7px 0;}
+.pet-room-view .room-profile-achievement-detail-copy small{font-size:9px;color:var(--room-text-soft,#81735d);}
+.pet-room-view .room-profile-toast-mark{display:block;flex:0 0 40px;}
+.pet-room-view .room-profile-toast-mark svg{display:block;width:40px;height:44px;}
+.pet-room-view .room-profile-badge:focus-visible,.pet-room-view .room-profile button:focus-visible,.pet-room-view .room-profile input:focus-visible { outline:2px solid #ad8741;outline-offset:3px; }
+.pet-room-view .room-profile-calendar-spacer { aspect-ratio:1; }
+/* v2.17/F6：存档管理（一键备份 / 导出 / 恢复 / 最近备份列表） */
+.pet-room-view .room-profile-archive { display:grid;gap:10px; }
+.pet-room-view .room-profile-archive[hidden] { display:none; }
+.pet-room-view .room-profile-archive-hint { font-size:11px;line-height:1.7;color:var(--room-text-soft,#8a795a); }
+.pet-room-view .room-profile-archive-actions { display:flex;flex-wrap:wrap;gap:8px;align-items:center; }
+.pet-room-view .room-profile-archive-actions .edit-button { font-size:10px;padding:7px 10px; }
+.pet-room-view .room-profile-archive-status { margin:2px 0;min-height:16px;font-size:10px;line-height:1.6;color:var(--room-text-soft,#81735d); }
+.pet-room-view .room-profile-archive-status[data-tone="ok"] { color:var(--room-accent,#587a65); }
+.pet-room-view .room-profile-archive-status[data-tone="warn"] { color:#a2774e; }
+.pet-room-view .room-profile-archive-list { margin:2px 0 0;padding:0;list-style:none;display:grid;gap:6px; }
+.pet-room-view .room-profile-archive-list[hidden] { display:none; }
+.pet-room-view .room-profile-archive-list-label { display:block;font-size:10px;color:var(--room-text-soft,#81735d);margin-bottom:2px; }
+.pet-room-view .room-profile-archive-item { display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--room-line,#ddd6be);border-radius:12px;background:var(--room-card,#fffdf4); }
+.pet-room-view .room-profile-archive-item-copy { min-width:0;flex:1;display:grid;gap:1px; }
+.pet-room-view .room-profile-archive-item-note { font-size:11px;color:var(--room-text,#554d3e); }
+.pet-room-view .room-profile-archive-item-meta { font-size:9px;color:var(--room-text-soft,#81735d); }
+.pet-room-view .room-profile-archive-item .edit-button { font-size:9px;padding:4px 8px; }
+.pet-room-view .room-profile-archive-remove { border-color:#dcc3b3;color:#a05e43;background:#fdf6f1; }
+@media(max-width:480px) {
+  .pet-room-view .room-profile-avatar-row { gap:10px; }
+  .pet-room-view .room-profile-avatar { width:72px;height:72px; }
+  .pet-room-view .room-profile-avatar-actions button { font-size:10px;padding:7px 9px; }
+  .pet-room-view .room-profile-level-name { display:none; }
+  .pet-room-view .room-profile-hud-emblem { width:29px;height:32px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .pet-room-view .room-profile *, .pet-room-view .room-profile-level { animation:none!important;transition:none!important; }
+}
+@container pet-room (max-width:480px) {
+  .pet-room-view .room-profile-avatar-row{gap:10px;}
+  .pet-room-view .room-profile-avatar{width:64px;height:64px;}
+  .pet-room-view .room-profile-avatar-actions button{font-size:10px;padding:7px 9px;}
+  .pet-room-view .room-profile-level-name{display:none;}
+  .pet-room-view .room-profile-hud-emblem{width:29px;height:32px;}
+}

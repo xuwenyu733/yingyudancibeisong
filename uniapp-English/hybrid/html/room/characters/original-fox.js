@@ -15,7 +15,7 @@ import {
  * 也没有以任何现有品牌 / 动画角色 / 吉祥物作为设计模板（只采用上述通用原则）。
  *
  * 各部位是独立刚性网格，真实挂在髋/膝/脚、肩/肘、颈/头、耳/尾关节下。
- * 头脸不做 morph 或缩放；行走、坐起都直接转动这些关节。
+ * 头部不做 morph 或整体缩放；眼部关节只用于短暂自然眨眼，行走、坐起直接转动身体关节。
  *
  * 外观预设：
  *   appearance: 'kid'（默认，幼态化：大头大眼圆颊、腮红、高饱和配色）
@@ -26,7 +26,7 @@ import {
 const KID_PALETTE = Object.freeze({
   fur: '#eda95e', furShade: '#d18a4c', cream: '#fff3da', ear: '#f6cba8',
   shirt: '#8fc4b4', shirtShade: '#6fae9e', shorts: '#7e93a0', eye: '#293739',
-  nose: '#584337', blush: '#ff9fb0', pupil: '#201c22',
+  nose: '#584337', blush: '#e6b3a6', pupil: '#201c22',
 });
 const CLASSIC_PALETTE = Object.freeze({
   fur: '#e9a15f', furShade: '#cf8045', cream: '#fff0d4', ear: '#f4c8a6',
@@ -128,20 +128,24 @@ export function createOriginalFox({ palette = {}, appearance = 'kid' } = {}) {
   ellipsoid('Fox_Chin', head, mat.cream, [0, -.096, .115], [.102, .036, .046], true);
   ellipsoid('Fox_Nose', head, mat.nose, [0, -.037, .183], [.022, .016, .016], true);
   if (look.blush) {
-    ellipsoid('Fox_Blush_L', head, mat.blush, [-.088, -.058, .132], [.052, .026, .020], true);
-    ellipsoid('Fox_Blush_R', head, mat.blush, [.088, -.058, .132], [.052, .026, .020], true);
+    ellipsoid('Fox_Blush_L', head, mat.blush, [-.088, -.058, .132], [.034, .016, .009], true);
+    ellipsoid('Fox_Blush_R', head, mat.blush, [.088, -.058, .132], [.034, .016, .009], true);
   }
+  const eyeLids = [];
   for (const side of [-1, 1]) {
     const suffix = side < 0 ? 'L' : 'R';
-    ellipsoid(`Fox_Eye_${suffix}`, head, mat.eye, [side * .070, look.eyeY, look.eyeZ], look.eye, true);
-    if (look.pupil) ellipsoid(`Fox_Pupil_${suffix}`, head, mat.pupil, [side * .070, look.eyeY, look.eyeZ + .007], [.011, .017, .004], true);
-    ellipsoid(`Fox_EyeGlint_${suffix}`, head, mat.cream, [side * .070 - .005, look.eyeY + .008, look.eyeZ + .012], [.0060, .0085, .0035], true);
+    const lid = joint(`Fox_EyeBlink_${suffix}`, head, [side * .070, look.eyeY, look.eyeZ], 'expression');
+    ellipsoid(`Fox_Eye_${suffix}`, lid, mat.eye, [0, 0, 0], look.eye, true);
+    if (look.pupil) ellipsoid(`Fox_Pupil_${suffix}`, lid, mat.pupil, [0, 0, .007], [.011, .017, .004], true);
+    const glint = ellipsoid(`Fox_EyeGlint_${suffix}`, lid, mat.cream, [-.005, .008, .012], [.0050, .0065, .0035], true);
+    eyeLids.push({lid, glint, glintScale:glint.scale.clone()});
     const brow = ellipsoid(`Fox_Brow_${suffix}`, head, mat.furShade, [side * .070, .060, .152], [.030, .0075, .007], true);
-    brow.rotation.z = side * .10;
+    brow.rotation.z = side * .035;
   }
-  const smile = new QuadraticBezierCurve3(new Vector3(-.023, -.065, .171), new Vector3(0, -.080, .179), new Vector3(.023, -.065, .171));
-  const smileGeometry = new TubeGeometry(smile, 8, .0022, 4, false); geometries.add(smileGeometry);
-  shapeMesh('Fox_Smile', head, smileGeometry, mat.nose, [0, 0, 0]);
+  // A relaxed closed mouth: a very shallow curve avoids a permanently posed grin.
+  const mouth = new QuadraticBezierCurve3(new Vector3(-.018, -.069, .173), new Vector3(0, -.072, .179), new Vector3(.018, -.069, .173));
+  const mouthGeometry = new TubeGeometry(mouth, 8, .0018, 4, false); geometries.add(mouthGeometry);
+  shapeMesh('Fox_RelaxedMouth', head, mouthGeometry, mat.nose, [0, 0, 0]);
   const ears = [];
   const outerEar = earGeometry(look.earW, look.earH, .034), innerEar = earGeometry(look.earW * .64, look.earH * .70, .008);
   for (const side of [-1, 1]) {
@@ -192,11 +196,15 @@ export function createOriginalFox({ palette = {}, appearance = 'kid' } = {}) {
 
   function applyRig() {
     const w = locomotion.weight * (1 - values.amount), phase = locomotion.phase;
+    const blinkPhase = elapsed % 4.6, blink = smooth(Math.max(0, 1 - Math.abs(blinkPhase - 2.6) / .13));
+    for (const {lid, glint, glintScale} of eyeLids) {
+      lid.scale.y = 1 - .95 * blink;
+      glint.scale.copy(glintScale).multiplyScalar(1 - .95 * blink);
+    }
     // 步伐幅度随实际速度轻微缩放：快走大步、慢走小步，慢走更接近待机姿态。
     const speedBias = clamp(locomotion.speed / 1.5, .35, 1.2);
-    // 竖直起伏放在角色根节点：脚步交换(支撑点交替)时重心最低，迈步中段最高，
-    // 两次起伏/步幅周期，与真实双足行走的相位一致。GLB walk 段会一并烘焙。
-    model.position.y = (1 - Math.abs(Math.cos(phase))) * .024 * w * speedBias;
+    // v2.24 · 真实狐狸是四足动物：小跑时身体放平前倾、前后肢对角交替，重心起伏比双足更小更平稳。
+    model.position.y = (1 - Math.abs(Math.cos(phase))) * .016 * w * speedBias;
     // 骨盆随迈步做横向重心位移（不用 z 轴旋转，保证脚掌始终水平）。
     const swayX = Math.sin(phase) * .022 * w;
     let hipY = values.hipY;
@@ -215,9 +223,10 @@ export function createOriginalFox({ palette = {}, appearance = 'kid' } = {}) {
       hipY -= (Math.min(...bottoms) - rawFloor) * w;
     }
     pelvis.position.set(swayX, hipY, values.hipZ);
-    spine.rotation.x = rad(values.lean) + (Math.cos(phase * 2) * .018 + .05) * w;
+    // 四足小跑姿态：脊柱前倾放平（身体接近水平），颈部抬头补偿保持视平线，尾巴放低拖行。
+    spine.rotation.x = rad(values.lean) - rad(22) * w + (Math.cos(phase * 2) * .010) * w;
     spine.rotation.z = Math.sin(phase) * .016 * w;
-    neck.rotation.x = rad(values.head) + Math.abs(Math.sin(phase)) * .018 * w * speedBias;
+    neck.rotation.x = rad(values.head) + rad(18) * w + Math.abs(Math.sin(phase)) * .018 * w * speedBias;
     head.rotation.y = Math.sin(phase) * .015 * w;
     // 庆祝（签到/勋章解锁）：点头两次、耳朵扇动、尾巴轻摇，权重由 setCelebrate 外部驱动，结束后自动归零。
     if (celebrateWeight > 0) {
@@ -233,17 +242,19 @@ export function createOriginalFox({ palette = {}, appearance = 'kid' } = {}) {
       leg.foot.rotation.x = shin + swing - flex;
     }
     for (const arm of arms) {
-      const wave = Math.sin(phase + (arm.side < 0 ? 0 : Math.PI));
-      arm.shoulder.rotation.x = -rad(values.arm) + wave * .34 * w * speedBias;
+      // 前肢与对侧后腿同相（对角步态）；行走时前臂前伸下沉、肘部深屈，像真实狐狸那样用前爪撑地。
+      const wave = Math.sin(phase + (arm.side < 0 ? Math.PI : 0));
+      arm.shoulder.rotation.x = -rad(values.arm) - rad(26) * w + wave * .40 * w * speedBias;
       arm.shoulder.rotation.z = arm.side * (.11 + .035 * values.amount);
-      arm.elbow.rotation.x = -rad(values.elbow) - Math.max(0, -wave) * .10 * w * speedBias;
+      arm.elbow.rotation.x = -rad(values.elbow) - rad(36) * w - Math.max(0, -wave) * .10 * w * speedBias;
     }
     for (const ear of ears) {
       ear.joint.rotation.z = -ear.side * (.15 + .045 * values.amount) + Math.sin(phase + ear.side) * .024 * w;
       ear.joint.rotation.x = .065 + values.amount * .035;
     }
     tail.rotation.y = -.72 + Math.sin(phase) * .15 * w * speedBias + Math.sin(elapsed * 1.7) * .025 * (1 - w);
-    tail.rotation.x = .40 + values.tail * .32; tailMid.rotation.x = -.28 - values.tail * .13;
+    // 四足时尾巴放低拖行（不再高高翘起），仅保留随步伐的左右微摆。
+    tail.rotation.x = .40 + values.tail * .32 - rad(16) * w * speedBias; tailMid.rotation.x = -.28 - values.tail * .13;
     tailTip.rotation.y = Math.sin(elapsed * 1.9) * .035;
     if (waterWeight > 0) {
       // 浇水姿势：双臂前伸微垂（像端水壶）、肘微屈、肩略收拢、头微低、尾巴微翘。
@@ -298,7 +309,7 @@ export function createOriginalFox({ palette = {}, appearance = 'kid' } = {}) {
     source: 'original-procedural-geometry', rigType: 'articulated-object-joints',
     design: Object.freeze({
       targetAudience: '6-14岁儿童', appeal: ['round-silhouette', 'large-eyes', 'clear-facial-signals', 'high-saturation', 'animal-type'],
-      appearance, paletteKeys: Object.keys(colors),
+      appearance, gait: 'quad', paletteKeys: Object.keys(colors),
     }),
     animations: Object.freeze([
       { name: 'idle', duration: 3, loop: true }, { name: 'walk', duration: 1, loop: true },

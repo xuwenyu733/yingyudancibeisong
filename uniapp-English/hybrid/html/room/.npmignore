@@ -1,0 +1,13 @@
+# Generated framework hosts and dependency/build caches are not package source.
+**/node_modules/
+**/__pycache__/
+validation/frameworks/host/
+validation/frameworks/app/public/
+validation/frameworks/build-log.txt
+validation/frameworks/app/UniH5.generated.vue
+*.zip
+test-results.txt
+# Historical source snapshots and QA screenshots are not runtime assets.
+original-pet-room/
+original-pet-room-v2.3-flat/
+/previews/

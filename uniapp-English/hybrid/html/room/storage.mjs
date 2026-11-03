@@ -5,6 +5,20 @@
 export const DEFAULT_QUOTA = 5 * 1024 * 1024; // 5MB
 export const DEFAULT_WARN_RATIO = 0.8;
 
+// 同一 JS 宿主内，不同实例共享适配器时也必须串行写同一键。
+// 防止宿主 setItem/订阅回调同步重入另一实例，绕过各实例自己的 busy 检查。
+const storageLocks = new WeakMap();
+export function acquireStorageLock(adapter, keys) {
+  if (adapter === null) return () => {};
+  let held = storageLocks.get(adapter);
+  if (!held) { held = new Set(); storageLocks.set(adapter, held); }
+  const requested = [...new Set(keys)];
+  if (requested.some(key => held.has(key))) return null;
+  requested.forEach(key => held.add(key));
+  let released = false;
+  return () => { if (released) return; released = true; requested.forEach(key => held.delete(key)); };
+}
+
 const encoder = new TextEncoder();
 /** 字符串的 UTF-8 字节数（与 localStorage 存储口径一致的近似值）。 */
 export function estimateBytes(value) {

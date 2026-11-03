@@ -1,8 +1,8 @@
 import { usePlayerStore } from "../stores/player";
 
 /**
- * App：加载打包的 v2.8 学习小屋。
- * H5：默认连本机 original-pet-room 预览端口。
+ * App：加载打包的 v2.28.1 学习小屋。
+ * H5：默认连本机 hybrid/html/room 预览端口。
  */
 // #ifdef APP-PLUS
 export const ROOM_URL = "/hybrid/html/room/index.html";
@@ -32,12 +32,12 @@ export function roomRuntimeTip() {
   const pending = usePlayerStore().pendingCount;
   // #ifdef APP-PLUS
   return pending
-    ? `杏橘狐小屋已打包。本次将尝试入账 ${pending} 条闯关奖励。`
-    : "杏橘狐学习小屋（v2.8）。在房内商店兑换家具 / 扩建。";
+    ? `杏橘狐小屋已打包（v2.28.1）。本次将尝试入账 ${pending} 条闯关奖励。`
+    : "杏橘狐学习小屋（v2.28.1）。在房内商店兑换家具 / 扩建 / 装修码。";
   // #endif
   // #ifndef APP-PLUS
   return pending
-    ? `H5：${ROOM_URL}，待入账 ${pending} 条。请先启动 v2.8.0 预览服务。`
-    : `H5 联调：${ROOM_URL}`;
+    ? `H5：${ROOM_URL}，待入账 ${pending} 条。请先启动房间预览：python3 serve.py --port 8768`
+    : `H5 联调 v2.28.1：${ROOM_URL}`;
   // #endif
 }

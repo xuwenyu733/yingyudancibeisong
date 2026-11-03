@@ -1,3 +1,6 @@
+import {acquireStorageLock} from './storage.mjs';
+import {giftProduct} from './gift-catalog.mjs';
+
 /**
  * 个人主页账本（纯逻辑，可在 Node 中测试）：头像、昵称、等级、经验、累计学习时长、
  * 连续签到天数、勋章墙，以及「签到/升级给积分」的待入账补偿（pending）。
@@ -6,6 +9,29 @@
  */
 
 export const MAX_LEVEL = 20;
+// 头像只接受本地已解码、压缩后的栅格图片；不保存外链或 SVG。
+export const MAX_AVATAR_BYTES = 98304;
+export function validAvatar(value) {
+  if (value === null) return true;
+  if (typeof value !== 'string' || value.length > MAX_AVATAR_BYTES) return false;
+  const match = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
+  if (!match || match[2].length % 4 !== 0) return false;
+  const prefix = match[2];
+  return match[1] === 'jpeg' ? prefix.startsWith('/9j/')
+    : match[1] === 'png' ? prefix.startsWith('iVBORw0KGgo')
+      : prefix.startsWith('UklGR');
+}
+export const BADGE_TIERS = Object.freeze([
+  Object.freeze({ id: 'bronze', name: '青铜新芽', minLevel: 1, rank: 1 }),
+  Object.freeze({ id: 'silver', name: '白银守护', minLevel: 4, rank: 2 }),
+  Object.freeze({ id: 'gold', name: '鎏金星芒', minLevel: 8, rank: 3 }),
+  Object.freeze({ id: 'crystal', name: '璀璨水晶', minLevel: 12, rank: 4 }),
+  Object.freeze({ id: 'royal', name: '星耀王冠', minLevel: 16, rank: 5 }),
+]);
+export function badgeTierForLevel(level) {
+  const value = Number.isFinite(level) ? Math.max(1, Math.min(MAX_LEVEL, Math.floor(level))) : 1;
+  return BADGE_TIERS.findLast(tier => value >= tier.minLevel);
+}
 export const LEVEL_REWARDS = Object.freeze(
   Array.from({ length: MAX_LEVEL - 1 }, (_, i) => 50 + 25 * i), // 升到 level=i+2 时奖励：50,75,100…
 );
@@ -59,7 +85,7 @@ export const BADGES = Object.freeze([
   Object.freeze({ id: 'level-10', name: '资深学者', description: '达到 10 级', category: 'level' }),
   Object.freeze({ id: 'first-purchase', name: '第一件家具', description: '从商店买下第一件家具', category: 'growth' }),
   Object.freeze({ id: 'expand-1', name: '第一次扩建', description: '把房间扩建到下一档', category: 'growth' }),
-  Object.freeze({ id: 'collector', name: '收藏家', description: '集齐商店全部家具', category: 'growth' }),
+  Object.freeze({ id: 'collector', name: '收藏家', description: '收藏 4 件不同的商店物品', category: 'growth' }),
   Object.freeze({ id: 'spend-500', name: '购物达人', description: '累计消费满 500 积分', category: 'growth' }),
   Object.freeze({ id: 'expand-2', name: '改造大师', description: '累计扩建 2 次房间', category: 'growth' }),
 ]);
@@ -67,7 +93,7 @@ export const BADGES = Object.freeze([
 export function badgeTest(badge, profile, economy) {
   const streak = profile.streakDays, total = profile.totalCheckIns, xp = profile.xp, level = profile.level;
   const hours = profile.totalStudySeconds / 3600;
-  const owned = Array.isArray(economy?.owned) ? economy.owned : [];
+  const owned = Array.isArray(economy?.owned) ? economy.owned.filter(sku=>!giftProduct(sku)) : [];
   const totalSpent = Number.isSafeInteger(economy?.totalSpent) ? economy.totalSpent : 0;
   const expandCount = Array.isArray(economy?.claims?.requests)
     ? economy.claims.requests.filter(request => request.operation === 'expand').length : 0;
@@ -87,14 +113,14 @@ export function badgeTest(badge, profile, economy) {
     case 'level-5': return level >= 5;
     case 'level-10': return level >= 10;
     case 'first-purchase': return owned.length >= 1;
-    case 'expand-1': return (economy?.roomLevel || 0) >= 1;
+    case 'expand-1': return (economy?.maxRoomLevel ?? economy?.roomLevel ?? 0) >= 1;
     case 'collector': return owned.length >= 4;
     case 'spend-500': return totalSpent >= 500;
     case 'expand-2': return expandCount >= 2;
     default: return false;
   }
 }
-// 未解锁徽章的「还差多少」提示；不可量化的（初次签到/首购/收藏家）返回 null。
+// 未解锁徽章的「还差多少」提示；初次签到和首购由具体行动引导，不估算完成日期。
 export function badgeHint(badge, profile, economy) {
   const streak = profile.streakDays, total = profile.totalCheckIns, level = profile.level;
   const hours = profile.totalStudySeconds / 3600;
@@ -123,6 +149,10 @@ export function badgeHint(badge, profile, economy) {
     case 'spend-500': {
       const need = 500;
       return totalSpent >= need ? null : `再消费 ${need - totalSpent} 积分`;
+    }
+    case 'collector': {
+      const owned = Array.isArray(economy?.owned) ? economy.owned.filter(sku=>!giftProduct(sku)).length : 0;
+      return owned >= 4 ? null : `再收藏 ${4 - owned} 件商店物品`;
     }
     case 'expand-2': {
       const need = 2;
@@ -157,7 +187,11 @@ const plain = value => value !== null && typeof value === 'object' && [Object.pr
 const natural = value => Number.isSafeInteger(value) && value >= 0;
 const validId = value => typeof value === 'string' && value.length <= 160 && value.trim().length > 0;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-const isDate = value => typeof value === 'string' && datePattern.test(value) && !Number.isNaN(Date.parse(value));
+const isDate = value => {
+  if (typeof value !== 'string' || !datePattern.test(value)) return false;
+  const timestamp = Date.parse(`${value}T00:00:00Z`);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === value;
+};
 const MAX_PROFILE_BYTES = 262144;
 const MAX_CHECKIN_HISTORY = 480; // 签到日期历史上限（约 16 个月），超出丢弃最旧的
 const MAX_PENDING = 31;          // 待入账积分条数上限（约一个月），防止经济账本长期写失败时无限膨胀
@@ -194,14 +228,18 @@ export function buildMonthCalendar(checkInDates, anchorDate, viewMonth) {
   return { year, month, days };
 }
 
+const acquisitionTimestamp=value=>typeof value==='string'&&value.includes('T')&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString()===value;
 function parseProfile(raw) {
   if (typeof raw !== 'string' || bytes(raw) > MAX_PROFILE_BYTES) fail('INVALID_STATE', '个人主页存档过大或不是 JSON 文本');
   let profile; try { profile = copyJSON(JSON.parse(raw)); } catch { fail('INVALID_STATE', '个人主页存档损坏'); }
-  const keys = ['version', 'gender', 'name', 'totalStudySeconds', 'xp', 'level', 'lastCheckIn', 'streakDays', 'totalCheckIns', 'badges', 'pending', 'checkInDates', 'badgeUnlockedAt', 'makeups'];
+  const keys = ['version', 'gender', 'name', 'avatar', 'totalStudySeconds', 'xp', 'level', 'lastCheckIn', 'streakDays', 'totalCheckIns', 'badges', 'pending', 'checkInDates', 'badgeUnlockedAt', 'badgeAcquiredAt', 'levelBadgeAcquiredAt', 'makeups'];
   parseProfile: if (!plain(profile) || Object.keys(profile).some(key => !keys.includes(key))) fail('INVALID_STATE', '个人主页存档字段无效');
   if (profile.version !== 1) fail('INVALID_STATE', '个人主页版本无效');
-  if (!['male', 'female'].includes(profile.gender)) fail('INVALID_STATE', '头像性别无效');
+  // v2.10：新增「未选择」状态（none）。旧档只有 male/female，补默认即可，非损坏。
+  if (!['none', 'male', 'female'].includes(profile.gender)) fail('INVALID_STATE', '头像性别无效');
   if (typeof profile.name !== 'string' || profile.name.length > 40) fail('INVALID_STATE', '昵称无效');
+  if (profile.avatar === undefined) profile.avatar = null;
+  if (!validAvatar(profile.avatar)) fail('INVALID_STATE', '头像图片格式无效或超过 96KB');
   for (const key of ['totalStudySeconds', 'xp', 'level', 'streakDays', 'totalCheckIns']) {
     if (!natural(profile[key])) fail('INVALID_STATE', `${key} 无效`);
   }
@@ -212,6 +250,14 @@ function parseProfile(raw) {
   // 勋章解锁时间（v2.7/batch1）：旧档缺失补空对象，不视为损坏。
   if (profile.badgeUnlockedAt === undefined) profile.badgeUnlockedAt = {};
   if (!plain(profile.badgeUnlockedAt) || Object.values(profile.badgeUnlockedAt).some(value => value !== null && !isDate(value))) fail('INVALID_STATE', '勋章解锁时间无效');
+  // Absent historical exact times stay unknown, never the time of viewing.
+  if (profile.badgeAcquiredAt === undefined) profile.badgeAcquiredAt = {};
+  if (profile.levelBadgeAcquiredAt === undefined) profile.levelBadgeAcquiredAt = {};
+  const eligibleTiers = new Set(BADGE_TIERS.filter(tier => profile.level >= tier.minLevel).map(tier => tier.id));
+  for (const [field,allowed] of [['badgeAcquiredAt',new Set(profile.badges)],['levelBadgeAcquiredAt',eligibleTiers]]) {
+    if (!plain(profile[field]) || Object.entries(profile[field]).some(([id,value]) => !allowed.has(id) || value !== null && !acquisitionTimestamp(value))) fail('INVALID_STATE', '获得时间记录无效');
+    for (const id of allowed) if (!Object.hasOwn(profile[field],id)) profile[field][id] = null;
+  }
   // 补签记录（v2.7/batch1）：{month, count} 每月限额；旧档缺失补默认。
   if (profile.makeups === undefined) profile.makeups = { month: null, count: 0 };
   if (!plain(profile.makeups) || !natural(profile.makeups.count) || profile.makeups.count > 999 ||
@@ -227,8 +273,10 @@ function parseProfile(raw) {
   return profile;
 }
 
-export function createProfile({ storageAdapter, storageKey = 'original-pet-room-profile-v1', onEvent } = {}) {
-  let profile = { version: 1, gender: 'male', name: '', totalStudySeconds: 0, xp: 0, level: 1, lastCheckIn: null, streakDays: 0, totalCheckIns: 0, badges: [], pending: [], checkInDates: [], badgeUnlockedAt: {}, makeups: { month: null, count: 0 } };
+export function createProfile({ storageAdapter, storageKey = 'original-pet-room-profile-v1', onEvent, now = () => new Date() } = {}) {
+  const timestamp = () => { const value = new Date(now()); if (!Number.isFinite(value.getTime())) fail('INVALID_DATE', '获得时间的时钟无效'); return value.toISOString(); };
+  let baselineSaved = false;
+  let profile = { version: 1, gender: 'none', name: '', avatar: null, totalStudySeconds: 0, xp: 0, level: 1, lastCheckIn: null, streakDays: 0, totalCheckIns: 0, badges: [], pending: [], checkInDates: [], badgeUnlockedAt: {}, badgeAcquiredAt: {}, levelBadgeAcquiredAt: { bronze: timestamp() }, makeups: { month: null, count: 0 } };
   let adapter = null, loadError = null, writeError = null, busy = false, lastPersisted = null;
   try {
     if (typeof storageKey !== 'string' || !storageKey.trim()) fail('INVALID_STORAGE_KEY', '个人主页存储键无效');
@@ -237,6 +285,7 @@ export function createProfile({ storageAdapter, storageKey = 'original-pet-room-
       if (!adapter) fail('STORAGE_UNAVAILABLE', '当前环境没有个人主页存储，请显式传入存储适配器');
     } else adapter = storageAdapter;
     if (adapter !== null && (typeof adapter?.getItem !== 'function' || typeof adapter?.setItem !== 'function')) fail('STORAGE_UNAVAILABLE', '个人主页存储适配器无效');
+    if (adapter && [adapter.getItem, adapter.setItem].some(fn => fn.constructor?.name === 'AsyncFunction')) fail('STORAGE_UNAVAILABLE', '个人主页需要同步存储适配器，请先加载宿主数据到同步缓存');
     if (adapter) {
       let raw; try { raw = adapter.getItem(storageKey); } catch { fail('STORAGE_READ_FAILED', '无法读取个人主页存档'); }
       if (raw !== null) { profile = parseProfile(raw); lastPersisted = raw; }
@@ -247,11 +296,23 @@ export function createProfile({ storageAdapter, storageKey = 'original-pet-room-
     return copyJSON({ ...profile, valid: !loadError && !writeError, writable: !loadError && !writeError, error: loadError || writeError });
   }
   const reply = (ok, code, message) => ({ ok, code, message, state: getState() });
+  function ensureCurrentArchive() {
+    if (!adapter) return;
+    let current;
+    try { current = adapter.getItem(storageKey); }
+    catch { writeError = { code: 'STORAGE_READ_FAILED', message: '无法确认个人主页存档，本次未变更' }; fail(writeError.code, writeError.message); }
+    if (current !== lastPersisted) { writeError = { code: 'ARCHIVE_CONFLICT', message: '个人主页存档已被其他页面或账户修改，请重新挂载房间' }; fail(writeError.code, writeError.message); }
+  }
   function transaction(mutate, operation) {
     if (loadError) return reply(false, loadError.code, loadError.message);
     if (busy) return reply(false, 'BUSY', '个人主页正在保存，请稍后重试');
+    const releaseLock = acquireStorageLock(adapter, [storageKey]);
+    if (!releaseLock) return reply(false, 'BUSY', '另一个房间实例正在保存此个人主页，请稍后重试');
     busy = true; let changed = false, result;
     try {
+      // 先检查冲突，再执行可能向经济账本发放积分的 settlePending 回调。
+      // 空存档也参与比较，防止两个首次挂载实例相互覆盖。
+      ensureCurrentArchive();
       const candidate = copyJSON(profile), verdict = mutate(candidate);
       if (verdict?.unchanged) result = { ...reply(true, verdict.code || 'ALREADY_APPLIED', verdict.message || '此操作已处理'), ...verdict };
       else {
@@ -262,10 +323,7 @@ export function createProfile({ storageAdapter, storageKey = 'original-pet-room-
           try {
             // 多标签页并发写保护：落盘前重读一次，若外部已改过（版本号不同）则拒绝本次写入，
             // 避免后写的标签页用旧快照覆盖新数据（本版不自动合并，安全优先）。
-            if (lastPersisted !== null) {
-              let current; try { current = adapter.getItem(storageKey); } catch { current = undefined; }
-              if (current !== lastPersisted) { writeError = { code: 'ARCHIVE_CONFLICT', message: '个人主页存档已被其他页面修改，本次未保存' }; fail('ARCHIVE_CONFLICT', writeError.message); }
-            }
+            ensureCurrentArchive();
             const saved = adapter.setItem(storageKey, encoded);
             if (saved && typeof saved.then === 'function') { Promise.resolve(saved).catch(() => { }); throw new Error('需要同步存储适配器'); }
             lastPersisted = encoded;
@@ -274,16 +332,22 @@ export function createProfile({ storageAdapter, storageKey = 'original-pet-room-
         profile = candidate; writeError = null; changed = true; result = { ...reply(true, 'OK', verdict?.message || '已保存'), ...(verdict || {}) };
       }
     } catch (error) { const detail = errorInfo(error); result = reply(false, detail.code, detail.message); }
-    finally { busy = false; }
+    finally { busy = false; releaseLock(); }
     if (changed) try { onEvent?.('profile-change', { operation, state: getState() }); } catch { /* 宿主回调异常不能推翻已保存的数据。 */ }
     return result;
   }
 
+  function ensureAcquisitionBaseline() {
+    if (baselineSaved || lastPersisted !== null) return { ...reply(true,'ALREADY_APPLIED','获得时间已保留'), unchanged:true };
+    const result = transaction(() => ({message:'第一枚等级勋章的获得时间已记住'}),'acquisition-baseline');
+    if (result.ok) baselineSaved = true;
+    return result;
+  }
   function setGender(gender) {
     return transaction(candidate => {
       if (gender !== 'male' && gender !== 'female') fail('INVALID_GENDER', '头像性别只能为 male 或 female');
-      if (candidate.gender === gender) return { unchanged: true };
-      candidate.gender = gender; return { message: '头像已更新' };
+      if (candidate.gender === gender && candidate.avatar === null) return { unchanged: true };
+      candidate.gender = gender; candidate.avatar = null; return { message: '默认头像已更新' };
     }, 'set-gender');
   }
   function setName(name) {
@@ -293,6 +357,14 @@ export function createProfile({ storageAdapter, storageKey = 'original-pet-room-
       if (candidate.name === value) return { unchanged: true };
       candidate.name = value; return { message: '昵称已更新' };
     }, 'set-name');
+  }
+  function setAvatar(value) {
+    return transaction(candidate => {
+      if (!validAvatar(value)) fail('INVALID_AVATAR', '请选择 JPG、PNG 或 WebP 图片，处理后的头像需小于 96KB');
+      if (candidate.avatar === value) return { unchanged: true, message: '头像未改变' };
+      candidate.avatar = value;
+      return { message: value ? '头像已更新' : '已恢复默认头像' };
+    }, 'set-avatar');
   }
   function addStudyTime(seconds) {
     return transaction(candidate => {
@@ -306,7 +378,8 @@ export function createProfile({ storageAdapter, storageKey = 'original-pet-room-
     const day = isDate(date) ? date : null;
     if (!day) fail('INVALID_DATE', '签到日期格式应为 YYYY-MM-DD');
     return transaction(candidate => {
-      if (candidate.lastCheckIn === day) return { unchanged: true, code: 'ALREADY_CHECKED_IN', message: '今天已经签到过了' };
+      if (candidate.lastCheckIn === day || candidate.checkInDates.includes(day)) return { unchanged: true, code: 'ALREADY_CHECKED_IN', message: '这一天已经签到过了' };
+      if (candidate.lastCheckIn !== null && day < candidate.lastCheckIn) fail('DATE_OUT_OF_ORDER', '签到日期早于已有记录，请检查宿主时区与设备日期');
       if (candidate.pending.length >= MAX_PENDING) fail('REWARD_QUEUE_FULL', '待入账积分过多，请稍后重试补账后再签到');
       const streak = daysBetween(candidate.lastCheckIn, day) === 1 ? candidate.streakDays + 1 : 1;
       const reward = checkInReward(streak);
@@ -319,6 +392,8 @@ export function createProfile({ storageAdapter, storageKey = 'original-pet-room-
       while (candidate.level < MAX_LEVEL && candidate.xp >= xpForLevel(candidate.level + 1)) {
         candidate.level += 1; levelUps.push(candidate.level);
       }
+      const obtainedAt = levelUps.length ? timestamp() : null;
+      for (const tier of BADGE_TIERS) if (profile.level < tier.minLevel && candidate.level >= tier.minLevel) candidate.levelBadgeAcquiredAt[tier.id] = obtainedAt;
       const pendingPoints = reward.points + levelUps.reduce((sum, level) => sum + levelUpRewardPoints(level), 0);
       if (pendingPoints > 0) candidate.pending.push({ key: `checkin:${day}`, points: pendingPoints });
       return { streak, exp: expGained, points: reward.points, levelUps, pendingPoints, capped, message: capped ? '已满级，签到积分照常发放' : `签到成功，连续第 ${streak} 天` };
@@ -338,15 +413,24 @@ export function createProfile({ storageAdapter, storageKey = 'original-pet-room-
       const month = anchor.slice(0, 7);
       if (candidate.makeups.month !== month) { candidate.makeups = { month, count: 0 }; }
       if (candidate.makeups.count >= 3) fail('MAKEUP_LIMIT', '本月补签次数已用完');
-      // 补签后：签到总数 +1，日期按序插入；连续天数按“补签日紧接上次签到”计算。
+      // 日期先补齐，再从最近签到日向前重算；今天已经签到时同样能接回昨天的缺口。
       candidate.checkInDates.push(day);
       candidate.checkInDates.sort((a, b) => String(a) < String(b) ? -1 : String(a) > String(b) ? 1 : 0);
       if (candidate.checkInDates.length > MAX_CHECKIN_HISTORY) candidate.checkInDates.splice(0, candidate.checkInDates.length - MAX_CHECKIN_HISTORY);
       candidate.makeups.count += 1;
-      const streak = previousDay(day) === candidate.lastCheckIn ? candidate.streakDays + 1 : 1;
       const previously = candidate.streakDays;
-      candidate.streakDays = Math.max(candidate.streakDays, streak);
+      const extendsPrevious = previousDay(day) === candidate.lastCheckIn;
+      const latest = candidate.lastCheckIn && candidate.lastCheckIn > day ? candidate.lastCheckIn : day;
+      const signed = new Set(candidate.checkInDates);
+      let cursor = latest, contiguous = 0;
+      while (signed.has(cursor)) { contiguous++; cursor = previousDay(cursor); }
+      // 兼容只保存近 480 天历史的旧长连签，不能因裁剪历史而缩短它。
+      candidate.streakDays = Math.max(previously, contiguous, extendsPrevious ? previously + 1 : 1);
+      const streak = candidate.streakDays;
       candidate.totalCheckIns += 1;
+      // lastCheckIn 随补签日往后延续（只进不退）：否则补签后当天再签到会按
+      // “上次签到与今天相隔两天”把连签重置为 1，补签的衔接价值落空。
+      if (candidate.lastCheckIn === null || day > candidate.lastCheckIn) candidate.lastCheckIn = day;
       return { makeup: day, streak, totalCheckIns: candidate.totalCheckIns, month, count: candidate.makeups.count, stretched: candidate.streakDays > previously, message: `已补签 ${day}` };
     }, 'make-up');
   }
@@ -372,13 +456,15 @@ export function createProfile({ storageAdapter, storageKey = 'original-pet-room-
     const result = transaction(candidate => {
       candidate.badges = [...candidate.badges, ...unlocked];
       if (unlockDate) for (const id of unlocked) candidate.badgeUnlockedAt[id] = unlockDate;
+      const obtainedAt = timestamp();
+      for (const id of unlocked) candidate.badgeAcquiredAt[id] = obtainedAt;
       return { message: `解锁 ${unlocked.length} 枚勋章` };
     }, 'badges');
-    for (const id of unlocked) { try { onEvent?.('badge-unlocked', { id }); } catch { /* 回调异常不推翻结果 */ } }
-    return { ...result, unlocked };
+    if (result.ok) for (const id of unlocked) { try { onEvent?.('badge-unlocked', { id }); } catch { /* 回调异常不推翻结果 */ } }
+    return { ...result, unlocked: result.ok ? unlocked : [] };
   }
   return {
-    getState, setGender, setName, addStudyTime, checkIn, makeUp, settlePending, evaluate,
+    getState, setGender, setName, setAvatar, addStudyTime, checkIn, makeUp, settlePending, evaluate, ensureAcquisitionBaseline,
     get pendingCount() { return profile.pending.length; },
     get makeUpCount() { return profile.makeups.count; },
   };

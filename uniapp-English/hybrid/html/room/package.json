@@ -1,1 +1,29 @@
-{"name":"original-pet-room","version":"2.4.0","private":true,"type":"module","engines":{"node":">=20"},"scripts":{"test":"node --test tests/*.test.mjs","export:character":"node tools/export-character.mjs"}}
+{
+    "name":  "original-pet-room",
+    "version":  "2.28.1",
+    "private":  true,
+    "type":  "module",
+    "engines":  {
+                    "node":  "\u003e=20"
+                },
+    "scripts":  {
+                    "test":  "node --test tests/*.test.mjs",
+                    "export:character":  "node tools/export-character.mjs",
+                    "export:pets":  "node tools/export-pets.mjs",
+                    "render:pets":  "node tools/render-pet-thumbnails.mjs",
+                    "render:products":  "node tools/render-product-thumbnails.mjs",
+                    "build:styles":  "node scripts/sync-styles.mjs"
+                },
+    "main":  "./pet-house.js",
+    "module":  "./pet-house.js",
+    "types":  "./pet-house.d.ts",
+    "exports":  {
+                    ".":  {
+                              "types":  "./pet-house.d.ts",
+                              "import":  "./pet-house.js"
+                          },
+                    "./styles.css":  "./styles.css",
+                    "./room":  "./room.js",
+                    "./*":  "./*"
+                }
+}

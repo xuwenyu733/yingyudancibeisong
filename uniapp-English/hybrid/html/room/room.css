@@ -1,37 +1,111 @@
-.pet-room-view {position:relative;width:100%;height:100%;min-height:240px;overflow:hidden;isolation:isolate;background:#f6e9c9;font-family:system-ui,sans-serif;}
-.pet-room-view * { box-sizing: border-box; }
-.pet-room-view canvas { width:100%; height:100%; display:block; touch-action:none; outline:none; }
-.pet-room-view [data-room-control="loading"] { position:absolute; inset:0; display:grid; place-content:center; text-align:center; gap:12px; color:#896746; font:16px/1.7 system-ui,sans-serif; background:#f6e9c9; transition:opacity .4s; }
-.pet-room-view [data-room-control="loading"]::before { content:' '; width:24px; height:24px; border:3px solid #e4cea0; border-top-color:#a97d4c; border-radius:50%; margin:auto; animation:pet-room-spin 1s linear infinite; }
+.pet-room-view {position:relative;width:100%;height:100%;min-height:240px;overflow:hidden;isolation:isolate;background:#f6e9c9;font:14px/1.5 system-ui,sans-serif;container:pet-room / inline-size;text-align:left;letter-spacing:normal;color:#755d41;--room-decor-dock-height:142px;}
+.pet-room-view * { box-sizing:border-box; }
+.pet-room-view > canvas[data-room-control="room"] { width:100%;height:100%;display:block;touch-action:none;outline:none; }
+.pet-room-view .room-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;background:#f6e9c9;pointer-events:none;}
+.pet-room-view [data-room-control="loading"] { position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:12px;color:#896746;font:16px/1.7 system-ui,sans-serif;background:#f6e9c9;transition:opacity .4s; }
+.pet-room-view [data-room-control="loading"]::before { content:' ';width:24px;height:24px;border:3px solid #e4cea0;border-top-color:#a97d4c;border-radius:50%;margin:auto;animation:pet-room-spin 1s linear infinite; }
 .pet-room-view [data-room-control="loading"].error::before { display:none; }
-.pet-room-view .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.pet-room-view .sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
 @keyframes pet-room-spin { to { transform:rotate(360deg); } }
-.pet-room-view button, .pet-room-view input { font:inherit; }
-.pet-room-view button { cursor:pointer; }
+.pet-room-view button,.pet-room-view input { font:inherit; }
+.pet-room-view button { cursor:pointer;width:auto;min-width:0;margin:0;text-transform:none;letter-spacing:normal;line-height:1.4;text-align:center;text-decoration:none; }
 .pet-room-view button:disabled { cursor:default;opacity:.48; }
-.pet-room-view .edit-button { border:1px solid #c9aa7a; border-radius:13px;background:#fff8e8;color:#765b3c;padding:10px 16px;box-shadow:0 3px 12px #8d6d3420;font:600 14px system-ui,sans-serif; }
+.pet-room-view button:focus-visible,.pet-room-view .storage-strip__row:focus-visible { outline:3px solid #74987a;outline-offset:3px; }
+.pet-room-view .edit-button { border:1px solid #c9aa7a;border-radius:13px;background:#fff8e8;color:#765b3c;padding:10px 16px;box-shadow:0 3px 12px #8d6d3420;font:600 14px system-ui,sans-serif; }
 .pet-room-view [data-room-control="decorate"]:not(.room-shop__decorate) { position:absolute;right:18px;top:max(18px,env(safe-area-inset-top)); }
 .pet-room-view [data-room-control="decorate"].room-shop__decorate { position:static;margin:0;min-height:42px; }
-.pet-room-view [data-room-control="decoration-panel"] { position:absolute;left:18px;top:max(72px,calc(env(safe-area-inset-top) + 54px));width:min(286px,calc(100vw - 36px));padding:16px;border:1px solid #d8bd90;border-radius:18px;background:#fff9ebf5;box-shadow:0 8px 30px #795a3526;color:#755d41;font:13px/1.6 system-ui,sans-serif;max-height:calc(100% - 105px);overflow:auto; }
+/* 装修时收起其它入口，给家具和操作留出空间；退出后恢复。 */
+.pet-room-view[data-room-decorating="true"] .room-shop__topbar,.pet-room-view[data-room-decorating="true"] .room-hud-right { display:none!important; }
+.pet-room-view [data-room-control="decoration-panel"] { position:absolute;z-index:24;left:18px;top:max(18px,env(safe-area-inset-top));width:min(338px,calc(100% - 36px));padding:12px;display:flex;flex-direction:column;gap:9px;border:1px solid #d8bd90;border-radius:18px;background:#fff9ebf5;box-shadow:0 8px 30px #795a3526;color:#755d41;font:13px/1.6 system-ui,sans-serif;max-height:calc(100% - var(--room-decor-dock-height) - max(18px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom)) - 12px);overflow:hidden; }
 .pet-room-view [hidden] { display:none!important; }
-.pet-room-view [data-room-control="decoration-panel"] h2 { font-size:16px;margin:0 0 8px; }
-.pet-room-view [data-room-control="decoration-panel"] p { margin:7px 0; }
-.pet-room-view .edit-actions { display:flex;gap:8px;margin-top:12px; }
-.pet-room-view .edit-actions button { flex:1; }
-.pet-room-view .edit-primary { color:#fffaf1;background:#a6804a; }
-.pet-room-view [data-room-control="selected-name"] { font-weight:650;font-size:15px; }
-.pet-room-view .owned-furniture-block { margin:0; }
-.pet-room-view .owned-furniture-title { font-weight:650;font-size:13px;margin:0 0 6px;color:#755d41; }
-.pet-room-view .owned-furniture-list { display:flex;flex-wrap:wrap;gap:6px; }
-.pet-room-view .owned-furniture-chip { appearance:none;border:1px solid #d7c4a7;border-radius:11px;background:#fffdf6;color:#755d41;padding:7px 10px;font:600 12px/1.3 system-ui,sans-serif;cursor:pointer;max-width:100%;text-align:left; }
-.pet-room-view .owned-furniture-chip:hover { filter:brightness(.98);border-color:#c9aa7a; }
-.pet-room-view .owned-furniture-chip.is-selected { background:#a6804a;border-color:#a6804a;color:#fffaf1; }
-.pet-room-view .owned-furniture-empty { margin:0;color:#a38b6e;font-size:12px;line-height:1.55; }
+.pet-room-view .decoration-panel__header { display:flex;align-items:center;justify-content:space-between;gap:7px;flex:none;flex-wrap:wrap; }
+.pet-room-view .decoration-panel__shop{padding:6px 8px;min-height:30px;font-size:11px;border-radius:10px;box-shadow:none;white-space:nowrap;}
+.pet-room-view [data-room-control="decoration-panel"] h2 { font-size:16px;margin:0;line-height:1.4; }
+.pet-room-view .decoration-panel__toggle { padding:6px 9px;min-height:30px;font-size:11px;border-radius:10px;background:#f5ead6;box-shadow:none;white-space:nowrap; }
+.pet-room-view .decoration-panel__selection { display:flex;align-items:center;gap:6px;min-width:0;flex:none;padding-top:8px;border-top:1px solid #eadcc3; }
+.pet-room-view [data-room-control="selected-name"] { flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:650;font-size:12px; }
+.pet-room-view .decoration-panel__selection .edit-button { flex:none;padding:7px 9px;border-radius:10px;min-height:32px;font-size:11px;box-shadow:none; }
+.pet-room-view .decoration-panel__body { min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#dcc9a4 transparent;padding-right:3px; }
+.pet-room-view [data-room-control="decoration-panel"] p { margin:0 0 9px; }
 .pet-room-view [data-room-control="decoration-panel"] label { display:flex;align-items:center;gap:6px; }
-.pet-room-view [data-room-control="decoration-panel"] summary { cursor:pointer;font-weight:600;margin:12px 0 7px; }
+.pet-room-view [data-room-control="decoration-panel"] input[type="checkbox"] { accent-color:#8a9b71; }
+.pet-room-view [data-room-control="decoration-panel"] summary { cursor:pointer;font-weight:600;margin:10px 0 7px; }
+.pet-room-view .decoration-panel__note { margin:10px 0 0!important; }
+.pet-room-view .edit-actions { display:flex;gap:8px;flex:none; }
+.pet-room-view .edit-actions button { flex:1;min-height:36px;padding:8px 10px;font-size:12px; }
+.pet-room-view .edit-primary { color:#fffaf1;background:#a6804a; }
+.pet-room-view [data-room-control="decoration-panel"][data-collapsed="true"] .decoration-panel__body { display:none; }
+/* 家具独立停靠房间底部，始终单行，不随设置面板折叠。 */
+.pet-room-view .storage-strip { position:absolute;z-index:25;left:18px;right:18px;bottom:max(12px,env(safe-area-inset-bottom));height:var(--room-decor-dock-height);padding:10px 12px;border:1px solid #d8bd90;border-radius:18px;background:#fff9ebf7;box-shadow:0 6px 25px #795a3526; }
+.pet-room-view .storage-strip__head { display:flex;align-items:center;gap:12px;height:28px;margin:0 0 6px;min-width:0;color:#7a674a; }
+.pet-room-view .storage-strip__title { font-size:13px;font-weight:750;white-space:nowrap; }
+.pet-room-view .storage-strip__count { margin-left:3px;font-size:10px;color:#9c8b70;font-weight:500; }
+.pet-room-view .storage-strip__hint { min-width:0;flex:1;font-size:11px;color:#a18b68;overflow:hidden;white-space:nowrap;text-overflow:ellipsis; }
+.pet-room-view .storage-strip__navigation { display:flex;gap:5px;margin-left:auto;flex:none; }
+.pet-room-view .storage-strip__arrow { display:grid;place-items:center;width:29px;height:28px;padding:0;border:1px solid #dfcba5;border-radius:9px;background:#fffdf6;color:#8b704c;font:24px/1 system-ui,sans-serif; }
+.pet-room-view .storage-strip__row { display:flex;flex-wrap:nowrap;gap:8px;height:86px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#d6c19a transparent;scroll-snap-type:x proximity;padding:2px 1px 5px; }
+.pet-room-view .storage-strip__card { flex:0 0 94px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;padding:7px;border:1px solid #e2d3b4;border-radius:13px;background:#fffdf6;color:#765b3c;box-shadow:0 2px 8px #8d6d3410;scroll-snap-align:start;touch-action:pan-x;user-select:none;-webkit-user-select:none; }
+.pet-room-view .storage-strip__card:hover { background:#fff6e2;border-color:#c6ab7e; }
+.pet-room-view .storage-strip__card[aria-pressed="true"] { border-color:#91aa7c;background:#edf3e4;box-shadow:0 0 0 2px #9eb98c35; }
+.pet-room-view .storage-strip__card[data-placed="true"] { background:#f5f2e9; }
+.pet-room-view .storage-strip__card:disabled { opacity:.5;cursor:default; }
+.pet-room-view .storage-strip__mark { font-size:23px;line-height:1;pointer-events:none; }
+/* v2.17/F1：家具栏真实缩略图（商品实拍 PNG），加载失败回退 Emoji */
+.pet-room-view .storage-strip__thumb { width:46px;height:46px;object-fit:contain;pointer-events:none;border-radius:9px;background:#f8f1e3;padding:2px; }
+.pet-room-view .storage-strip__card[hidden] { display:none; }
+/* v2.17/F1：家具栏筛选「全部/家具/挂件/仓库」 */
+.pet-room-view .storage-strip__filters { display:flex;gap:5px;flex:none; }
+.pet-room-view .storage-strip__filter { padding:3px 10px;border:1px solid #ddc9a7;border-radius:999px;background:#fffdf6;color:#8b704c;font-size:11px;line-height:1.4;cursor:pointer; }
+.pet-room-view .storage-strip__filter:hover { background:#fff6e2;border-color:#c6ab7e; }
+.pet-room-view .storage-strip__filter[aria-pressed="true"] { border-color:#91aa7c;background:#edf3e4;color:#5d7a4f;font-weight:650; }
+.pet-room-view .storage-strip__caption { font-size:11px;font-weight:650;white-space:nowrap;width:100%;overflow:hidden;text-overflow:ellipsis;pointer-events:none; }
+.pet-room-view .storage-strip__status { font-size:10px;line-height:1.15;color:#9e8d71;white-space:nowrap;pointer-events:none; }
+.pet-room-view .storage-strip__card[aria-pressed="true"] .storage-strip__status { color:#6f8b60; }
+.pet-room-view .storage-strip__empty { margin:18px 0;text-align:center;font-size:12px;color:#a18b68; }
+.pet-room-view .storage-strip__ghost { position:absolute;z-index:40;width:132px;max-width:calc(100% - 12px);padding:10px 12px;border:2px solid #d7b895;border-radius:13px;background:#fff9ebf5;box-shadow:0 8px 24px #795a3533;color:#8b6d4d;font-size:12px;line-height:1.5;text-align:center;pointer-events:none;white-space:pre-line; }
+.pet-room-view .storage-strip__ghost[data-valid="true"] { border-color:#8fa77c;background:#f5faed;color:#617a51; }
 .pet-room-view .box-fields { display:grid;grid-template-columns:repeat(3,1fr);gap:7px; }
 .pet-room-view .box-fields label { display:grid!important;gap:2px!important;font-size:12px; }
 .pet-room-view .box-fields input { width:100%;min-width:0;border:1px solid #d7c4a7;border-radius:7px;padding:5px;color:#755d41;background:#fffdf6; }
-.pet-room-view .edit-small { color:#a38b6e;font-size:12px; }
-.pet-room-view [data-room-control="edit-feedback"] { position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);max-width:calc(100vw - 32px);padding:10px 18px;background:#fff9ebf0;border:1px solid #d7bd94;border-radius:12px;color:#755d41;font:13px/1.6 system-ui,sans-serif;box-shadow:0 4px 20px #795a3514;text-align:center;pointer-events:none; }
-@media(max-width:600px) {.pet-room-view [data-room-control="decoration-panel"] {padding:12px;max-height:min(55vh,calc(100% - 105px));} .pet-room-view .edit-button {padding:8px 12px;} }
+.pet-room-view .edit-small { color:#a38b6e;font-size:11px; }
+.pet-room-view [data-room-control="edit-feedback"] { position:absolute;z-index:26;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);width:max-content;padding:8px 14px;background:#fff9ebf0;border:1px solid #d7bd94;border-radius:12px;color:#755d41;font:12px/1.5 system-ui,sans-serif;box-shadow:0 4px 20px #795a3514;text-align:center;pointer-events:none; }
+.pet-room-view[data-room-decorating="true"] [data-room-control="edit-feedback"] { bottom:calc(var(--room-decor-dock-height) + max(12px,env(safe-area-inset-bottom)) + 8px); }
+@container pet-room (max-width:620px) {
+  .pet-room-view .storage-strip,.pet-room-view [data-room-control="decoration-panel"],.pet-room-view [data-room-control="edit-feedback"] { --room-decor-dock-height:124px; }
+  .pet-room-view [data-room-control="decoration-panel"] { left:10px;top:max(10px,env(safe-area-inset-top));width:min(338px,calc(100% - 20px));padding:9px;gap:7px;max-height:calc(100% - var(--room-decor-dock-height) - max(10px,env(safe-area-inset-top)) - max(8px,env(safe-area-inset-bottom)) - 10px); }
+  .pet-room-view [data-room-control="decoration-panel"] h2 { font-size:14px; }
+  .pet-room-view .decoration-panel__selection { gap:4px;padding-top:6px; }
+  .pet-room-view .decoration-panel__selection .edit-button { padding:6px 7px; }
+  .pet-room-view .storage-strip { left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));padding:7px 9px;border-radius:16px; }
+  .pet-room-view .storage-strip__head { height:26px;margin-bottom:5px;gap:8px; }
+  .pet-room-view .storage-strip__hint { font-size:10px; }
+  .pet-room-view .storage-strip__row { height:77px;gap:6px; }
+  .pet-room-view .storage-strip__card { flex-basis:82px;gap:3px;padding:5px; }
+  .pet-room-view .storage-strip__mark { font-size:21px; }
+  .pet-room-view .storage-strip__arrow { width:27px;height:26px; }
+  .pet-room-view[data-room-decorating="true"] [data-room-control="edit-feedback"] { bottom:calc(var(--room-decor-dock-height) + max(8px,env(safe-area-inset-bottom)) + 6px);max-width:calc(100% - 20px);padding:6px 9px; }
+}
+@container pet-room (max-width:360px) {
+  .pet-room-view .storage-strip__hint { display:none; }
+  .pet-room-view .storage-strip__title { font-size:12px; }
+  .pet-room-view .decoration-panel__selection .edit-button { font-size:10px; }
+  .pet-room-view [data-room-control="selected-name"] { font-size:11px; }
+}
+@media(prefers-reduced-motion:reduce) { .pet-room-view [data-room-control="loading"] { transition:none; } }
+.pet-room-view .room-area{position:absolute;bottom:18px;right:18px;padding:7px 12px;border:1px solid #ddc9a4;background:#fffaf0e8;border-radius:12px;color:#806c4e;font-size:11px;pointer-events:none;}
+.pet-room-view[data-room-decorating="true"] .room-area{bottom:calc(var(--room-decor-dock-height) + 28px);right:20px;}
+.pet-room-view .room-finishes{margin:10px 0 0;border:1px solid #e2d6bc;border-radius:12px;padding:9px;}
+.pet-room-view .room-finishes legend{font-weight:650;font-size:12px;}
+.pet-room-view .wall-colors{display:flex;flex-wrap:wrap;gap:8px;margin:3px 0 9px;}
+.pet-room-view .wall-colors button{width:25px;height:25px;padding:0;border:2px solid #fff9eb;border-radius:50%;box-shadow:0 0 0 1px #c8b898;}
+.pet-room-view .wall-colors button[aria-pressed="true"]{outline:2px solid #789569;outline-offset:2px;}
+.pet-room-view [data-room-control="custom-wall-color"]{width:36px;height:26px;padding:1px;border:1px solid #d5c3a6;border-radius:5px;background:transparent;}
+.pet-room-view [data-room-control="reset-flooring"]{margin:8px 0;font-size:11px;padding:6px 10px;}
+
+
+.pet-room-view .decoration-organizer{padding:0 9px 10px;border:1px solid #dfcba9;border-radius:12px;margin-top:12px;background:#fcf4e4;}
+.pet-room-view .decoration-organizer summary{margin:9px 0;}
+.pet-room-view .decoration-organizer__actions{display:flex;flex-wrap:wrap;gap:7px;}
+.pet-room-view .decoration-organizer__actions button{flex:1;min-height:35px;padding:7px 8px;font-size:11px;box-shadow:none;}
+.pet-room-view .decoration-organizer__confirm{margin-top:10px;padding-top:9px;border-top:1px solid #dfcba9;}
+.pet-room-view .decoration-organizer__confirm strong{display:block;margin-bottom:7px;font-size:12px;}

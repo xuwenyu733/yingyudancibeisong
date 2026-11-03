@@ -32,8 +32,12 @@ export const COLLIDERS = {
   'ottoman-a':collider('黄色软凳',[0,.365,0],[1.24,.69,.99]),
   'ottoman-b':collider('绿色软凳',[0,.365,0],[1.24,.69,.99]),
   'front-fence':collider('矮栅栏',[0,.49,.60],[.095,.89,3.69]),
-  // 地面盆栽可拖动；不挡寻路/摆放碰撞，避免旧存档与新碰撞盒冲突导致无法进房。
-  'floor-pot':collider('地面盆栽',[0,.35,0],[.55,.70,.55],{blocksNavigation:false,blocksPlacement:false}),
   rug:collider('地毯',[0,.012,0],[5.32,.07,5.22],{blocksNavigation:false,blocksPlacement:false}),
+  // 后墙装饰画：挂在窗户左侧墙上；只挡墙面附近薄薄一层，不参与地面导航与摆放碰撞。
+  'wall-pictures':collider('装饰画',[0,3.30,0],[1.34,.80,.06],{blocksNavigation:false}),
+  // 地面盆栽 v2.8：登记为可移动/可旋转家具（旧版只做浇水目标、无法在装修里选中）。
+  // 保持原设计「外观件、不挡路」：blocksNavigation=false 避免占掉大块可行走区域
+  // （花盆是低矮小件，宠物走位无需绕行）；拖动/旋转仍受房间边界与摆放防重叠约束。
+  'floor-pot':collider('地面盆栽',[0,.42,0],[.56,.84,.56],{blocksNavigation:false}),
 };
 export const PLACEMENT_BOUNDS={minX:-4.36,maxX:4.36,minZ:-4.06,maxZ:4.06};

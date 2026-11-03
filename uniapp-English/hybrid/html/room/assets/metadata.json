@@ -16,6 +16,7 @@
       "animal-type"
     ],
     "appearance": "kid",
+    "gait": "quad",
     "paletteKeys": [
       "fur",
       "furShade",
@@ -34,7 +35,7 @@
     {
       "name": "idle",
       "duration": 3,
-      "channels": 2,
+      "channels": 6,
       "loop": true
     },
     {
@@ -52,13 +53,13 @@
     {
       "name": "stand",
       "duration": 1.2,
-      "channels": 19,
+      "channels": 23,
       "loop": false
     }
   ],
   "format": "glTF 2.0 binary",
   "file": "original-fox.glb",
-  "bytes": 146368,
+  "bytes": 158424,
   "contactY": 0.09703657683241554,
   "sampleRate": 30,
   "externalTextures": false,

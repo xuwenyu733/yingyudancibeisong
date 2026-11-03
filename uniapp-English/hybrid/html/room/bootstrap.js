@@ -1,29 +1,31 @@
-import {mountRoom} from './room.js';
-import {createRoomView} from './view.js';
-import {createRoomBridge} from './integration.mjs';
-import {createShopPanel} from './shop-panel.js';
-import {createProfilePanel} from './scene-profile.js';
+import {startDemo} from './demo-app.js';
+import {openDatabaseStorage} from './database-sync.mjs';
 
-// 这只是独立演示页入口。嵌入Vue/React/其他App时直接使用mountRoom，毋需此文件。
-const view=createRoomView(document.getElementById('app'));
 const params=new URLSearchParams(location.search);
-let bridge=null,shop=null,profile=null,oldAlias=false;
-const controller=mountRoom({
-  canvas:view.canvas,uiRoot:view.controlsRoot,
-  quality:['low','balanced','high'].includes(params.get('quality'))?params.get('quality'):'auto',
-  storageKey:params.get('preview')==='qa'?'original-pet-room-qa-v3':'hamster-room-layout-v3',
-  initialPoints:1000, // 独立演示账户；实际App挂载默认0，由学习完成事件入账。
-  onState:state=>{view.updateState(state);shop?.update(state);profile?.update(state);},
-  onEvent:(type,detail)=>{if(type!=='ready')bridge?.emit(type,detail);},
+const enabled=params.get('storage')!=='local';
+const status=enabled?await fetch('/api/v1/status',{cache:'no-store',signal:AbortSignal.timeout(1500)}).then(response=>response.ok?response.json():null).catch(()=>null):null;
+if(enabled&&status?.social!==false){
+  await import('./online-entry.js');
+}else{
+let badge;
+function showStatus(value){
+  if(!badge){
+    badge=document.createElement('output');badge.id='database-sync-status';badge.setAttribute('role','status');
+    badge.style.cssText='position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:1100;font:12px/1.4 system-ui;background:#fff9e9ed;color:#436753;padding:5px 12px;border-radius:12px;max-width:70%;pointer-events:none';document.body.append(badge);
+  }
+  badge.textContent=value.message;badge.dataset.state=value.state;
+}
+// Explicit legacy links retain their original namespace. New sessions use the
+// same account/guest gate as the current standalone release.
+const legacy=params.get('preview');
+const legacyStorageKey=params.get('legacy')==='default'?'hamster-room-layout-v3':legacy==='qa'?'original-pet-room-qa-v3':legacy==='estate'?'original-pet-room-estate-qa-v1':legacy==='single'?'hamster-room-layout-v3':undefined;
+startDemo({
+  ...(enabled?{openStorage:({storageKey,storage})=>openDatabaseStorage({storageKey,storage,onStatus:showStatus})}:{}),
+  legacyLinks:[
+    {label:'继续旧版默认小屋',href:'/?legacy=default&storage='+ (enabled?'mysql':'local')},
+    {label:'继续旧版体验小屋',href:'/?preview=qa&storage='+ (enabled?'mysql':'local')},
+    {label:'继续旧版多房间小屋',href:'/?preview=estate&storage='+ (enabled?'mysql':'local')},
+  ],
+  ...(legacyStorageKey?{legacyStorageKey}:{}),
 });
-shop=createShopPanel({root:view.root,api:controller.api,pointsLabel:'体验积分',demo:true});
-profile=createProfilePanel({root:view.root,api:controller.api,pointsLabel:'体验积分'});
-bridge=createRoomBridge({api:controller.api,getState:controller.api.getState,eventTarget:view.canvas,globalObject:window,legacyName:'PetRoom',roomId:'pet-room-demo'});
-// 仅演示页保留旧接口别名；核心模块不写全局。同名宿主对象绝不覆盖。
-if(!Object.hasOwn(window,'HamsterRoom')){window.HamsterRoom=controller.api;oldAlias=true;}
-controller.ready.then(async()=>{view.ready();await bridge.ready();}).catch(error=>{if(error.code!=='ABORTED')view.error(error);});
-window.addEventListener('pagehide',event=>{
-  if(event.persisted)return;
-  shop.dispose();profile.dispose();bridge.dispose();controller.dispose();view.dispose();
-  if(oldAlias&&window.HamsterRoom===controller.api)delete window.HamsterRoom;
-});
+}

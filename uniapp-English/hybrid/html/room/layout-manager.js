@@ -105,18 +105,21 @@ function normalizedTransform(value, partial = false) {
  */
 export function createLayoutManager({ furniture, definitions: initialDefinitions, roomBounds, navigationBounds,
   petRadius = 0.48, getPet, setPet, getApproach, getSeatApproaches, afterUpdate = () => {}, onEvent = () => {},
-  storageKey = DEFAULT_STORAGE_KEY, storageAdapter, petHeight = 1.22, navigationHeight = petHeight, groundY = 0.09 } = {}) {
+  storageKey = DEFAULT_STORAGE_KEY, storageAdapter, petHeight = 1.22, navigationHeight = petHeight, groundY = 0.09,
+  grandfatherUnreachableSeats = false } = {}) {
   if (!(furniture instanceof Map) || !rectValid(roomBounds) || !rectValid(navigationBounds)
     || !Number.isFinite(petRadius) || petRadius < 0 || typeof getPet !== 'function'
     || (typeof getApproach !== 'function' && typeof getSeatApproaches !== 'function')
     || (getSeatApproaches !== undefined && typeof getSeatApproaches !== 'function')
     || (setPet !== undefined && typeof setPet !== 'function') || !Number.isFinite(petHeight) || petHeight <= 0
-    || !Number.isFinite(navigationHeight) || navigationHeight <= 0 || !Number.isFinite(groundY)) throw new TypeError('布局管理器参数无效');
+    || !Number.isFinite(navigationHeight) || navigationHeight <= 0 || !Number.isFinite(groundY)
+    || typeof grandfatherUnreachableSeats !== 'boolean') throw new TypeError('布局管理器参数无效');
   const sourceDefinitions = initialDefinitions instanceof Map ? Object.fromEntries(initialDefinitions) : initialDefinitions;
   if (!record(sourceDefinitions)) throw new TypeError('需要独立碰撞盒定义');
   const definitions = Object.create(null);
   const ids = Object.keys(sourceDefinitions);
-  // 创建时的内置家具集合：旧档可缺其中新增项；动态 register 的商店件仍须先注销再 restore。
+  // v2.8：内置启动家具（来自初始 definitions）加进版本后，旧存档缺它们的条目时用默认补齐；
+  // 动态注册的商店家具不在此集合，缺失仍严格拒绝（保住购买回滚的语义）。
   const builtinIds = new Set(ids);
   for (const id of ids) {
     if (!furniture.has(id) || id === 'pet') throw new TypeError(`家具不存在或不可编辑: ${id}`);
@@ -127,6 +130,7 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
   const obstacles = [];
   let lampSupport = ids.includes('lamp') && ids.includes('lamp-cabinet') ? 'lamp-cabinet' : null;
   let lastGood, defaults, storageFailure = '', editSession = null;
+  let legacyBlockedSeats = new Set();
   const emit = (type, detail = {}) => { try { onEvent(type, detail); } catch (error) { console.warn('Layout event listener failed', error); } };
   // Access to the browser storage getter is deferred until inside a guarded
   // persistence operation; injected hosts never touch another room's globals.
@@ -136,39 +140,76 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
     const transforms = Object.create(null);
     for (const id of ids) {
       const root = furniture.get(id);
+      // v2.8.3 孤儿护栏：id 在注册表内但家具 Map 缺失（调用方误删）时给可读错误，
+      // 而不是让后续页面裸抛 "Cannot read properties of undefined (reading 'position')"。
+      if (!root) throw new RangeError(`布局内部状态不一致：家具 ${id} 已从场景移除但未注销`);
       transforms[id] = { position: root.position.toArray(), rotation: [0, root.rotation.y, 0], scale: root.scale.toArray() };
     }
     return { version: VERSION, furniture: transforms, definitions: clone(definitions), lampSupport };
   }
-  function seatApproaches() {
+  function seatApproaches(from=getPet()) {
     if (!getSeatApproaches) return [{id:'sofa',point:getApproach()}];
-    const entries=getSeatApproaches(obstacles,navigationBounds);
-    if (!Array.isArray(entries) || !entries.length) throw new TypeError('没有可用的座位接近点');
-    // Scene roots are owned by the host; a root can briefly remain in its Map
-    // after unregisterFurniture() while the host completes a purchase rollback.
-    const registered=entries.filter(entry=>record(entry)&&typeof entry.id==='string'&&own(definitions,entry.id));
-    if (!registered.length) throw new TypeError('没有已登记的座位接近点');
-    return registered;
+    const entries=getSeatApproaches(obstacles,navigationBounds,from);
+    if (!Array.isArray(entries)) throw new TypeError('座位接近点格式无效');
+    // v2.8.2：所有座位都收回仓库时允许空（室内无座是合法状态），返回空数组让校验跳过。
+    return entries.filter(entry=>record(entry)&&typeof entry.id==='string'&&own(definitions,entry.id));
+  }
+  function seatReachable(entry,from=getPet()) {
+    const approach=entry.point;
+    return pointValid(from)&&pointValid(approach)&&inside(from,navigationBounds)&&inside(approach,navigationBounds)
+      &&!obstacles.some(box=>inside(from,box)||inside(approach,box))
+      &&createPath(from,approach,{bounds:navigationBounds,obstacles,cellSize:.18})!==null;
+  }
+  // Capture only at startup / accepted startup restore. Previews must never
+  // turn newly obstructed seats into a legacy exception.
+  function captureLegacySeats() {
+    resetNavigationBaseline();
+  }
+  function blockedSeatIds(){return [...legacyBlockedSeats].filter(id=>own(definitions,id));}
+  function getNavigationBaseline(){return [...legacyBlockedSeats];}
+  function restoreNavigationBaseline(saved){
+    if(!Array.isArray(saved)||saved.length>128||new Set(saved).size!==saved.length
+      ||saved.some(id=>typeof id!=='string'||!own(definitions,id)&&!builtinIds.has(id)))return false;
+    legacyBlockedSeats=new Set(grandfatherUnreachableSeats?saved:[]);return true;
+  }
+  // Only a trusted room-size / startup restore may establish a new baseline.
+  // A stale point in the previous room extension must not exempt every seat.
+  function resetNavigationBaseline(from=getPet()){
+    if(!grandfatherUnreachableSeats)return [];
+    try {
+      refresh();
+      if(!pointValid(from)||!inside(from,navigationBounds)||obstacles.some(box=>inside(from,box)))return null;
+      const next=seatApproaches(from).filter(entry=>!seatReachable(entry,from)).map(entry=>entry.id);
+      legacyBlockedSeats=new Set(next);return blockedSeatIds();
+    }catch(error){emit('layout-navigation-warning',{reason:messageOf(error)});return null;}
+  }
+  function acceptNavigationState() {
+    if(!grandfatherUnreachableSeats)return [];
+    try {
+      refresh();
+      // Calculate all successes before mutating the baseline, so a throwing host
+      // callback cannot partially retire exceptions or reverse an accepted save.
+      const restored=seatApproaches().filter(entry=>legacyBlockedSeats.has(entry.id)&&seatReachable(entry)).map(entry=>entry.id);
+      for(const id of legacyBlockedSeats)if(!own(definitions,id)||restored.includes(id))legacyBlockedSeats.delete(id);
+    } catch(error) {emit('layout-navigation-warning',{reason:messageOf(error)});}
+    return blockedSeatIds();
   }
   function parseSnapshot(value) {
     if (!record(value) || value.version !== VERSION || !record(value.furniture) || !record(value.definitions)) throw new TypeError('布局存档版本或结构无效');
-    // 不可含当前未登记的未知 id；动态注册件缺失时仍拒绝（须先 unregister）。
-    for (const id of Object.keys(value.furniture)) if (!ids.includes(id)) throw new TypeError(`存档含未知家具 ${id}`);
-    for (const id of Object.keys(value.definitions)) if (!ids.includes(id)) throw new TypeError(`存档含未知家具定义 ${id}`);
+    const savedIds = Object.keys(value.furniture);
+    if (savedIds.some((id) => !ids.includes(id))) throw new TypeError('存档包含未知家具');
     const result = { transforms: Object.create(null), definitions: Object.create(null), lampSupport: value.lampSupport };
     if (result.lampSupport !== null && (!own(SUPPORTS, result.lampSupport) || !ids.includes(result.lampSupport) || !ids.includes('lamp'))) throw new TypeError('台灯支架无效');
     for (const id of ids) {
-      if (own(value.furniture,id) && own(value.definitions,id)) {
-        result.transforms[id] = normalizedTransform(value.furniture[id]);
-        result.definitions[id] = normalizedDefinition(value.definitions[id]);
+      if (!own(value.furniture,id) || !own(value.definitions,id)) {
+        // 旧版存档缺少本轮新增的内置家具（如地面盆栽）：用默认位置/碰撞补齐，保留其余布局。
+        if (!builtinIds.has(id) || !own(defaults.furniture,id) || !own(defaults.definitions,id)) throw new TypeError(`缺少家具 ${id}`);
+        result.transforms[id] = normalizedTransform(defaults.furniture[id]);
+        result.definitions[id] = normalizedDefinition(defaults.definitions[id]);
         continue;
       }
-      if (own(value.furniture,id) || own(value.definitions,id)) throw new TypeError(`缺少家具 ${id}`);
-      if (!builtinIds.has(id)) throw new TypeError('存档家具与当前房间不一致');
-      // 旧档缺新增内置家具：沿用当前场景姿态与定义，避免整份布局回退默认。
-      const root = furniture.get(id);
-      result.transforms[id] = { position: root.position.toArray(), rotation: [0, root.rotation.y, 0], scale: root.scale.toArray() };
-      result.definitions[id] = clone(definitions[id]);
+      result.transforms[id] = normalizedTransform(value.furniture[id]);
+      result.definitions[id] = normalizedDefinition(value.definitions[id]);
     }
     return result;
   }
@@ -180,13 +221,19 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
   }
   function applyParsed(parsed) {
     for (const id of ids) {
-      applyTransform(furniture.get(id), parsed.transforms[id]);
+      const root = furniture.get(id);
+      if (!root) throw new RangeError(`布局内部状态不一致：家具 ${id} 已从场景移除但未注销`);
+      applyTransform(root, parsed.transforms[id]);
       definitions[id] = parsed.definitions[id];
     }
     lampSupport = parsed.lampSupport;
   }
   function refresh() {
-    for (const id of ids) furniture.get(id).updateWorldMatrix(true, false);
+    for (const id of ids) {
+      const root = furniture.get(id);
+      if (!root) throw new RangeError(`布局内部状态不一致：家具 ${id} 已从场景移除但未注销`);
+      root.updateWorldMatrix(true, false);
+    }
     afterUpdate();
     const nextColliders = new Map(), nextInputs = new Map();
     let changed = colliders.size !== ids.length;
@@ -282,12 +329,37 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
       refresh(); return true;
     } catch (error) { restore(before); emit('layout-preview-rejected',{id,reason:messageOf(error)}); return false; }
   }
+  // Resizing changes the walking boundary while the pet may still be standing
+  // in the old extension. Find a safe spot without changing furniture or state.
+  function findSafePetPosition({checkSeats=true}={}) {
+    if(typeof checkSeats!=='boolean')return null;
+    refresh();
+    const pet=getPet(),safe=point=>pointValid(point)&&inside(point,navigationBounds)&&!obstacles.some(box=>inside(point,box));
+    const approaches=seatApproaches().map(entry=>entry.point);
+    const candidates=[];
+    const inset=petRadius+.06;
+    if(pointValid(pet))candidates.push({x:pet.x,z:pet.z},{x:Math.max(navigationBounds.minX+inset,Math.min(navigationBounds.maxX-inset,pet.x)),z:Math.max(navigationBounds.minZ+inset,Math.min(navigationBounds.maxZ-inset,pet.z))});
+    candidates.push(...approaches,{x:.65,z:2.83});
+    // Seat-free rooms still need a safe spawn. Search from the centre outwards.
+    const grid=[];
+    for(let x=navigationBounds.minX+.15;x<navigationBounds.maxX;x+=.4)for(let z=navigationBounds.minZ+.15;z<navigationBounds.maxZ;z+=.4)grid.push({x,z});
+    grid.sort((a,b)=>Math.hypot(a.x-(pet?.x||0),a.z-(pet?.z||0))-Math.hypot(b.x-(pet?.x||0),b.z-(pet?.z||0)));
+    candidates.push(...grid);
+    return candidates.find(point=>safe(point)&&(!checkSeats||seatApproaches(point).every(({id,point:approach})=>legacyBlockedSeats.has(id)||safe(approach)&&createPath(point,approach,{bounds:navigationBounds,obstacles,cellSize:.18})!==null)))||null;
+  }
   function validate({checkPath=true}={}) {
     try {
       refresh();
       for (const id of ids) {
         normalizedTransform({position:furniture.get(id).position.toArray(),rotation:[furniture.get(id).rotation.x,furniture.get(id).rotation.y,furniture.get(id).rotation.z],scale:furniture.get(id).scale.toArray()});
         normalizedDefinition(definitions[id]);
+        const mounted=furniture.get(id);
+        if(mounted.userData.wallHanging){
+          const left=Math.abs(mounted.rotation.y-Math.PI/2)<.001,back=Math.abs(mounted.rotation.y)<.001;
+          const target=left?roomBounds.minX+.18:roomBounds.minZ+.18,actual=left?mounted.position.x:mounted.position.z;
+          const halfHeight=(mounted.userData.hangingHeight||1.2)*mounted.scale.y/2;
+          if((!left&&!back)||Math.abs(actual-target)>.025||mounted.position.y-halfHeight<.45||mounted.position.y+halfHeight>5.12)return {valid:false,reason:'挂件需要贴在左墙或后墙的合适高度',id};
+        }
         if (!isColliderWithinBounds(colliders.get(id),roomBounds)) return {valid:false,reason:`${definitions[id].label || id} 超出房间边界`,id};
       }
       const solid = ids.filter((id) => definitions[id].blocksPlacement);
@@ -300,6 +372,7 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
       if (!pointValid(pet) || !inside(pet,navigationBounds)) return {valid:false,reason:'宠物位置不在可行走范围内'};
       if (obstacles.some((box) => inside(pet,box))) return {valid:false,reason:'家具会困住宠物'};
       for (const {id,point:approach} of seatApproaches()) {
+        if(legacyBlockedSeats.has(id))continue;
         const label=id==='sofa'?'沙发':definitions[id]?.label||id;
         if (!pointValid(approach) || !inside(approach,navigationBounds)) return {valid:false,reason:`${label}接近点超出可行走范围`,id};
         if (obstacles.some((box) => inside(approach,box))) return {valid:false,reason:`家具挡住了${label}接近点`,id};
@@ -321,6 +394,7 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
       emit('layout-invalid',{reason:storageFailure||'布局保存失败'});return false;
     }
     lastGood=snapshot();
+    acceptNavigationState();
     emit('layout-change',{lampSupport}); return true;
   }
   function updateCollider(id,patch,boxIndex=0) {
@@ -348,7 +422,9 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
   function persist() {
     const result=validate();
     if (!result.valid) {emit('layout-save-failed',{reason:result.reason});return false;}
-    return writeStoredLayout(snapshot());
+    const saved=writeStoredLayout(snapshot());
+    if(saved&&!editSession)acceptNavigationState();
+    return saved;
   }
   /** App-facing import: bounded JSON/object input, full placement/path checks,
    * optional synchronous persistence, and rollback to the current layout on any
@@ -370,6 +446,7 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
       const imported=snapshot();
       if (shouldPersist&&!writeStoredLayout(imported)) throw new Error(storageFailure||'布局保存失败');
       lastGood=imported;
+      acceptNavigationState();
       emit('layout-imported',{persisted:shouldPersist&&!editSession});
       return {ok:true,reason:''};
     } catch (error) {
@@ -382,6 +459,7 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
   }
   function loadSaved() {
     let petBefore=null,relocated=false;
+    const baselineBefore=new Set(legacyBlockedSeats);
     try {
       const storage=getStorage();
       if (!storage) return false;
@@ -400,11 +478,13 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
         relocated=true;
         setPet({x:approach.x,z:approach.z});
       }
+      captureLegacySeats();
       const result=validate();
       if (!result.valid) throw new Error(result.reason);
       lastGood=snapshot(); emit('layout-loaded'); return true;
     } catch (error) {
       restore(defaults);
+      legacyBlockedSeats=baselineBefore;
       if (relocated&&petBefore) {
         try {setPet(petBefore);} catch (petError) {emit('layout-pet-restore-failed',{reason:petError.message});}
       }
@@ -417,14 +497,29 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
    */
   function beginEdit() {
     if (editSession || !validate().valid) return false;
-    editSession={entry:snapshot()};emit('layout-edit-begin');return true;
+    editSession={entry:snapshot(),collectionChanged:false,seatBaseline:new Set(legacyBlockedSeats)};emit('layout-edit-begin');return true;
   }
   function finishEdit({save=true,persist:shouldPersist=false}={}) {
     if (!editSession || typeof save!=='boolean' || typeof shouldPersist!=='boolean') return false;
     const session=editSession;
     if (!save) {
+      const before=snapshot(),baselineBefore=new Set(legacyBlockedSeats);
       if (!restore(session.entry)) return false;
-      lastGood=snapshot();editSession=null;emit('layout-change',{canceled:true,lampSupport});return true;
+      legacyBlockedSeats=new Set(session.seatBaseline);
+      // Warehouse transactions already persisted the current layout together
+      // with their inventory change. Persist the canceled transforms too, so a
+      // reload cannot resurrect earlier, unsaved moves. Hosts opting out of
+      // persistence and edits without collection changes retain their behavior.
+      if (session.collectionChanged && shouldPersist) {
+        const result=validate();
+        if (!result.valid) {
+          restore(before);legacyBlockedSeats=baselineBefore;emit('layout-invalid',{reason:result.reason});return false;
+        }
+        if (!writeStoredLayout(snapshot(),{force:true})) {
+          restore(before);legacyBlockedSeats=baselineBefore;return false;
+        }
+      }
+      legacyBlockedSeats=new Set(session.seatBaseline);lastGood=snapshot();editSession=null;emit('layout-change',{canceled:true,lampSupport});return true;
     }
     const result=validate();
     if (!result.valid) {emit('layout-invalid',{reason:result.reason});return false;}
@@ -434,53 +529,66 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
       const saved=writeStoredLayout(snapshot(),{force:true});
       if (!saved) return false;
     }
-    editSession=null;lastGood=snapshot();emit('layout-change',{saved:save,lampSupport});return true;
+    editSession=null;lastGood=snapshot();acceptNavigationState();emit('layout-change',{saved:save,lampSupport});return true;
   }
   function registerFurniture(id,root,definition) {
-    if (editSession || typeof id!=='string' || !id || id.length>128 || ['pet','__proto__','prototype','constructor'].includes(id)
+    if (typeof id!=='string' || !id || id.length>128 || ['pet','__proto__','prototype','constructor'].includes(id)
       || own(definitions,id) || furniture.get(id)!==root || !root?.isObject3D || ids.length>=128) return false;
     const before=snapshot(),goodBefore=lastGood,defaultsBefore=defaults;
     try {
       const normalized=normalizedDefinition(definition);
       normalizedTransform({position:root.position.toArray(),rotation:root.rotation.toArray().slice(0,3),scale:root.scale.toArray()});
       ids.push(id);definitions[id]=normalized;
+      if(id==='lamp')snapLamp();
       const result=validate();if (!result.valid) throw new Error(result.reason);
+      // v2.8.2 仓库：装修编辑会话内也允许注册（摆回家具），并同步入口快照，
+      // 取消装修时新摆回的家具保持生效，与仓库事务一致。
+      if (editSession) {
+        editSession.entry.furniture[id] = normalizedTransform({position:root.position.toArray(),rotation:root.rotation.toArray().slice(0,3),scale:root.scale.toArray()});
+        editSession.entry.definitions[id] = normalized;
+      }
       // The account's current registered collection becomes a compatible safe
       // fallback; old snapshots remain restorable after unregistering this ID.
       defaults=snapshot();lastGood=clone(defaults);
+      if (editSession) editSession.collectionChanged=true;
       emit('layout-change',{registered:id,lampSupport});return true;
     } catch (error) {
       const index=ids.indexOf(id);if(index!==-1)ids.splice(index,1);delete definitions[id];
+      if (editSession) { delete editSession.entry.furniture[id]; delete editSession.entry.definitions[id]; }
       restore(before);lastGood=goodBefore;defaults=defaultsBefore;
       emit('layout-register-rejected',{id,reason:messageOf(error)});return false;
     }
   }
-  function unregisterFurniture(id,options={}) {
+  function unregisterFurniture(id) {
     const index=ids.indexOf(id);
-    if (editSession || index===-1) return false;
-    const relax=options?.relax===true;
+    if (index===-1) return false;
     const before=snapshot(),definition=definitions[id],supportBefore=lampSupport;
     const goodBefore=lastGood,defaultsBefore=defaults;
+    const entryTransform = editSession?.entry.furniture?.[id];
+    const entryDefinition = editSession?.entry.definitions?.[id];
+    const entryLampSupport = editSession?.entry.lampSupport;
     ids.splice(index,1);delete definitions[id];
     if (id==='lamp'||id===lampSupport)lampSupport=null;
+    // v2.8.2 仓库：装修编辑会话内也允许注销（收回家具），并同步入口快照，
+    // 取消装修时已收回的家具不会复活，与仓库事务一致。
+    if (editSession) { delete editSession.entry.furniture[id]; delete editSession.entry.definitions[id]; if (editSession.entry.lampSupport===id) editSession.entry.lampSupport=null; }
     try {
-      // relax：账户软恢复时可批量卸下重叠的已购件，稍后再 rebaseDefaults。
-      if(relax){refresh();emit('layout-change',{unregistered:id,lampSupport,relaxed:true});return true;}
       const result=validate();if(!result.valid)throw new Error(result.reason);
       defaults=snapshot();lastGood=clone(defaults);
+      if (editSession) editSession.collectionChanged=true;
       emit('layout-change',{unregistered:id,lampSupport});return true;
     } catch (error) {
       ids.splice(index,0,id);definitions[id]=definition;lampSupport=supportBefore;
+      if (editSession) {
+        if (entryTransform) editSession.entry.furniture[id] = entryTransform;
+        else delete editSession.entry.furniture[id];
+        if (entryDefinition) editSession.entry.definitions[id] = entryDefinition;
+        else delete editSession.entry.definitions[id];
+        editSession.entry.lampSupport = entryLampSupport;
+      }
       restore(before);lastGood=goodBefore;defaults=defaultsBefore;
       emit('layout-unregister-rejected',{id,reason:messageOf(error)});return false;
     }
-  }
-  function rebaseDefaults() {
-    if (editSession) return false;
-    refresh();
-    const result=validate();
-    if (!result.valid) return false;
-    defaults=snapshot();lastGood=clone(defaults);return true;
   }
   function setBounds(newRoomBounds,newNavigationBounds=newRoomBounds) {
     if(editSession||!rectValid(newRoomBounds)||!rectValid(newNavigationBounds))return false;
@@ -494,8 +602,8 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
     if(!result.valid){Object.assign(roomBounds,beforeRoom);Object.assign(navigationBounds,beforeNavigation);refresh();emit('layout-bounds-rejected',{reason:result.reason});return false;}
     emit('layout-bounds-change',{roomBounds:{...roomBounds},navigationBounds:{...navigationBounds}});return true;
   }
-  refresh(); defaults=snapshot();lastGood=clone(defaults);
-  return {snapshot,restore,refresh,previewTransform,validate,commit,updateCollider,persist,loadSaved,importLayout,
-    beginEdit,finishEdit,registerFurniture,unregisterFurniture,rebaseDefaults,setBounds,get editing(){return Boolean(editSession);},
+  refresh();captureLegacySeats(); defaults=snapshot();lastGood=clone(defaults);
+  return {snapshot,restore,refresh,previewTransform,validate,findSafePetPosition,commit,updateCollider,persist,loadSaved,importLayout,
+    beginEdit,finishEdit,registerFurniture,unregisterFurniture,setBounds,acceptNavigationState,resetNavigationBaseline,getNavigationBaseline,restoreNavigationBaseline,get blockedSeats(){return blockedSeatIds();},get editing(){return Boolean(editSession);},
     get obstacles(){return obstacles;},get colliders(){return colliders;},get definitions(){return definitions;},get lampSupport(){return lampSupport;},storageKey};
 }
