@@ -1,22 +1,15 @@
-import {mountRoom} from './room.js';
-import {createRoomView} from './view.js';
-import {createRoomBridge} from './integration.mjs';
-import {createShopPanel} from './shop-panel.js';
-import {createProfilePanel} from './scene-profile.js';
+import { mountPetEstate } from './estate-house.js';
 
 /**
- * 单词 App 嵌入入口：
- * - 初始积分 0
- * - 商店关闭演示领奖
+ * 单词 App 嵌入入口（v2.28.1 完整版）：
+ * - 完整版多房间庄园（mountPetEstate），纯本地存储，不依赖后端
+ * - 初始积分 0，学习积分制（demo:false），商店/档案/伙伴/创意面板全套 UI
  * - 通过 URL ?pending= 接收闯关待入账事件，并 creditLearning（幂等）
+ * - 入账完成后通过 postMessage 通知宿主（host-credits-applied）
  */
-const view = createRoomView(document.getElementById('app'));
 const params = new URLSearchParams(location.search);
 const storageKey = params.get('storageKey') || 'word-quest-room-account-v1';
-
-let bridge = null;
-let shop = null;
-let profile = null;
+const app = document.getElementById('app');
 
 function readPendingFromUrl() {
   const raw = params.get('pending');
@@ -31,7 +24,7 @@ function readPendingFromUrl() {
 
 async function applyPendingCredits(api) {
   const events = readPendingFromUrl();
-  if (!events.length) return {applied: 0, failed: 0, earnedHint: 0};
+  if (!events.length) return { applied: 0, failed: 0, earnedHint: 0 };
   let applied = 0;
   let failed = 0;
   let earnedHint = 0;
@@ -58,88 +51,58 @@ async function applyPendingCredits(api) {
       failed += 1;
     }
   }
-  return {applied, failed, earnedHint};
+  return { applied, failed, earnedHint };
 }
 
 function notifyHost(event, detail) {
   try {
     window.parent?.postMessage?.(
-      {protocolVersion: 1, type: 'event', event, detail},
+      { protocolVersion: 1, type: 'event', event, detail },
       '*',
     );
   } catch {
     /* ignore */
   }
   try {
-    window.uni?.postMessage?.({data: {event, detail}});
+    window.uni?.postMessage?.({ data: { event, detail } });
   } catch {
     /* ignore */
   }
 }
 
-const controller = mountRoom({
-  canvas: view.canvas,
-  uiRoot: view.controlsRoot,
+let room = null;
+
+function disposeRoom() {
+  room?.dispose();
+  room = null;
+}
+
+room = mountPetEstate({
+  container: app,
+  storageKey,
   quality: ['low', 'balanced', 'high'].includes(params.get('quality'))
     ? params.get('quality')
     : 'auto',
-  storageKey,
   initialPoints: 0,
-  onState: (state) => {
-    view.updateState(state);
-    shop?.update(state);
-    profile?.update(state);
-  },
-  onEvent: (type, detail) => {
-    if (type !== 'ready') bridge?.emit(type, detail);
-  },
-});
-
-shop = createShopPanel({
-  root: view.root,
-  api: controller.api,
   pointsLabel: '学习积分',
   demo: false,
-});
-profile = createProfilePanel({
-  root: view.root,
-  api: controller.api,
-  pointsLabel: '学习积分',
-});
-bridge = createRoomBridge({
-  api: controller.api,
-  getState: controller.api.getState,
-  eventTarget: view.canvas,
-  globalObject: window,
-  legacyName: 'PetRoom',
-  roomId: 'word-quest-room',
+  bridge: { legacyName: 'PetRoom', roomId: 'word-quest-room' },
 });
 
 if (!Object.hasOwn(window, 'HamsterRoom')) {
-  window.HamsterRoom = controller.api;
+  window.HamsterRoom = room.api;
 }
 
-controller.ready
+room.ready
   .then(async (api) => {
-    view.ready();
-    await bridge.ready();
     const summary = await applyPendingCredits(api);
-    try {
-      shop?.update(api.getShop?.() || api.getState?.());
-    } catch {
-      /* ignore */
-    }
     notifyHost('host-credits-applied', summary);
   })
   .catch((error) => {
-    if (error.code !== 'ABORTED') view.error(error);
+    if (error.code !== 'ABORTED') console.error(error);
   });
 
 window.addEventListener('pagehide', (event) => {
   if (event.persisted) return;
-  shop?.dispose();
-  profile?.dispose();
-  bridge?.dispose();
-  controller.dispose();
-  view.dispose();
+  disposeRoom();
 });
