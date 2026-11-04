@@ -3,6 +3,8 @@ import {
   rmSync,
   existsSync,
   realpathSync,
+  statSync,
+  copyFileSync,
   writeFileSync,
   readFileSync,
 } from 'node:fs'
@@ -10,19 +12,31 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+// 优先使用仓库内 canonical 源 pet-house/source-connected（Windows/Linux 均可运行）
+const repoSource = join(root, '..', 'pet-house', 'source-connected')
 const desktopLatest = join(
   '/Users/mac/Desktop',
   '宠物小屋-四位装修码版-v2.28.1',
   'source-connected',
 )
+// 源候选必须真实存在且是目录：room-v2 在 Windows 克隆时可能被 git 还原成
+// 75 字节的符号链接残留文件（内容为 Mac 桌面路径），此时不能作为源使用
+const isDir = (p) => {
+  try {
+    return statSync(p).isDirectory()
+  } catch {
+    return false
+  }
+}
 const srcCandidate =
-  (existsSync(join(root, 'room-v2')) && join(root, 'room-v2')) ||
-  (existsSync(desktopLatest) && desktopLatest) ||
+  (isDir(join(root, 'room-v2')) && join(root, 'room-v2')) ||
+  (isDir(repoSource) && repoSource) ||
+  (isDir(desktopLatest) && desktopLatest) ||
   join('/Users/mac/Desktop/original-pet-room-v2.8.0')
 const dest = join(root, 'hybrid', 'html', 'room')
 
-if (!existsSync(srcCandidate)) {
-  console.error('缺少房间源目录:', srcCandidate)
+if (!isDir(srcCandidate)) {
+  console.error('缺少房间源目录（需要包含 index.html/package.json 的目录）:', srcCandidate)
   process.exit(1)
 }
 
@@ -30,39 +44,51 @@ if (!existsSync(srcCandidate)) {
 const src = realpathSync(srcCandidate)
 const bootstrapBackup = join(root, 'scripts', 'bootstrap-app.template.js')
 const hostMobileCss = join(root, 'scripts', 'host-mobile.css')
+
+// 拷贝源 → dest 的共用函数（初始拷贝与容错重建均复用同一 filter）
+const copyFilter = (path) => {
+  const normalized = path.replace(/\\/g, '/')
+  if (normalized.includes('/tests/')) return false
+  if (normalized.includes('/examples/')) return false
+  if (normalized.includes('/server-proto/')) return false
+  if (normalized.includes('/node_modules/')) return false
+  if (normalized.endsWith('/tools')) return false
+  if (normalized.includes('/tools/')) return false
+  // 根目录预览大图可跳过，assets 内缩略图保留
+  if (
+    (normalized.endsWith('.png') || normalized.endsWith('.jpg')) &&
+    !normalized.includes('/assets/')
+  ) {
+    return false
+  }
+  return true
+}
+function copyRoom() {
+  cpSync(src, dest, { recursive: true, dereference: true, filter: copyFilter })
+}
+
 if (existsSync(dest)) {
   rmSync(dest, { recursive: true, force: true })
 }
-cpSync(src, dest, {
-  recursive: true,
-  dereference: true,
-  filter: (path) => {
-    const normalized = path.replace(/\\/g, '/')
-    if (normalized.includes('/tests/')) return false
-    if (normalized.includes('/examples/')) return false
-    if (normalized.includes('/server-proto/')) return false
-    if (normalized.includes('/node_modules/')) return false
-    if (normalized.endsWith('/tools')) return false
-    if (normalized.includes('/tools/')) return false
-    // 根目录预览大图可跳过，assets 内缩略图保留
-    if (
-      (normalized.endsWith('.png') || normalized.endsWith('.jpg')) &&
-      !normalized.includes('/assets/')
-    ) {
-      return false
-    }
-    return true
-  },
-})
+copyRoom()
 
-// 始终用仓库内 App 嵌入入口覆盖演示 bootstrap
+// 始终用仓库内 App 嵌入入口覆盖演示 bootstrap；若 dest 目录在拷贝期间
+// 被外部进程替换为非目录，重建后重试一次
 const appBootstrap = join(dest, 'bootstrap-app.js')
-if (existsSync(bootstrapBackup)) {
-  cpSync(bootstrapBackup, appBootstrap)
+const overwriteFromScripts = (fromFile, toFile) => {
+  if (!existsSync(fromFile)) return
+  try {
+    copyFileSync(fromFile, toFile)
+  } catch {
+    if (existsSync(dest)) {
+      rmSync(dest, { recursive: true, force: true })
+    }
+    copyRoom()
+    copyFileSync(fromFile, toFile)
+  }
 }
-if (existsSync(hostMobileCss)) {
-  cpSync(hostMobileCss, join(dest, 'host-mobile.css'))
-}
+overwriteFromScripts(bootstrapBackup, appBootstrap)
+overwriteFromScripts(hostMobileCss, join(dest, 'host-mobile.css'))
 
 const indexPath = join(dest, 'index.html')
 writeFileSync(

@@ -467,24 +467,19 @@ class PetActor {
 function resize() {
   if(!renderer||disposed)return;
   const w=Math.max(1,canvas.clientWidth),h=Math.max(1,canvas.clientHeight);renderSurface.resize(w,h,Math.min(win.devicePixelRatio||1,quality.maxPixelRatio));
-  // 对当前房型包围盒作投影适配；勿再用最大档位，否则初始小屋在手机上缩成中央小块。
+  // 对房间固定包围盒作投影适配，竖屏手机与桌面均不裁掉家具。
   const view=new THREE.Matrix4().copy(camera.matrixWorld).invert();
   const projected=new THREE.Box3();
-  const reference=decoration?.active?(ROOM_TIERS.at(-1)||roomTier):roomTier;
+  const reference=ROOM_TIERS.at(-1);
   for(const x of [-reference.width/2-.3,reference.width/2+.3])for(const y of [-.4,5.40])for(const z of [-reference.depth/2-.15,reference.depth/2+.15])projected.expandByPoint(new THREE.Vector3(x,y,z).applyMatrix4(view));
   const center=projected.getCenter(new THREE.Vector3());
   const aspect=w/h;
   const dock=decoration?.active?uiRoot?.querySelector('[data-room-control="storage-strip"]'):null;
   const bottomInset=dock&&!dock.hidden?Math.min(h*.6,Math.max(0,canvas.getBoundingClientRect().bottom-dock.getBoundingClientRect().top+8)):0;
-  // 竖屏让地板外角可出画，并再拉近一档；装修模式仍用更完整取景。
-  const portrait=aspect<.85;
-  const tight=portrait&&!decoration?.active;
-  // 竖屏按宽度贴齐左右边：地板左右角贴近手机边，几乎不留白。
-  const widthPad=tight?1.0:1.06;
-  const heightPad=tight?0.46:0.51;
-  const contentWidth=(projected.max.x-projected.min.x)*widthPad;
-  let halfY=Math.max((projected.max.y-projected.min.y)*heightPad/(1-bottomInset/h),contentWidth/2/aspect);
-  if(tight)halfY*=0.98;
+  // 竖屏优先保留主要家具，房间地板的两个外角可出画；避免手机里整间房缩成小图标。
+  // 装修时展示完整房间，并给底部家具栏留出空间，避免前沿家具和伙伴被遮挡。
+  const contentWidth=(projected.max.x-projected.min.x)*1.06;
+  const halfY=Math.max((projected.max.y-projected.min.y)*.51/(1-bottomInset/h),contentWidth/2/aspect);
   const offsetY=halfY*bottomInset/h;
   camera.left=center.x-halfY*aspect;camera.right=center.x+halfY*aspect;
   camera.top=center.y+halfY-offsetY;camera.bottom=center.y-halfY-offsetY;camera.updateProjectionMatrix();
