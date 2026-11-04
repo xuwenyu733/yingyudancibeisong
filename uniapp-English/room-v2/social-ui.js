@@ -1,0 +1,54 @@
+import {openFriendVisit} from './social-visit.js';
+
+export function createFriendsPanel({client,doc=document,beforeInvite=async()=>{},onVisiting=()=>{}}){
+ const win=doc.defaultView,el=(tag,text,parent)=>{const node=doc.createElement(tag);if(tag==='button')node.type='button';if(text!==undefined)node.textContent=text;parent?.append(node);return node;};
+ const trigger=el('button','朋友',doc.body);trigger.className='social-trigger';trigger.setAttribute('aria-label','打开朋友');
+ const panel=el('section',undefined,doc.body);panel.className='social-panel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','朋友和聊天');
+ const header=el('header',undefined,panel);el('strong','我的朋友',header);const closeButton=el('button','关闭',header);
+ const identity=el('div',undefined,panel);identity.className='social-id';el('span','我的ID：'+client.identity.publicId,identity);const copy=el('button','复制ID',identity);
+ const tabs=el('nav',undefined,panel),friendTab=el('button','好友',tabs),chatTab=el('button','聊天',tabs),inviteTab=el('button','参观邀请',tabs);
+ const status=el('p','按完整ID添加朋友，对方同意后即可聊天。',panel);status.className='social-status';status.setAttribute('role','status');
+ const friendView=el('div',undefined,panel),chatView=el('div',undefined,panel),inviteView=el('div',undefined,panel);friendView.className='social-scroll';chatView.className='social-chat';inviteView.className='social-scroll';chatView.hidden=inviteView.hidden=true;
+ const searchForm=el('form',undefined,friendView),search=el('input',undefined,searchForm),searchButton=el('button','搜索ID',searchForm);searchButton.type='submit';search.placeholder='例如 PET-012345ABCD';search.maxLength=20;search.setAttribute('aria-label','朋友的账号ID');
+ const searchResult=el('div',undefined,friendView),requests=el('div',undefined,friendView),friends=el('div',undefined,friendView),blocks=el('details',undefined,friendView);el('summary','已屏蔽的账号',blocks);const blockList=el('div',undefined,blocks);
+ requests.setAttribute('aria-label','好友申请列表');friends.setAttribute('aria-label','我的好友列表');inviteView.setAttribute('aria-label','参观邀请列表');
+ const chatTitle=el('strong','先在好友列表选择“聊天”',chatView),history=el('div',undefined,chatView);history.className='social-messages';history.setAttribute('role','log');history.setAttribute('aria-label','聊天记录');
+ const form=el('form',undefined,chatView),text=el('textarea',undefined,form),send=el('button','发送',form);text.maxLength=1000;text.rows=3;text.placeholder='和朋友说点什么（最多1000字）';text.setAttribute('aria-label','聊天消息');send.type='submit';send.disabled=text.disabled=true;
+ let opened=false,disposed=false,busy=false,peerId=null,latest='0',messageRows=[],signature='',sending=false,view='friends',visit=null,chatGeneration=0,visitGeneration=0,openingVisit=false;
+ const drafts=new Map(),pendingSends=new Map();
+ const notice=message=>{if(!disposed)status.textContent=message;};
+ const action=async fn=>{try{return await fn();}catch(error){notice(error.message);return null;}};
+ function tab(next){view=next;friendView.hidden=next!=='friends';chatView.hidden=next!=='chat';inviteView.hidden=next!=='invites';for(const [button,name]of [[friendTab,'friends'],[chatTab,'chat'],[inviteTab,'invites']])button.setAttribute('aria-pressed',String(next===name));}
+ function button(parent,label,callback){const button=el('button',label,parent);button.onclick=()=>void action(callback);return button;}
+ function row(parent,title){const row=el('div',undefined,parent);row.className='social-person';el('strong',title,row);return row;}
+ function paintMessages(){history.replaceChildren();for(const message of messageRows){const bubble=el('div',undefined,history);bubble.className=message.mine?'social-bubble mine':'social-bubble';el('p',message.text,bubble);el('small',new Date(message.sentAt).toLocaleString('zh-CN'),bubble);}history.scrollTop=history.scrollHeight;}
+ async function loadMessages(initial=false){if(!peerId)return;const selected=peerId,serial=chatGeneration;const result=await client.messages(selected,initial?undefined:latest==='0'?undefined:latest);if(disposed||selected!==peerId||serial!==chatGeneration)return;
+  const seen=new Set(messageRows.map(message=>message.id));for(const message of result.messages)if(!seen.has(message.id)){seen.add(message.id);messageRows.push(message);}messageRows.sort((a,b)=>BigInt(a.id)<BigInt(b.id)?-1:BigInt(a.id)>BigInt(b.id)?1:0);messageRows=messageRows.slice(-300);const cursor=result.messages.at(-1)?.id;if(cursor&&BigInt(cursor)>BigInt(latest))latest=cursor;if(initial||result.messages.length)paintMessages();
+ }
+ async function chat(user){if(peerId)drafts.set(peerId,text.value);peerId=user.publicId;const serial=++chatGeneration;latest='0';messageRows=[];history.replaceChildren();text.value=drafts.get(peerId)||'';chatTitle.textContent=user.name+' · '+user.publicId;send.disabled=sending;text.disabled=false;tab('chat');await loadMessages(true);if(serial===chatGeneration)notice('私聊只对你和这位好友可见。');}
+ async function refresh(){if(disposed||busy||!opened||doc.hidden)return;busy=true;try{const state=await client.overview();if(disposed)return;const unread=state.friends.reduce((n,user)=>n+user.unread,0)+state.incoming.length+state.invitations.filter(item=>item.direction==='received'&&item.state==='pending').length;trigger.textContent=unread?'朋友 · '+unread:'朋友';
+  const next=JSON.stringify(state);if(next!==signature){signature=next;friends.replaceChildren();requests.replaceChildren();blockList.replaceChildren();inviteView.replaceChildren();
+   el('h3','好友申请',requests);if(!state.incoming.length)el('p','暂无新申请',requests);
+   for(const user of state.incoming){const item=row(requests,user.name+' · '+user.publicId);button(item,'同意',async()=>{await client.post('respond',{peerId:user.publicId,accept:true});signature='';notice('已经成为好友');});button(item,'拒绝',async()=>{await client.post('respond',{peerId:user.publicId,accept:false});signature='';});}
+   for(const user of state.outgoing)el('p','等待 '+user.name+' 同意好友申请',requests);
+   el('h3','我的好友',friends);if(!state.friends.length)el('p','还没有好友，先搜索对方的ID吧。',friends);
+   for(const user of state.friends){const item=row(friends,user.name+(user.unread?' · '+user.unread+'条新消息':''));el('small',user.publicId,item);button(item,'聊天',()=>chat(user));button(item,'邀请参观',async()=>{await beforeInvite();await client.post('invite',{peerId:user.publicId});signature='';notice('邀请已发送，等待好友同意。');});const more=el('details',undefined,item);el('summary','更多',more);button(more,'移除好友',async()=>{await client.post('remove',{peerId:user.publicId});signature='';notice('已移除好友。重新聊天需要双方再次同意。');});button(more,'屏蔽',async()=>{await client.post('block',{peerId:user.publicId,block:true});signature='';notice('已屏蔽该账号');});}
+   for(const user of state.blocks){const item=row(blockList,user.name+' · '+user.publicId);button(item,'解除屏蔽',async()=>{await client.post('block',{peerId:user.publicId,block:false});signature='';});}
+   el('h3','来访和参观',inviteView);if(!state.invitations.length)el('p','暂无有效邀请。好友发来邀请后，可在这里确认参观。',inviteView);
+   for(const invitation of state.invitations){const item=row(inviteView,(invitation.direction==='sent'?'邀请 '+invitation.name+' 来我家':invitation.name+' 邀请我参观'));el('small',(invitation.state==='pending'?'等待同意':'邀请已同意')+' · '+new Date(invitation.expiresAt).toLocaleTimeString('zh-CN')+' 到期',item);
+    if(invitation.direction==='sent')button(item,'结束邀请',async()=>{await client.post('invitation',{id:invitation.id,action:'revoke'});signature='';notice('邀请已结束');});
+    else{button(item,invitation.state==='accepted'?'再次参观':'接受并参观',async()=>{if(openingVisit||disposed)return;openingVisit=true;const serial=++visitGeneration;try{if(invitation.state==='pending')await client.post('invitation',{id:invitation.id,action:'accept'});if(disposed||serial!==visitGeneration)return;if(visit)await visit.close();onVisiting(true);close();const next=await openFriendVisit({client,id:invitation.id,doc,isActive:()=>!disposed&&serial===visitGeneration,onClose:()=>{visit=null;onVisiting(false);}});if(disposed||serial!==visitGeneration)await next.close();else visit=next;signature='';}catch(error){onVisiting(false);throw error;}finally{openingVisit=false;}});if(invitation.state==='pending')button(item,'暂不参观',async()=>{await client.post('invitation',{id:invitation.id,action:'decline'});signature='';});}
+   }
+  }
+  if(opened&&view==='chat'&&peerId){if(!state.friends.some(user=>user.publicId===peerId)){peerId=null;send.disabled=text.disabled=true;notice('好友关系已变化，暂时不能继续聊天。');}else await loadMessages();}
+ }catch(error){if(opened)notice(error.message);}finally{busy=false;}}
+ searchForm.onsubmit=event=>{event.preventDefault();void action(async()=>{searchButton.disabled=true;try{const result=await client.search(search.value);searchResult.replaceChildren();const user=result.user,item=row(searchResult,user.name+' · '+user.publicId);if(user.self)el('p','这是你自己的账号',item);else if(user.relation==='accepted')button(item,'聊天',()=>chat(user));else button(item,'添加朋友',async()=>{await client.post('request',{peerId:user.publicId});notice('申请已发送，等待对方同意。');signature='';});}finally{searchButton.disabled=false;}});};
+ form.onsubmit=event=>{event.preventDefault();if(sending||!peerId||!text.value.trim())return;sending=true;send.disabled=true;const selected=peerId,content=text.value;let pendingSend=pendingSends.get(selected);if(!pendingSend||pendingSend.text!==content){pendingSend={text:content,id:win.crypto.randomUUID()};pendingSends.set(selected,pendingSend);}const clientId=pendingSend.id;void action(async()=>{const result=await client.send(selected,content,clientId);if(pendingSends.get(selected)?.id===clientId)pendingSends.delete(selected);if(drafts.get(selected)===content)drafts.delete(selected);if(!disposed&&peerId===selected){if(text.value===content)text.value='';if(!messageRows.some(message=>message.id===result.message.id))messageRows.push(result.message);paintMessages();notice('消息已发送');}}).finally(()=>{sending=false;if(!disposed)send.disabled=!peerId;});};
+ copy.onclick=()=>void action(async()=>{if(!win.navigator.clipboard?.writeText)throw new Error('请选中上面的ID后复制');await win.navigator.clipboard.writeText(client.identity.publicId);notice('ID已复制，可以分享给朋友');});
+ function open(){if(disposed)return;opened=true;panel.hidden=false;void refresh();}
+ function close(){opened=false;panel.hidden=true;}
+ trigger.onclick=()=>opened?close():open();closeButton.onclick=close;friendTab.onclick=()=>tab('friends');chatTab.onclick=()=>tab('chat');inviteTab.onclick=()=>tab('invites');
+ const escape=event=>{if(event.key==='Escape'&&opened)close();};doc.addEventListener('keydown',escape);tab('friends');
+ const timer=win.setInterval(()=>void refresh(),2500);void refresh();
+ return {open,close,dispose(){disposed=true;++visitGeneration;++chatGeneration;win.clearInterval(timer);doc.removeEventListener('keydown',escape);void visit?.close();panel.remove();trigger.remove();}};
+}

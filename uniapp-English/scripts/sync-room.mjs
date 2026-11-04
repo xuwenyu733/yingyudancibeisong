@@ -4,6 +4,7 @@ import {
   existsSync,
   realpathSync,
   statSync,
+  lstatSync,
   copyFileSync,
   writeFileSync,
   readFileSync,
@@ -12,35 +13,29 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-// 优先使用仓库内 canonical 源 pet-house/source-connected（Windows/Linux 均可运行）
-const repoSource = join(root, '..', 'pet-house', 'source-connected')
-const desktopLatest = join(
-  '/Users/mac/Desktop',
-  '宠物小屋-四位装修码版-v2.28.1',
-  'source-connected',
-)
-// 源候选必须真实存在且是目录：room-v2 在 Windows 克隆时可能被 git 还原成
-// 75 字节的符号链接残留文件（内容为 Mac 桌面路径），此时不能作为源使用
-const isDir = (p) => {
+const roomV2 = join(root, 'room-v2')
+const petHouseSource = join(root, '..', 'pet-house', 'source-connected')
+// 只使用仓库内真实目录；拒绝桌面软链，避免跨机克隆失败
+const isRealDir = (p) => {
   try {
-    return statSync(p).isDirectory()
+    return statSync(p).isDirectory() && !lstatSync(p).isSymbolicLink()
   } catch {
     return false
   }
 }
 const srcCandidate =
-  (isDir(join(root, 'room-v2')) && join(root, 'room-v2')) ||
-  (isDir(repoSource) && repoSource) ||
-  (isDir(desktopLatest) && desktopLatest) ||
-  join('/Users/mac/Desktop/original-pet-room-v2.8.0')
+  (isRealDir(roomV2) && roomV2) ||
+  (isRealDir(petHouseSource) && petHouseSource) ||
+  null
 const dest = join(root, 'hybrid', 'html', 'room')
 
-if (!isDir(srcCandidate)) {
-  console.error('缺少房间源目录（需要包含 index.html/package.json 的目录）:', srcCandidate)
+if (!srcCandidate) {
+  console.error(
+    '缺少项目内房间源目录。请使用真实目录 uniapp-English/room-v2 或 pet-house/source-connected（不要软链到桌面）',
+  )
   process.exit(1)
 }
 
-// room-v2 常为指向桌面源的软链；必须解引用成真实目录副本，避免仓库提交软链
 const src = realpathSync(srcCandidate)
 const bootstrapBackup = join(root, 'scripts', 'bootstrap-app.template.js')
 const hostMobileCss = join(root, 'scripts', 'host-mobile.css')

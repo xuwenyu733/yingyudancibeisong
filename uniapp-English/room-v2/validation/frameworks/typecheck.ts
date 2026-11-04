@@ -1,0 +1,26 @@
+import React from 'react';
+import ReactPetRoom from '../../frameworks/ReactPetRoom.jsx';
+import {mountPetHouse,createShopPanel} from '../../pet-house.js';
+import SveltePetRoom from '../../frameworks/SveltePetRoom.svelte';
+import {mount} from 'svelte';
+import {createRoomBridge,ROOM_PROTOCOL_VERSION} from '../../integration.mjs';
+import type {RoomAPI,RoomState,RoomCommandName} from '../../room.js';
+const container=document.createElement('div');
+const room=mountPetHouse({container,initialPoints:0,storageKey:'typed-account',assetUrls:{sofa:new URL('https://example.com/sofa.glb')},bridge:{roomId:'typed-bridge',legacyName:false}});
+const version:1=ROOM_PROTOCOL_VERSION;
+const bridge=createRoomBridge({api:room.api,getState:room.api.getState,eventTarget:container,legacyName:false});
+room.ready.then(async(api:RoomAPI)=>{
+  const state:RoomState=api.getState();
+  await api.purchasePet('cloud-bunny','purchase-1');await api.selectPet('cloud-bunny');
+  api.setProfileAvatar(null);api.creditLearning({eventId:'lesson-1',learned:1});
+  await api.setWallColor('mint');await api.applyFlooring(null);api.setPresentationPaused(false);
+  const frames:number=state.metrics.renderCount,paused:boolean=state.metrics.presentationPaused;
+  const panel=createShopPanel({root:room.view.root,api});panel.open('flooring');panel.open('wall');
+  const commands:RoomCommandName[]=['setWallColor','applyFlooring'];console.log(frames,paused,commands);
+  const balance:number=state.shop.balance;
+  console.log(balance,version);
+});
+const element=React.createElement(ReactPetRoom,{storageKey:'typed-react',onReady:(api:RoomAPI)=>api.getShop()});
+console.log(element,bridge);
+const svelte=mount(SveltePetRoom,{target:container,props:{storageKey:'typed-svelte',storageAdapter:null,onReady:api=>api.getShop()}});
+const optionalApi:RoomAPI|null=svelte.getApi();svelte.remount();console.log(optionalApi);

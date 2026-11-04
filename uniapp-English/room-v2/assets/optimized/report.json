@@ -1,0 +1,383 @@
+{
+  "formatVersion": 1,
+  "createdAt": "2026-10-25T11:03:16.225Z",
+  "description": "有损家具优化副本；仅简化网格、按需缩小贴图，不修改输入 GLB。无 Draco/Meshopt/BasisU 解码依赖。",
+  "pathBase": "房间交付根目录",
+  "sourceReadOnly": true,
+  "method": {
+    "transforms": [
+      "dedup",
+      "weld",
+      "simplify",
+      "prune"
+    ],
+    "simplifier": "MeshoptSimplifier",
+    "maximumError": 0.003,
+    "boundsCoordinateDifferenceLimit": 0.003,
+    "textureMeanChannelDifferenceLimit": 2,
+    "note": "误差阈值针对本轮输入副本；三角数及缓冲区减少可降低几何处理负担，不代表已经测得具体设备 FPS。"
+  },
+  "assets": [
+    {
+      "id": "sofa",
+      "source": "assets/sofa.glb",
+      "output": "assets/optimized/sofa.glb",
+      "lossyCopy": true,
+      "sourceSHA256": "8af46dc3028f78c97efbb1a1ac4f294931078f5d1d9bb456eb6719ad0a858063",
+      "outputSHA256": "b2d49f769fef32be84c9c28d67759577441ed7c8ccc2590f00a165a6ee0855d9",
+      "originalUnchanged": true,
+      "originalBytes": 1671928,
+      "optimizedBytes": 994420,
+      "fileSizeReductionPercent": 40.52,
+      "targetTriangles": 30000,
+      "textureLimit": 1024,
+      "selectedError": 0.002,
+      "attempts": [
+        {
+          "error": 0.002,
+          "triangles": 30000,
+          "maximumBoundsCoordinateDifference": 0.00018310546875
+        }
+      ],
+      "before": {
+        "triangles": 60000,
+        "vertices": 36714,
+        "geometryBufferBytes": 1534848,
+        "textures": [
+          {
+            "name": "沙发3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              1024,
+              1024
+            ],
+            "encodedBytes": 135611
+          }
+        ],
+        "approximateDecodedTextureBytesWithMipmaps": 5592405,
+        "bounds": {
+          "min": [
+            -0.3553466796875,
+            0.0000457763671875,
+            -0.49993896484375
+          ],
+          "max": [
+            0.355377197265625,
+            0.4939117431640625,
+            0.499969482421875
+          ]
+        },
+        "nodes": 1,
+        "meshes": 1,
+        "materials": 1,
+        "skins": 0,
+        "animations": 0
+      },
+      "after": {
+        "triangles": 30000,
+        "vertices": 21167,
+        "geometryBufferBytes": 857344,
+        "textures": [
+          {
+            "name": "沙发3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              1024,
+              1024
+            ],
+            "encodedBytes": 135611
+          }
+        ],
+        "approximateDecodedTextureBytesWithMipmaps": 5592405,
+        "bounds": {
+          "min": [
+            -0.35528564453125,
+            0.000152587890625,
+            -0.499847412109375
+          ],
+          "max": [
+            0.3553466796875,
+            0.4938812255859375,
+            0.499786376953125
+          ]
+        },
+        "nodes": 1,
+        "meshes": 1,
+        "materials": 1,
+        "skins": 0,
+        "animations": 0
+      },
+      "validation": {
+        "readBackSucceeded": true,
+        "maximumBoundsCoordinateDifference": 0.00018310546875,
+        "boundsLimit": 0.003,
+        "materialParametersUnchanged": true,
+        "colorChecks": [
+          {
+            "texture": 0,
+            "originalMeanRGB": [
+              247.39457321166992,
+              195.11572933197021,
+              109.24345302581787
+            ],
+            "optimizedMeanRGB": [
+              247.39457321166992,
+              195.11572933197021,
+              109.24345302581787
+            ],
+            "maximumMeanChannelDifference": 0,
+            "threshold": 2
+          }
+        ],
+        "forbiddenDecoderExtensions": [],
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ],
+        "extensionsRequired": []
+      }
+    },
+    {
+      "id": "lamp",
+      "source": "assets/lamp.glb",
+      "output": "assets/optimized/lamp.glb",
+      "lossyCopy": true,
+      "sourceSHA256": "8056c0e2e714ef1954efce133aa4830328acd10ec052e6859c55e6369df6a5bb",
+      "outputSHA256": "682b408ca270bef48e5f10b1464dc40a9e2f134c7fb52eec0171a1d8c77775e7",
+      "originalUnchanged": true,
+      "originalBytes": 1884464,
+      "optimizedBytes": 683468,
+      "fileSizeReductionPercent": 63.73,
+      "targetTriangles": 16000,
+      "textureLimit": 768,
+      "selectedError": 0.002,
+      "attempts": [
+        {
+          "error": 0.002,
+          "triangles": 15994,
+          "maximumBoundsCoordinateDifference": 0.0003662109375
+        }
+      ],
+      "before": {
+        "triangles": 59998,
+        "vertices": 41118,
+        "geometryBufferBytes": 1675764,
+        "textures": [
+          {
+            "name": "桌灯3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              1024,
+              1024
+            ],
+            "encodedBytes": 207265
+          }
+        ],
+        "approximateDecodedTextureBytesWithMipmaps": 5592405,
+        "bounds": {
+          "min": [
+            -0.4352569580078125,
+            0,
+            -0.4346923828125
+          ],
+          "max": [
+            0.4352874755859375,
+            1,
+            0.4346923828125
+          ]
+        },
+        "nodes": 1,
+        "meshes": 1,
+        "materials": 1,
+        "skins": 0,
+        "animations": 0
+      },
+      "after": {
+        "triangles": 15994,
+        "vertices": 13977,
+        "geometryBufferBytes": 543228,
+        "textures": [
+          {
+            "name": "桌灯3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              768,
+              768
+            ],
+            "encodedBytes": 138812
+          }
+        ],
+        "approximateDecodedTextureBytesWithMipmaps": 3145728,
+        "bounds": {
+          "min": [
+            -0.4348907470703125,
+            0,
+            -0.4346923828125
+          ],
+          "max": [
+            0.4351654052734375,
+            1,
+            0.4346923828125
+          ]
+        },
+        "nodes": 1,
+        "meshes": 1,
+        "materials": 1,
+        "skins": 0,
+        "animations": 0
+      },
+      "validation": {
+        "readBackSucceeded": true,
+        "maximumBoundsCoordinateDifference": 0.0003662109375,
+        "boundsLimit": 0.003,
+        "materialParametersUnchanged": true,
+        "colorChecks": [
+          {
+            "texture": 0,
+            "originalMeanRGB": [
+              235.9856309890747,
+              196.8644037246704,
+              146.5976161956787
+            ],
+            "optimizedMeanRGB": [
+              235.82823181152344,
+              196.84181891547308,
+              146.57094489203558
+            ],
+            "maximumMeanChannelDifference": 0.15739917755126953,
+            "threshold": 2
+          }
+        ],
+        "forbiddenDecoderExtensions": [],
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ],
+        "extensionsRequired": []
+      }
+    },
+    {
+      "id": "table",
+      "source": "assets/table.glb",
+      "output": "assets/optimized/table.glb",
+      "lossyCopy": true,
+      "sourceSHA256": "85ebed8fe9a03a70b7ca4dea16bd736dcacc82532009033ae44903d9ea7766b8",
+      "outputSHA256": "2e96c527adc9dbfaedc6531ecca6eba06860044ef727316cb0849f81ab9d3c7a",
+      "originalUnchanged": true,
+      "originalBytes": 1646872,
+      "optimizedBytes": 743252,
+      "fileSizeReductionPercent": 54.87,
+      "targetTriangles": 20000,
+      "textureLimit": 1024,
+      "selectedError": 0.002,
+      "attempts": [
+        {
+          "error": 0.002,
+          "triangles": 20000,
+          "maximumBoundsCoordinateDifference": 0.0001220703125
+        }
+      ],
+      "before": {
+        "triangles": 60000,
+        "vertices": 36141,
+        "geometryBufferBytes": 1516512,
+        "textures": [
+          {
+            "name": "木质矮桌3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              1024,
+              1024
+            ],
+            "encodedBytes": 128919
+          }
+        ],
+        "approximateDecodedTextureBytesWithMipmaps": 5592405,
+        "bounds": {
+          "min": [
+            -0.494598388671875,
+            0,
+            -0.499969482421875
+          ],
+          "max": [
+            0.49462890625,
+            0.410614013671875,
+            0.5
+          ]
+        },
+        "nodes": 1,
+        "meshes": 1,
+        "materials": 1,
+        "skins": 0,
+        "animations": 0
+      },
+      "after": {
+        "triangles": 20000,
+        "vertices": 15403,
+        "geometryBufferBytes": 612896,
+        "textures": [
+          {
+            "name": "木质矮桌3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              1024,
+              1024
+            ],
+            "encodedBytes": 128919
+          }
+        ],
+        "approximateDecodedTextureBytesWithMipmaps": 5592405,
+        "bounds": {
+          "min": [
+            -0.494537353515625,
+            0,
+            -0.499847412109375
+          ],
+          "max": [
+            0.49462890625,
+            0.410614013671875,
+            0.5
+          ]
+        },
+        "nodes": 1,
+        "meshes": 1,
+        "materials": 1,
+        "skins": 0,
+        "animations": 0
+      },
+      "validation": {
+        "readBackSucceeded": true,
+        "maximumBoundsCoordinateDifference": 0.0001220703125,
+        "boundsLimit": 0.003,
+        "materialParametersUnchanged": true,
+        "colorChecks": [
+          {
+            "texture": 0,
+            "originalMeanRGB": [
+              228.95765495300293,
+              173.3504114151001,
+              104.83946704864502
+            ],
+            "optimizedMeanRGB": [
+              228.95765495300293,
+              173.3504114151001,
+              104.83946704864502
+            ],
+            "maximumMeanChannelDifference": 0,
+            "threshold": 2
+          }
+        ],
+        "forbiddenDecoderExtensions": [],
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ],
+        "extensionsRequired": []
+      }
+    }
+  ],
+  "totals": {
+    "originalBytes": 5203264,
+    "optimizedBytes": 2421140,
+    "originalTriangles": 179998,
+    "optimizedTriangles": 65994,
+    "fileSizeReductionPercent": 53.47
+  }
+}
