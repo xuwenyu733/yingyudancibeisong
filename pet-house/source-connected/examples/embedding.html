@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>房间模块 · 接入自检</title>
+  <link rel="stylesheet" href="../room.css">
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f4efe4;color:#3e493e;font:15px/1.6 system-ui,sans-serif}
+    main{max-width:1200px;margin:auto;padding:24px}h1{font-size:25px;margin:0 0 6px}p{margin:7px 0}
+    .intro{max-width:880px;color:#65705f}.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0}
+    button{font:600 15px system-ui;cursor:pointer;border:1px solid #698163;border-radius:10px;padding:11px 18px;color:#fff;background:#627a5a}
+    button.secondary{color:#52614d;background:#fffdf6;border-color:#c9cebf}button:disabled{opacity:.5;cursor:default}
+    #self-test-status{font-weight:600}.rooms{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    article{min-width:0;background:#fffdf7;border:1px solid #dedfce;border-radius:15px;overflow:hidden}
+    article header{padding:10px 15px;border-bottom:1px solid #e5e2d6;font-weight:650}.room-slot{height:320px;min-width:0;position:relative}
+    .placeholder{display:grid;place-content:center;height:100%;padding:24px;text-align:center;color:#7d8372;background:#f7f1df}
+    .checks{padding:0;list-style:none;margin:20px 0}.checks li{display:flex;gap:10px;align-items:baseline;padding:9px 12px;border-bottom:1px solid #dedfce;background:#faf8f1}
+    .checks [data-status=passed]{color:#326344}.checks [data-status=failed]{color:#a73a32}.checks [data-status=running]{color:#84662e}
+    .check-duration{margin-left:auto;white-space:nowrap;color:#8a8f7c;font:12px ui-monospace,monospace}
+    .result-note{color:#707b65;font-size:13px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#28342e;color:#e6eedf;border-radius:13px;padding:18px;max-height:620px;overflow:auto;font:12px/1.6 ui-monospace,monospace}
+    @media(max-width:700px){main{padding:15px}.rooms{grid-template-columns:1fr}.room-slot{height:245px}h1{font-size:22px}}
+  </style>
+</head>
+<body data-self-test="idle">
+  <main>
+    <h1>房间模块接入自检</h1>
+    <p class="intro">开发者页面：点击后真实挂载两个独立 WebGL 房间，检查桥接、布局事务、内存存储及销毁恢复。每步最多等待 15 秒。测试使用内存 Map，不读写浏览器的个人房间存档。</p>
+    <div class="toolbar">
+      <button id="run-self-test" type="button">运行接入自检</button>
+      <button id="release-rooms" class="secondary" type="button" disabled>释放示例房间</button>
+      <output id="self-test-status" role="status" aria-live="polite">尚未运行</output>
+    </div>
+    <div class="rooms">
+      <article><header>实例 A · 独立灯光与布局</header><div id="room-a" class="room-slot"><div class="placeholder">运行自检后在这里挂载房间。</div></div></article>
+      <article><header>实例 B · 隔离、取消与恢复</header><div id="room-b" class="room-slot"><div class="placeholder">运行自检后在这里挂载另一个房间。</div></div></article>
+    </div>
+    <ol id="self-test-checks" class="checks" aria-label="接入检查结果"></ol>
+    <p class="result-note">下方指标来自实际实例的 renderer.info / 状态快照。双实例、后台标签页及设备差异会影响结果；此页不承诺固定 FPS。故意请求不存在的资产是加载失败测试的一部分。</p>
+    <pre id="self-test-results" aria-label="自检结果 JSON">{"status":"idle"}</pre>
+  </main>
+  <script type="module" src="./embedding.js"></script>
+</body>
+</html>

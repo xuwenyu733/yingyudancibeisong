@@ -1,0 +1,341 @@
+{
+  "selfTestVersion": 1,
+  "status": "passed",
+  "startedAt": "2026-10-26T00:56:29.816Z",
+  "assetsBaseUrl": "http://127.0.0.1:8769/assets/",
+  "quality": "low",
+  "watchdogPerStepMs": 15000,
+  "checks": [
+    {
+      "name": "两个独立 WebGL 实例分别 ready",
+      "status": "passed",
+      "durationMs": 250,
+      "detail": {
+        "a": "ready",
+        "b": "ready",
+        "independentCanvases": true
+      }
+    },
+    {
+      "name": "灯光状态互不干扰",
+      "status": "passed",
+      "durationMs": 0,
+      "detail": {
+        "isolated": true
+      }
+    },
+    {
+      "name": "room-command 有效及非法参数往返",
+      "status": "passed",
+      "durationMs": 1,
+      "detail": {
+        "valid": {
+          "protocolVersion": 1,
+          "roomId": "embedding-1-a",
+          "requestId": "embedding-request-1",
+          "type": "result",
+          "command": "setLamp",
+          "ok": true,
+          "result": true
+        },
+        "invalid": {
+          "protocolVersion": 1,
+          "roomId": "embedding-1-a",
+          "requestId": "embedding-request-2",
+          "type": "result",
+          "command": "setLamp",
+          "ok": false,
+          "error": {
+            "code": "INVALID_PARAMS",
+            "message": "on 必须为布尔值"
+          }
+        }
+      }
+    },
+    {
+      "name": "getLayout 为纯 JSON，序列化往返保持一致",
+      "status": "passed",
+      "durationMs": 2,
+      "detail": {
+        "version": 3,
+        "furnitureCount": 9
+      }
+    },
+    {
+      "name": "非法导入事务拒绝，当前布局保持不变",
+      "status": "passed",
+      "durationMs": 8,
+      "detail": {
+        "rejected": true,
+        "reason": "木质矮桌 超出房间边界"
+      }
+    },
+    {
+      "name": "合法桌子变换后可导入原布局恢复",
+      "status": "passed",
+      "durationMs": 24,
+      "detail": {
+        "movedTo": [
+          -0.4,
+          0,
+          0.87
+        ],
+        "restored": true
+      }
+    },
+    {
+      "name": "调整独立碰撞盒不改变家具模型 scale",
+      "status": "passed",
+      "durationMs": 18,
+      "detail": {
+        "modelScale": [
+          1.9,
+          1.9,
+          1.9
+        ],
+        "colliderSize": [
+          0.9702,
+          0.411,
+          0.98
+        ]
+      }
+    },
+    {
+      "name": "persistLayout:false 不自动写存档，显式导入使用内存适配器",
+      "status": "passed",
+      "durationMs": 24,
+      "detail": {
+        "persistLayoutFalseRespected": true,
+        "storedKeys": [
+          "embedding-memory-1-a-account-v1"
+        ],
+        "adapterOperations": [
+          {
+            "operation": "getItem",
+            "key": "embedding-memory-1-a-account-v1"
+          },
+          {
+            "operation": "getItem",
+            "key": "embedding-memory-1-b-account-v1"
+          },
+          {
+            "operation": "getItem",
+            "key": "embedding-memory-1-b"
+          },
+          {
+            "operation": "getItem",
+            "key": "embedding-memory-1-a"
+          },
+          {
+            "operation": "setItem",
+            "key": "embedding-memory-1-a-account-v1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "dispose 后在同一个旧 canvas 重新挂载并恢复适配器存档",
+      "status": "passed",
+      "durationMs": 254,
+      "detail": {
+        "sameCanvas": true,
+        "lifecycle": "ready",
+        "layoutRestored": true
+      }
+    },
+    {
+      "name": "加载中立即 dispose，ready 明确拒绝 ABORTED",
+      "status": "passed",
+      "durationMs": 95,
+      "detail": {
+        "expectedError": {
+          "code": "ABORTED",
+          "message": "房间加载已取消"
+        }
+      }
+    },
+    {
+      "name": "不存在的 assetsBaseUrl 明确失败 ASSET_LOAD_FAILED",
+      "status": "passed",
+      "durationMs": 188,
+      "detail": {
+        "expectedError": {
+          "code": "ASSET_LOAD_FAILED",
+          "message": "家具 sofa 加载失败"
+        }
+      }
+    },
+    {
+      "name": "资产加载失败后可以新建有效实例恢复",
+      "status": "passed",
+      "durationMs": 118,
+      "detail": {
+        "lifecycle": "ready",
+        "error": null
+      }
+    },
+    {
+      "name": "记录实际 renderer.info 指标与双实例最终状态",
+      "status": "passed",
+      "durationMs": 0,
+      "detail": {
+        "a": {
+          "fps": 0,
+          "triangles": 189512,
+          "drawCalls": 181,
+          "quality": "low",
+          "maxPixelRatio": 1.25
+        },
+        "b": {
+          "fps": 0,
+          "triangles": 0,
+          "drawCalls": 0,
+          "quality": "low",
+          "maxPixelRatio": 1.25
+        }
+      }
+    },
+    {
+      "name": "角色工厂永不 resolve，进入工厂后 dispose 仍及时 ABORTED",
+      "status": "passed",
+      "durationMs": 156,
+      "detail": {
+        "factoryEntered": true,
+        "expectedError": {
+          "code": "ABORTED",
+          "message": "房间加载已取消"
+        }
+      }
+    },
+    {
+      "name": "缺少 amount/contactY 的真实角色被拒绝，原 canvas 可重新挂载",
+      "status": "passed",
+      "durationMs": 195,
+      "detail": {
+        "expectedError": {
+          "code": "INVALID_CHARACTER",
+          "message": "角色工厂需提供model、动作函数及有效的amount/contactY"
+        },
+        "disposedCharacters": 1,
+        "sameCanvasRecovered": true
+      }
+    },
+    {
+      "name": "lamp-change 宿主同步销毁，不再 ready 或重建 Observers",
+      "status": "passed",
+      "durationMs": 186,
+      "detail": {
+        "expectedError": {
+          "code": "ABORTED",
+          "message": "房间加载已取消"
+        },
+        "disposedInCallback": true,
+        "lateReadyEvents": 0,
+        "observerConstructions": {
+          "ResizeObserver": 0,
+          "IntersectionObserver": 0
+        }
+      }
+    }
+  ],
+  "metrics": {
+    "a": {
+      "fps": 0,
+      "triangles": 189512,
+      "drawCalls": 181,
+      "quality": "low",
+      "maxPixelRatio": 1.25
+    },
+    "b": {
+      "fps": 0,
+      "triangles": 0,
+      "drawCalls": 0,
+      "quality": "low",
+      "maxPixelRatio": 1.25
+    },
+    "note": "来自真实渲染器；不可见实例可能暂停，FPS 不是性能保证。"
+  },
+  "storage": {
+    "kind": "isolated in-memory Map",
+    "persistLayout": false,
+    "operations": [
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-a-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-a"
+      },
+      {
+        "operation": "setItem",
+        "key": "embedding-memory-1-a-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-a-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b-abort-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b-bad-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b-pending-factory-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b-invalid-character-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b-after-invalid-character-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b-after-invalid-character"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b-callback-dispose-account-v1"
+      },
+      {
+        "operation": "getItem",
+        "key": "embedding-memory-1-b-callback-dispose"
+      }
+    ],
+    "keys": [
+      "embedding-memory-1-a-account-v1"
+    ]
+  },
+  "note": "真实浏览器接入检查，不代表任意设备的帧率或性能保证。",
+  "expectedChecks": 16,
+  "summary": {
+    "passed": 16,
+    "failed": 0,
+    "completed": 16,
+    "expected": 16,
+    "retainedRooms": 1
+  },
+  "finishedAt": "2026-10-26T00:56:31.337Z"
+}

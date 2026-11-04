@@ -1,0 +1,17 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+const source=readFileSync(new URL('../estate-house.js',import.meta.url),'utf8');
+test('disposing during the travel curtain removes it synchronously and cannot complete a canceled room load',async()=>{
+ const start=source.indexOf('  async function loadRoom(id){'),end=source.indexOf('  const onAbort=',start),disposeStart=source.indexOf('  function dispose(){',end),disposeEnd=source.indexOf('  controller=',disposeStart);
+ assert.ok(start>=0&&end>start&&disposeStart>end&&disposeEnd>disposeStart);
+ let release,finishing=false,removed=false,oldDisposed=false,nextDisposed=false,designDisposed=false;
+ const curtain={finish(){finishing=true;return new Promise(resolve=>{release=resolve;});},dispose(){removed=true;release?.();}};
+ const api={getState:()=>({ready:true}),getCompanion:()=>({companion:{sound:{}}}),playMoveInCeremony(){}};
+ const context={current:{api:{getState:()=>({ready:true}),setPresentationPaused(){}},dispose(){oldDisposed=true;}},activeCurtain:null,disposed:false,generation:0,panel:null,designPanel:{dispose(){designDisposed=true;}},stage:{querySelector(){return {};},replaceChildren(){},append(){},remove(){}},container:{},win:{matchMedia:()=>({matches:false}),clearTimeout(){}},estate:{getState:()=>({rooms:[{id:'room-2',name:'二楼'}]}),storageForRoom:()=>({})},createTravelCurtain:()=>curtain,doc:{createElement:()=>({style:{}})},roomOptions:{panels:false},storageKey:'test',mountPetHouse:()=>({api,view:{root:{querySelector(){return null;}}},ready:Promise.resolve(api),dispose(){nextDisposed=true;}}),getEstate(){},createEstateRoom(){},selectEstateRoom(){},setEstateMode(){},methods:{getMusic(){}},exportArchive(){},importSave(){},exportSave(){},createBackup(){},listBackups(){},removeBackupEntry(){},restoreBackup(){},safe(){},music:{configureSound(){},dispose(){}},refresh(){},scheduleBackup(){},onInteraction:null,onState:null,onEvent:null,roomError:(code,message)=>Object.assign(new Error(message),{code}),autoBackupTimer:0,options:{},onAbort(){},mounted:new WeakMap(),controller:{},api};
+ const run=new Function('context',`with(context){${source.slice(start,end)}\n${source.slice(disposeStart,disposeEnd)};return {loadRoom,dispose};}`)(context),loading=run.loadRoom('room-2');
+ for(let i=0;i<8;i++)await Promise.resolve();assert.equal(finishing,true);assert.equal(oldDisposed,true);run.dispose();assert.equal(removed,true);assert.equal(nextDisposed,true);assert.equal(designDisposed,true);await assert.rejects(loading,error=>error.code==='ABORTED');
+});
+test('unsaved drawings prevent travel until an explicit save or discard clears the current room flag',()=>{
+ const start=source.indexOf('  const hasDrawingDraft='),end=source.indexOf('  function getEstate()',start);assert.ok(start>=0&&end>start);
+ const context={current:{view:{root:{dataset:{roomDrawingDirty:'true'}}},api:{getState:()=>({ready:true,decoration:false}),getShop:()=>({busy:false})}},disposed:false,busy:false};
+ const api=new Function('context',`with(context){${source.slice(start,end)};return {canTravel,unavailable};}`)(context);assert.equal(api.canTravel(),false);assert.equal(api.unavailable().code,'UNSAVED_DRAWING');context.current.view.root.dataset.roomDrawingDirty='false';assert.equal(api.canTravel(),true);context.current.view.root.dataset.roomWallDrawingDirty='true';assert.equal(api.canTravel(),false);context.current.view.root.dataset.roomWallDrawingDirty='false';assert.equal(api.canTravel(),true);
+});

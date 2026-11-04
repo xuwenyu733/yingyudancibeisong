@@ -1,0 +1,82 @@
+name: pet-room
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: pet_room
+      MYSQL_USER: pet_room_app
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请先生成.env配置}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请先生成.env配置}
+      TZ: UTC
+    volumes:
+      - database:/var/lib/mysql
+      - ../backend/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./02-app-permissions.sql:/docker-entrypoint-initdb.d/02-app-permissions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$${MYSQL_PASSWORD}\" mysql --protocol=TCP -h127.0.0.1 -upet_room_app -N -e 'SELECT COUNT(*) FROM pet_room.social_accounts' >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    environment:
+      PET_ROOM_MYSQL_CONFIG: /app/backend/mysql.docker.json
+      PET_ROOM_MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请先生成.env配置}
+      PET_ROOM_ALLOW_REMOTE_DB: "1"
+      PET_ROOM_SOCIAL: "1"
+      PET_ROOM_TRUST_PROXY: "1"
+      PET_ROOM_PUBLIC_ORIGIN: https://${DOMAIN:?请填写域名}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8899:8899"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8899/api/v1/status').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\" && node server/check-connection.mjs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+  web:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?请填写域名}
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+      - caddy_config:/config
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+volumes:
+  database:
+  certificates:
+  caddy_config:

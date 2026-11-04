@@ -1,0 +1,7 @@
+.pet-room-view .companion-practice-pet{position:absolute;left:0;top:0;width:86px;height:96px;z-index:37;pointer-events:none;transition:transform .65s ease-in-out;}
+.pet-room-view .companion-practice-pet img{width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 4px 2px #816c4030);}
+.pet-room-view .companion-practice-hand{position:absolute;right:2px;bottom:4px;font-size:26px;transform:rotate(-16deg);}
+.pet-room-view .companion-practice-tour{max-width:min(320px,calc(100% - 36px));left:18px;bottom:72px;}
+.pet-room-view .companion-practice-tour::before{content:none;}
+.pet-room-view .companion-tour-target{animation:none!important;outline:3px solid #d9a65d!important;outline-offset:4px;}
+@media(prefers-reduced-motion:reduce){.pet-room-view .companion-practice-pet{transition:none;}}
