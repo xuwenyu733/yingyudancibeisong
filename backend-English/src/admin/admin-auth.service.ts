@@ -13,12 +13,12 @@ import {
 } from './admin-rate-limit';
 import { AdminRole, AdminTokenPayload, AdminUserRecord } from './admin.types';
 import { verifyPassword } from './password';
+import { adminAuthSecret } from '../common/env';
 
 @Injectable()
 export class AdminAuthService {
-  private readonly secret =
-    process.env.ADMIN_AUTH_SECRET ??
-    `${process.env.AUTH_SECRET ?? 'dev-word-quest-secret'}:admin`;
+  /** 优先独立密钥，未配置则回落到 AUTH_SECRET:admin，无硬编码默认值 */
+  private readonly secret = adminAuthSecret();
 
   constructor(private readonly prisma: PrismaService) {}
 

@@ -6,6 +6,7 @@ import {
 import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
 import { ParentUser } from '../domain/types';
 import { DataStore } from '../store/data.store';
+import { authSecret } from '../common/env';
 
 interface TokenPayload {
   sub: string;
@@ -20,7 +21,8 @@ interface WechatSessionResponse {
 
 @Injectable()
 export class AuthService {
-  private readonly secret = process.env.AUTH_SECRET ?? 'dev-word-quest-secret';
+  /** 密钥由启动校验 validateEnv 保证存在，不再有硬编码兜底 */
+  private readonly secret = authSecret();
 
   constructor(private readonly store: DataStore) {}
 
