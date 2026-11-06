@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5eee1">
+  <title>杏橘狐 · 原创角色预览</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f5eee1;color:#3d514b;font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+    main{min-height:100svh;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.72fr);max-width:1440px;margin:auto;align-items:center;gap:36px;padding:40px 6vw}
+    .stage{height:min(78vh,760px);min-height:430px;position:relative;border-radius:42px;overflow:hidden;background:#f8f2e6;box-shadow:0 24px 80px #6c795411}
+    canvas{display:block;width:100%;height:100%;outline:none}.tag{position:absolute;top:26px;left:28px;font-size:12px;letter-spacing:.16em;color:#7b8c7d}.stage-status{position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:13px;color:#728277}
+    .eyebrow{font-size:12px;letter-spacing:.18em;color:#81998b}h1{font-size:clamp(36px,4vw,58px);font-weight:650;letter-spacing:.06em;margin:15px 0 18px}p{font-size:15px;line-height:1.95;color:#74857a;margin:0 0 26px}.palette{display:flex;gap:10px;margin:26px 0}.palette i{width:22px;height:22px;border-radius:50%;display:block;box-shadow:0 0 0 4px #ffffff55}
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:28px 0 20px}button{border:1px solid #d6dfd2;border-radius:15px;padding:14px 20px;font:inherit;cursor:pointer;background:#fffaf1;color:#526b5e;transition:background .15s,transform .15s}button:hover{background:#edf1e6;transform:translateY(-1px)}button[aria-pressed=true]{background:#6f9b88;color:#fff;border-color:#6f9b88}button:focus-visible,a:focus-visible{outline:3px solid #d4aa73;outline-offset:3px}
+    .facts{font-size:12px;line-height:2;color:#8b998e;border-top:1px solid #dce3d4;padding-top:20px}.back{display:inline-block;margin-top:25px;color:#6b8f7d;text-decoration:none;font-size:13px}.back:hover{text-decoration:underline}
+    @media(max-width:760px){main{display:flex;flex-direction:column;padding:18px 18px 36px;gap:24px}.stage{height:58svh;min-height:360px;width:100%;border-radius:30px}aside{width:100%;padding:0 12px}.eyebrow{display:none}h1{font-size:34px;margin:0 0 10px}p{font-size:14px;margin-bottom:15px}.palette{margin:14px 0}.controls{margin:18px 0}.facts br{display:none}.facts br:after{content:' / '}.tag{top:21px;left:22px}}
+  </style>
+</head>
+<body>
+  <main>
+    <section class="stage" id="stage" aria-label="原创杏橘狐三维角色">
+      <span class="tag">ORIGINAL CHARACTER / 01</span>
+      <canvas id="character" aria-label="杏橘色大耳狐，薄荷上衣，奶油脸颊"></canvas>
+      <output id="stage-status" class="stage-status" aria-live="polite">站立 · 待机</output>
+    </section>
+    <aside>
+      <div class="eyebrow">原创角色 · 分部关节动画</div>
+      <h1>杏橘狐</h1>
+      <p>杏橘毛色，奶油脸颊，薄荷短上衣。<br>近距离看看它的原地步态，以及完整的坐下与起立。</p>
+      <div class="palette" aria-label="角色配色"><i style="background:#e9a15f"></i><i style="background:#fff0d4"></i><i style="background:#81b4a6"></i><i style="background:#71818a"></i></div>
+      <div class="controls" aria-label="选择动画">
+        <button type="button" data-action="walk" aria-pressed="false">行走</button>
+        <button type="button" data-action="sit" aria-pressed="false">坐下</button>
+        <button type="button" data-action="stand" aria-pressed="false">起立</button>
+        <button type="button" data-action="idle" aria-pressed="true">待机</button>
+      </div>
+      <div class="facts"><span id="mesh-facts">正在创建角色…</span><br>程序几何 · 无外部模型和贴图<br>髋 / 膝 / 肩肘 / 头耳 / 尾部关节</div>
+      <a class="back" href="../index.html">← 返回房间</a>
+    </aside>
+  </main>
+  <script type="module" src="./character.js"></script>
+</body>
+</html>

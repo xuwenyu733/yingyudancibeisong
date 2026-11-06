@@ -1,0 +1,134 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/library/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/wrong/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/pet/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/parent/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/shop/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/bag/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/room/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/auth/login",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/child/create",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/study/play",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/study/result",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/member/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/report/index",
+      "style": {
+        "navigationStyle": "custom",
+        "enableShareAppMessage": true
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationStyle": "custom",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "",
+    "navigationBarBackgroundColor": "#F7F4EE",
+    "backgroundColor": "#F7F4EE"
+  },
+  "tabBar": {
+    "color": "#8A94A6",
+    "selectedColor": "#2EB086",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "今日冒险",
+        "iconPath": "static/tab/home-v2.png",
+        "selectedIconPath": "static/tab/home-v2-on.png"
+      },
+      {
+        "pagePath": "pages/library/index",
+        "text": "单词地图",
+        "iconPath": "static/tab/book-v2.png",
+        "selectedIconPath": "static/tab/book-v2-on.png"
+      },
+      {
+        "pagePath": "pages/wrong/index",
+        "text": "复习小站",
+        "iconPath": "static/tab/wrong-v2.png",
+        "selectedIconPath": "static/tab/wrong-v2-on.png"
+      },
+      {
+        "pagePath": "pages/pet/index",
+        "text": "我的伙伴",
+        "iconPath": "static/tab/pet-v2.png",
+        "selectedIconPath": "static/tab/pet-v2-on.png"
+      },
+      {
+        "pagePath": "pages/parent/index",
+        "text": "家长中心",
+        "iconPath": "static/tab/parent-v2.png",
+        "selectedIconPath": "static/tab/parent-v2-on.png"
+      }
+    ]
+  }
+}

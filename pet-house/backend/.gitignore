@@ -1,0 +1,6 @@
+app.local.json
+mysql.password.dpapi
+*.password
+.admin-init-*.json
+node_modules/
+../database-backups/

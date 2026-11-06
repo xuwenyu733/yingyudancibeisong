@@ -1,0 +1,25 @@
+{
+  "name": "pet-house-framework-checks",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-vue": "6.0.10",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "svelte": "5.57.3",
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vue": "3.5.44"
+  },
+  "scripts": {
+    "dev": "node prepare.mjs && vite --config vite.config.mjs --host 127.0.0.1 --port 5190",
+    "build": "node prepare.mjs && vite build --config vite.config.mjs",
+    "preview": "node serve.mjs",
+    "check:types": "node typecheck.mjs",
+    "check:ssr": "node ssr-check.mjs",
+    "check:browser": "node browser-check.mjs"
+  }
+}

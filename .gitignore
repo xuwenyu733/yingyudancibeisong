@@ -1,0 +1,29 @@
+node_modules
+dist
+unpackage
+coverage
+.DS_Store
+.env
+.env.*
+!.env.example
+*.local
+*.db
+*.db-journal
+.turbo
+.vite
+*.tsbuildinfo
+
+# HBuilderX / 本地调试（含安卓基座联调配置，勿入库）
+.hbuilderx/
+**/.hbuilderx/
+
+# 编辑器与系统
+.idea/
+.vscode/
+*.suo
+*.sw?
+Thumbs.db
+
+# 日志与缓存
+*.log
+.cache/

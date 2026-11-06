@@ -1,0 +1,124 @@
+{
+  "version": 2,
+  "source": "characters/pet-models.js",
+  "sourceSha256": "3cb04925e4281a3cbdd10fd0d33b70185a190553365692241404f84f7aebbee2",
+  "kind": "runtime-model-studio-render",
+  "transparent": true,
+  "entries": [
+    {
+      "sku": "apricot-fox",
+      "name": "杏橘狐",
+      "modelId": "original-apricot-fox-v2",
+      "triangles": 7168,
+      "bounds": {
+        "min": [
+          -0.25178298700888246,
+          -1.3877787807814457e-17,
+          -0.39315374435704825
+        ],
+        "max": [
+          0.28930107309544295,
+          1.0000000000000002,
+          0.23115752969898762
+        ]
+      },
+      "file": "apricot-fox.png",
+      "width": 512,
+      "height": 512,
+      "bytes": 32409,
+      "sha256": "5d39c1f7da956ebbcd50dceb37bebc27e67f6d4667f68e5a8bdaa9e31a4a685f"
+    },
+    {
+      "sku": "cloud-bunny",
+      "name": "云朵兔",
+      "modelId": "original-cloud-bunny-v2",
+      "triangles": 4412,
+      "bounds": {
+        "min": [
+          -0.19970688448786908,
+          0,
+          -0.2198659187078977
+        ],
+        "max": [
+          0.19970688448786908,
+          1,
+          0.1824798110733564
+        ]
+      },
+      "file": "cloud-bunny.png",
+      "width": 512,
+      "height": 512,
+      "bytes": 24320,
+      "sha256": "04b1f2baf780bfb293eb534198d209501077b77b895652466e7d5b60ffa4fb19"
+    },
+    {
+      "sku": "mint-cat",
+      "name": "薄荷猫",
+      "modelId": "original-mint-cat-v2",
+      "triangles": 4760,
+      "bounds": {
+        "min": [
+          -0.28748310783051,
+          0,
+          -0.44980448065903433
+        ],
+        "max": [
+          0.28748310783051,
+          1,
+          0.24959211676225468
+        ]
+      },
+      "file": "mint-cat.png",
+      "width": 512,
+      "height": 512,
+      "bytes": 35647,
+      "sha256": "18ec48494f033765c00bc1ca58fdef7c56fde959182124a376c1a05de29f1696"
+    },
+    {
+      "sku": "cocoa-bear",
+      "name": "可可熊",
+      "modelId": "original-cocoa-bear-v2",
+      "triangles": 4080,
+      "bounds": {
+        "min": [
+          -0.35220176650388124,
+          0,
+          -0.2688728024819028
+        ],
+        "max": [
+          0.35220176650388124,
+          1,
+          0.2730817727613597
+        ]
+      },
+      "file": "cocoa-bear.png",
+      "width": 512,
+      "height": 512,
+      "bytes": 39083,
+      "sha256": "e443f01a1639ce07828461b8595b0e86df6248a534f4ed1d6af1dfbf6b731539"
+    },
+    {
+      "sku": "starlight-penguin",
+      "name": "星光企鹅",
+      "modelId": "original-starlight-penguin-v2",
+      "triangles": 1980,
+      "bounds": {
+        "min": [
+          -0.38770411273864575,
+          2.0662490098640198e-18,
+          -0.25270492909550346
+        ],
+        "max": [
+          0.38770411273864575,
+          1.0048663355622223,
+          0.3508902696053788
+        ]
+      },
+      "file": "starlight-penguin.png",
+      "width": 512,
+      "height": 512,
+      "bytes": 24274,
+      "sha256": "2f344ba72a96d930a582674ac5aa1b449615383091c25b3951764213612905c7"
+    }
+  ]
+}

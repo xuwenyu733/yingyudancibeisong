@@ -1,0 +1,211 @@
+{
+  "version": "2.3.0",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "初次账户 1000 积分，基础房屋及 9 件原家具",
+      "status": "passed"
+    },
+    {
+      "name": "兑换盆栽，扣 120 分并生成可编辑独立家具",
+      "status": "passed"
+    },
+    {
+      "name": "同一购买请求重放不重复扣分；新请求不能重复买",
+      "status": "passed"
+    },
+    {
+      "name": "600 分真实扩建，地板和行走边界同步扩大",
+      "status": "passed"
+    },
+    {
+      "name": "销毁重挂恢复积分、产权、房级及新家具位置",
+      "status": "passed"
+    },
+    {
+      "name": "积分不足时不扣费、不扩大房屋",
+      "status": "passed"
+    },
+    {
+      "name": "学习奖励 10/5/20 入账，重复学习事件不重复发奖",
+      "status": "passed"
+    },
+    {
+      "name": "购买存储失败，积分和暂存的3D家具同时回滚",
+      "status": "passed"
+    },
+    {
+      "name": "存储恢复后重试同一失败请求可以成功",
+      "status": "passed"
+    },
+    {
+      "name": "扩建存储失败同时回滚房壳尺寸和房级，恢复后可重试",
+      "status": "passed"
+    },
+    {
+      "name": "满级扩建和未知商品均不扣积分",
+      "status": "passed"
+    },
+    {
+      "name": "装修会话中禁止账户购买，退出后恢复操作",
+      "status": "passed"
+    }
+  ],
+  "startedAt": "2026-10-26T00:57:01.190Z",
+  "summary": {
+    "passed": 12,
+    "failed": 0
+  },
+  "finalState": {
+    "protocolVersion": 1,
+    "version": "2.3.0",
+    "lifecycle": "ready",
+    "ready": true,
+    "character": {
+      "id": "original-apricot-fox-v2",
+      "displayName": "杏橘狐",
+      "forwardAxis": "+Z",
+      "height": 1,
+      "triangles": 7168,
+      "source": "original-procedural-geometry",
+      "rigType": "articulated-object-joints",
+      "design": {
+        "targetAudience": "6-14岁儿童",
+        "appeal": [
+          "round-silhouette",
+          "large-eyes",
+          "clear-facial-signals",
+          "high-saturation",
+          "animal-type"
+        ],
+        "appearance": "kid",
+        "paletteKeys": [
+          "fur",
+          "furShade",
+          "cream",
+          "ear",
+          "shirt",
+          "shirtShade",
+          "shorts",
+          "eye",
+          "nose",
+          "blush",
+          "pupil"
+        ]
+      },
+      "animations": [
+        {
+          "name": "idle",
+          "duration": 3,
+          "loop": true
+        },
+        {
+          "name": "walk",
+          "duration": 1,
+          "loop": true
+        },
+        {
+          "name": "sit",
+          "duration": 1.45,
+          "loop": false
+        },
+        {
+          "name": "stand",
+          "duration": 1.2,
+          "loop": false
+        }
+      ]
+    },
+    "lampOn": true,
+    "shop": {
+      "balance": 270,
+      "owned": [
+        "clover-planter",
+        "cloud-table"
+      ],
+      "roomLevel": 2,
+      "roomName": "宽敞大屋",
+      "width": 12.8,
+      "depth": 12.2,
+      "catalog": [
+        {
+          "sku": "clover-planter",
+          "name": "四叶草盆栽",
+          "price": 120,
+          "description": "把一小片幸运绿意带进房间。",
+          "kind": "furniture"
+        },
+        {
+          "sku": "reading-shelf",
+          "name": "阅读书架",
+          "price": 260,
+          "description": "为每天学会的新词留一处安静角落。",
+          "kind": "furniture"
+        },
+        {
+          "sku": "cloud-table",
+          "name": "云朵小桌",
+          "price": 180,
+          "description": "圆润的小桌，陪伴每一次学习。",
+          "kind": "furniture"
+        },
+        {
+          "sku": "moon-ornament",
+          "name": "月亮摆件",
+          "price": 220,
+          "description": "给小屋添上一弯柔和的月亮。",
+          "kind": "furniture"
+        }
+      ],
+      "tiers": [
+        {
+          "level": 0,
+          "name": "初始小屋",
+          "width": 8.8,
+          "depth": 8.2,
+          "price": 0
+        },
+        {
+          "level": 1,
+          "name": "温馨大屋",
+          "width": 10.8,
+          "depth": 10.2,
+          "price": 600
+        },
+        {
+          "level": 2,
+          "name": "宽敞大屋",
+          "width": 12.8,
+          "depth": 12.2,
+          "price": 1500
+        }
+      ],
+      "nextTier": null,
+      "busy": false,
+      "valid": true,
+      "error": null
+    },
+    "petState": "idle",
+    "petPosition": [
+      0.65,
+      0.09,
+      2.83
+    ],
+    "petYaw": 0.15,
+    "desiredSeated": false,
+    "seatId": null,
+    "sitting": 0,
+    "poseStage": "站立",
+    "decoration": false,
+    "selected": null,
+    "error": null,
+    "metrics": {
+      "fps": 0,
+      "triangles": 0,
+      "drawCalls": 0,
+      "quality": "low",
+      "maxPixelRatio": 1.25
+    }
+  },
+  "finishedAt": "2026-10-26T00:57:01.638Z"
+}

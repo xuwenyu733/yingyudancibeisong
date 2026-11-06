@@ -1,0 +1,1017 @@
+{
+  "version": 1,
+  "kind": "runtime-product-studio-render",
+  "transparent": true,
+  "sources": [
+    {
+      "file": "scene-economy.js",
+      "sha256": "67bcfc4315cce30fabc46c33b77d2345c1511c2c24f31eb7952ae2799fbfbdc8"
+    },
+    {
+      "file": "surface-models.mjs",
+      "sha256": "ae2a5330025f3e48168cf3be6dc96d287af71bf879d0e62bd08d2b061de22127"
+    },
+    {
+      "file": "decor.js",
+      "sha256": "5d75eb846f08a30feed5d94c68564dc6d8f196d270250209c9a8a11b4ea55f0f"
+    },
+    {
+      "file": "layout.js",
+      "sha256": "2aae96d96acdab10346fabaec01b83beb6304183e3223a58f61ffdf9ee92a7dd"
+    },
+    {
+      "file": "surface-catalog.mjs",
+      "sha256": "f46b858dac3c9ed5e835d25b83967a049c47242c99de2f89cb283064ca88f5eb"
+    },
+    {
+      "file": "product-previews.mjs",
+      "sha256": "ea9e4ddd5a2a433a9f639f497bb0ff3c68a69baecbd886b5f597c58415ef2b43"
+    }
+  ],
+  "entries": [
+    {
+      "sku": "clover-planter",
+      "category": "furniture",
+      "triangles": 6432,
+      "meshes": 8,
+      "bounds": {
+        "min": [
+          -0.26992516219615936,
+          0,
+          -0.2784406840801239
+        ],
+        "max": [
+          0.26992516219615936,
+          0.9324999977834523,
+          0.2784406840801239
+        ]
+      },
+      "name": "四叶草盆栽",
+      "file": "clover-planter.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 36478,
+      "sha256": "ea860ce4848308f4464741e75ef6d6d262fae221b0f72267a55396b99b206d2d"
+    },
+    {
+      "sku": "reading-shelf",
+      "category": "furniture",
+      "triangles": 8780,
+      "meshes": 8,
+      "bounds": {
+        "min": [
+          -0.5249999761581421,
+          1.1102230246251565e-16,
+          -0.2298699989914894
+        ],
+        "max": [
+          0.5249999761581421,
+          1.4999999994039537,
+          0.2298699989914894
+        ]
+      },
+      "name": "阅读书架",
+      "file": "reading-shelf.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 56025,
+      "sha256": "0e3345fb6609367b9527c89a129f639a9e9e483cf4618cff77bad235c9438c60"
+    },
+    {
+      "sku": "cloud-table",
+      "category": "furniture",
+      "triangles": 3252,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -0.4650000035762787,
+          0,
+          -0.32500000298023224
+        ],
+        "max": [
+          0.4650000035762787,
+          0.6385000152513385,
+          0.32500000298023224
+        ]
+      },
+      "name": "云朵小桌",
+      "file": "cloud-table.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 27484,
+      "sha256": "d64bcb0170526671ab63d1f939d4bc0d575694eec2974a8af6c8720a90e7ec02"
+    },
+    {
+      "sku": "moon-ornament",
+      "category": "furniture",
+      "triangles": 4748,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -0.3120950609445572,
+          0,
+          -0.23499999940395355
+        ],
+        "max": [
+          0.3120950609445572,
+          0.9782287068665028,
+          0.23499999940395355
+        ]
+      },
+      "name": "月亮摆件",
+      "file": "moon-ornament.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 23889,
+      "sha256": "fa0b628f2bf6f0a192b70f9fcb187d914dbda4f2143ee36be79c898f5215aea1"
+    },
+    {
+      "sku": "star-lamp",
+      "category": "furniture",
+      "triangles": 4252,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -0.30000001192092896,
+          8.326672684688674e-17,
+          -0.30000001192092896
+        ],
+        "max": [
+          0.30000001192092896,
+          1.116313696280122,
+          0.30000001192092896
+        ]
+      },
+      "name": "星星夜灯",
+      "file": "star-lamp.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 27485,
+      "sha256": "2b0697e3447d55ca402ecca3f63402ac854b487e8b450bbe21c8bb366d93476e"
+    },
+    {
+      "sku": "mushroom-stool",
+      "category": "furniture",
+      "triangles": 7888,
+      "meshes": 6,
+      "bounds": {
+        "min": [
+          -0.3499999940395355,
+          0,
+          -0.3499999940395355
+        ],
+        "max": [
+          0.3499999940395355,
+          0.6830000317096709,
+          0.3499999940395355
+        ]
+      },
+      "name": "蘑菇小板凳",
+      "file": "mushroom-stool.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 32242,
+      "sha256": "c19658fc5cf67bb219268f0de85bd0d3ff048bff3038ff465e7a0d89668e55f7"
+    },
+    {
+      "sku": "beehive-ornament",
+      "category": "furniture",
+      "triangles": 9704,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -0.3400000035762787,
+          0,
+          -0.3400000035762787
+        ],
+        "max": [
+          0.3400000035762787,
+          0.9527618899941445,
+          0.3400000035762787
+        ]
+      },
+      "name": "蜂巢摆件",
+      "file": "beehive-ornament.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 38102,
+      "sha256": "e62ca0d4587c62503e4c9e60e69ebd3f25d19e11882114548bb17cd1bb8e4321"
+    },
+    {
+      "sku": "rocket-toy",
+      "category": "furniture",
+      "triangles": 5920,
+      "meshes": 8,
+      "bounds": {
+        "min": [
+          -0.2582642436027527,
+          0,
+          -0.18950000405311584
+        ],
+        "max": [
+          0.2582642436027527,
+          0.8000000072643161,
+          0.18950000405311584
+        ]
+      },
+      "name": "小火箭摆件",
+      "file": "rocket-toy.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 29352,
+      "sha256": "8f57b35523e57bc624ecf4bcbd5b29168d99d017ef45609526c00909bd22fb8e"
+    },
+    {
+      "sku": "rainbow-arch",
+      "category": "furniture",
+      "triangles": 10384,
+      "meshes": 7,
+      "bounds": {
+        "min": [
+          -0.6499999761581421,
+          0,
+          -0.2224999964237213
+        ],
+        "max": [
+          0.6499999761581421,
+          1.1284450246021152,
+          0.2224999964237213
+        ]
+      },
+      "name": "彩虹小拱门",
+      "file": "rainbow-arch.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 39852,
+      "sha256": "ebea6cd8595fd4c53bd30c28509ef667b7da90db59efe4d22fbddfa96c9434f1"
+    },
+    {
+      "sku": "candy-tree",
+      "category": "furniture",
+      "triangles": 9188,
+      "meshes": 7,
+      "bounds": {
+        "min": [
+          -0.33000001311302185,
+          0,
+          -0.23599999397993088
+        ],
+        "max": [
+          0.33000001311302185,
+          1.005313745699823,
+          0.23599999397993088
+        ]
+      },
+      "name": "糖果小树",
+      "file": "candy-tree.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 37027,
+      "sha256": "082e332f793d10b728ea43301a81d815a371ffb874d367ff23e823942f8e2643"
+    },
+    {
+      "sku": "tile-honey-grid",
+      "category": "flooring",
+      "triangles": 2136,
+      "meshes": 3,
+      "bounds": {
+        "min": [
+          -2.4000000953674316,
+          0,
+          -2.299999952316284
+        ],
+        "max": [
+          2.4000000953674316,
+          0.0325000025331974,
+          2.299999952316284
+        ]
+      },
+      "name": "蜂蜜奶油砖",
+      "file": "tile-honey-grid.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 10959,
+      "sha256": "ee8c3d623cdaa8fa650987fec4bda468f6cbd724d0afe23f71a1519311e4e8e5"
+    },
+    {
+      "sku": "tile-blush-checker",
+      "category": "flooring",
+      "triangles": 564,
+      "meshes": 3,
+      "bounds": {
+        "min": [
+          -2.4000000953674316,
+          0,
+          -2.299999952316284
+        ],
+        "max": [
+          2.4000000953674316,
+          0.0325000025331974,
+          2.299999952316284
+        ]
+      },
+      "name": "蜜桃棋盘砖",
+      "file": "tile-blush-checker.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 11953,
+      "sha256": "1d47c095e167a96b6d448e7272a9b52a57f7b6397e3e07ae3ea55bc266761a48"
+    },
+    {
+      "sku": "tile-mint-diamond",
+      "category": "flooring",
+      "triangles": 1284,
+      "meshes": 3,
+      "bounds": {
+        "min": [
+          -2.40121328830719,
+          0,
+          -2.299999952316284
+        ],
+        "max": [
+          2.40121328830719,
+          0.0325000025331974,
+          2.299999952316284
+        ]
+      },
+      "name": "薄荷菱花砖",
+      "file": "tile-mint-diamond.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 16466,
+      "sha256": "34d63f064e05de33403bbdbb7c689db359393cb2f89c8057141224caa55bdcad"
+    },
+    {
+      "sku": "tile-blue-mosaic",
+      "category": "flooring",
+      "triangles": 2044,
+      "meshes": 3,
+      "bounds": {
+        "min": [
+          -2.4000000953674316,
+          0,
+          -2.299999952316284
+        ],
+        "max": [
+          2.4000000953674316,
+          0.03500000014901161,
+          2.299999952316284
+        ]
+      },
+      "name": "海盐星花砖",
+      "file": "tile-blue-mosaic.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 17470,
+      "sha256": "7b6f1d4bfb255c20d9db78568b6aa0dfb5e263bdf34d802d4567f7f327cf51b1"
+    },
+    {
+      "sku": "tile-sakura-terrazzo",
+      "category": "flooring",
+      "triangles": 2412,
+      "meshes": 4,
+      "bounds": {
+        "min": [
+          -2.4000000953674316,
+          0,
+          -2.299999952316284
+        ],
+        "max": [
+          2.4000000953674316,
+          0.030499998480081558,
+          2.299999952316284
+        ]
+      },
+      "name": "樱花水磨石",
+      "file": "tile-sakura-terrazzo.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 16109,
+      "sha256": "b8dbdc9b6590225aaa4d69577c51b40667a9054a09a99a7a3c042b404b9bde27"
+    },
+    {
+      "sku": "tile-walnut-parquet",
+      "category": "flooring",
+      "triangles": 1692,
+      "meshes": 4,
+      "bounds": {
+        "min": [
+          -2.4000000953674316,
+          0,
+          -2.299999952316284
+        ],
+        "max": [
+          2.4000000953674316,
+          0.030499998480081558,
+          2.299999952316284
+        ]
+      },
+      "name": "胡桃人字拼",
+      "file": "tile-walnut-parquet.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 18311,
+      "sha256": "48989ff28f15325736e69e45ce35fd359f18992c2ea26aed57b36b8398aeb57d"
+    },
+    {
+      "sku": "tile-moon-marble",
+      "category": "flooring",
+      "triangles": 1452,
+      "meshes": 4,
+      "bounds": {
+        "min": [
+          -2.4000000953674316,
+          0,
+          -2.299999952316284
+        ],
+        "max": [
+          2.4000000953674316,
+          0.030499998480081558,
+          2.299999952316284
+        ]
+      },
+      "name": "月辉金脉石",
+      "file": "tile-moon-marble.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 15459,
+      "sha256": "e92a00a9538f1470c2935dc03f438d20b4bbf1d5811a282f62c96e212b72a4da"
+    },
+    {
+      "sku": "tile-royal-medallion",
+      "category": "flooring",
+      "triangles": 1988,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -2.4000000953674316,
+          0,
+          -2.299999952316284
+        ],
+        "max": [
+          2.4000000953674316,
+          0.03200000151991844,
+          2.299999952316284
+        ]
+      },
+      "name": "星宫鎏金拼花",
+      "file": "tile-royal-medallion.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 26069,
+      "sha256": "be46c008aef5f20df70adb970841240ba5b1325c7a3fcda73e65f6050f60594e"
+    },
+    {
+      "sku": "wall-botanical-frame",
+      "category": "wall",
+      "triangles": 2436,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.08924999833106995
+        ],
+        "max": [
+          0.5,
+          1.25,
+          0.08924999833106995
+        ]
+      },
+      "name": "晨光植物画",
+      "file": "wall-botanical-frame.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 50070,
+      "sha256": "3096ccc3ed3763c81f07b0a198f678f416ca356fcb38c1aea8f13c5f0d4897c7"
+    },
+    {
+      "sku": "wall-daisy-wreath",
+      "category": "wall",
+      "triangles": 14144,
+      "meshes": 4,
+      "bounds": {
+        "min": [
+          -0.574999988079071,
+          0,
+          -0.06382051110267639
+        ],
+        "max": [
+          0.574999988079071,
+          1.350000023841858,
+          0.06382051110267639
+        ]
+      },
+      "name": "雏菊花环",
+      "file": "wall-daisy-wreath.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 45889,
+      "sha256": "913cc15bb0e75d25ce0f14d1dac78269daf59d680512ec07a545b0ffcd82d5d9"
+    },
+    {
+      "sku": "wall-rainbow-cloud",
+      "category": "wall",
+      "triangles": 6840,
+      "meshes": 6,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.07678941637277603
+        ],
+        "max": [
+          0.75,
+          1.2000000476837158,
+          0.07678941637277603
+        ]
+      },
+      "name": "云端小彩虹",
+      "file": "wall-rainbow-cloud.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 46854,
+      "sha256": "726d5d39df8758098d902350238d3d0e520c162456fa4144c1de8492cd87d257"
+    },
+    {
+      "sku": "wall-butterfly-duo",
+      "category": "wall",
+      "triangles": 3568,
+      "meshes": 6,
+      "bounds": {
+        "min": [
+          -0.699999988079071,
+          0,
+          -0.10000000149011612
+        ],
+        "max": [
+          0.699999988079071,
+          1.5,
+          0.10000000149011612
+        ]
+      },
+      "name": "双蝶标本盒",
+      "file": "wall-butterfly-duo.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 41550,
+      "sha256": "48649fdbb3560aea4b48ea75fe49afc4f62868d9b7c51500c34034c7a67d1716"
+    },
+    {
+      "sku": "wall-moon-mobile",
+      "category": "wall",
+      "triangles": 3724,
+      "meshes": 4,
+      "bounds": {
+        "min": [
+          -0.6499999761581421,
+          0,
+          -0.05400000140070915
+        ],
+        "max": [
+          0.6499999761581421,
+          1.899999976158142,
+          0.05400000140070915
+        ]
+      },
+      "name": "月眠星铃",
+      "file": "wall-moon-mobile.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 13657,
+      "sha256": "60ab2469f684d9088711d230b841d36ab242a87337f52ee7d34d22c3eb748992"
+    },
+    {
+      "sku": "wall-forest-clock",
+      "category": "wall",
+      "triangles": 5168,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -0.7250000238418579,
+          0,
+          -0.10000000149011612
+        ],
+        "max": [
+          0.7250000238418579,
+          1.899999976158142,
+          0.10000000149011612
+        ]
+      },
+      "name": "林间布谷钟",
+      "file": "wall-forest-clock.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 29801,
+      "sha256": "ef333c6d5f0fdc723d7715ca419b16a2c8a660f82206f96b51c37457fcde8ed6"
+    },
+    {
+      "sku": "wall-ocean-triptych",
+      "category": "wall",
+      "triangles": 9272,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -1.0499999523162842,
+          0,
+          -0.07750000059604645
+        ],
+        "max": [
+          1.0499999523162842,
+          1.399999976158142,
+          0.07750000059604645
+        ]
+      },
+      "name": "潮汐三联画",
+      "file": "wall-ocean-triptych.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 49968,
+      "sha256": "91176a02b89dcfdaab0633aeff42d1a001ccdf88e3045524777f6998dc48dd55"
+    },
+    {
+      "sku": "wall-sakura-fan",
+      "category": "wall",
+      "triangles": 11912,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -0.925000011920929,
+          0,
+          -0.06874967366456985
+        ],
+        "max": [
+          0.925000011920929,
+          1.649999976158142,
+          0.06874967366456985
+        ]
+      },
+      "name": "樱雨折扇",
+      "file": "wall-sakura-fan.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 49847,
+      "sha256": "92c528781754256cd1492522bdd129f632909eeb1dac52c06fee047ac170d914"
+    },
+    {
+      "sku": "wall-starlight-mirror",
+      "category": "wall",
+      "triangles": 8504,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -0.824999988079071,
+          0,
+          -0.06599999964237213
+        ],
+        "max": [
+          0.824999988079071,
+          1.75,
+          0.06599999964237213
+        ]
+      },
+      "name": "星芒鎏金镜",
+      "file": "wall-starlight-mirror.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 45672,
+      "sha256": "5b4ce26e6b97babea7e115a81d49a193f33d8c110504391996dbad76ff38dd18"
+    },
+    {
+      "sku": "wall-crystal-chandelier",
+      "category": "wall",
+      "triangles": 12996,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -0.8500000238418579,
+          0,
+          -0.05729423090815544
+        ],
+        "max": [
+          0.8500000238418579,
+          2.1500000953674316,
+          0.05729423090815544
+        ]
+      },
+      "name": "极光水晶壁灯",
+      "file": "wall-crystal-chandelier.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 32483,
+      "sha256": "d4d566f1a43cd3678848bfec88bc13293f58b104fc8fda13114ec3e6fb5bfeb0"
+    },
+    {
+      "sku": "wall-celestial-orrery",
+      "category": "wall",
+      "triangles": 12568,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.09000000357627869
+        ],
+        "max": [
+          1,
+          2,
+          0.09000000357627869
+        ]
+      },
+      "name": "星河天仪",
+      "file": "wall-celestial-orrery.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 99057,
+      "sha256": "a04e2b25c74ab1cec33d0473bb235bf7e5aaee6a1f0db15d31e4f89249a0c824"
+    },
+    {
+      "sku": "wall-phoenix-tapestry",
+      "category": "wall",
+      "triangles": 15300,
+      "meshes": 6,
+      "bounds": {
+        "min": [
+          -1.0750000476837158,
+          0,
+          -0.10000000149011612
+        ],
+        "max": [
+          1.0750000476837158,
+          2.25,
+          0.10000000149011612
+        ]
+      },
+      "name": "凤羽流光屏",
+      "file": "wall-phoenix-tapestry.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 72386,
+      "sha256": "740c26a6116330ecc7ebb7395193fd840f76f7cd6f70ff00ed9da7d21392a3eb"
+    },
+    {
+      "sku": "sofa",
+      "category": "builtin",
+      "triangles": 30000,
+      "meshes": 1,
+      "bounds": {
+        "min": [
+          -1.8493225097656252,
+          0,
+          -1.3146697998046881
+        ],
+        "max": [
+          1.8493225097656252,
+          1.8267959594726564,
+          1.3146697998046881
+        ]
+      },
+      "name": "大沙发",
+      "file": "sofa.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 95488,
+      "sha256": "9f927b698df776918a0e20dd584cd47863e65e7d8ba680fc14652eec57bd85a5"
+    },
+    {
+      "sku": "table",
+      "category": "builtin",
+      "triangles": 20000,
+      "meshes": 1,
+      "bounds": {
+        "min": [
+          -0.9397079467773437,
+          0,
+          -0.9498550415039062
+        ],
+        "max": [
+          0.9397079467773437,
+          0.7801666259765625,
+          0.9498550415039062
+        ]
+      },
+      "name": "书桌",
+      "file": "table.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 54621,
+      "sha256": "fc06916bb6e7b8630b41c7bac565ad6ddffcb4e70b1b81872911250043c03a25"
+    },
+    {
+      "sku": "lamp",
+      "category": "builtin",
+      "triangles": 15994,
+      "meshes": 1,
+      "bounds": {
+        "min": [
+          -0.36107330322265624,
+          0,
+          -0.36079467773437496
+        ],
+        "max": [
+          0.36107330322265624,
+          0.83,
+          0.36079467773437496
+        ]
+      },
+      "name": "小台灯",
+      "file": "lamp.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 44284,
+      "sha256": "63b9d265f67a02efbbd808efbe768db2cfc83ca6817103780f85a30da2d989d5"
+    },
+    {
+      "sku": "rug",
+      "category": "flooring",
+      "triangles": 9900,
+      "meshes": 2,
+      "bounds": {
+        "min": [
+          -2.6600000858306885,
+          0,
+          -2.609999895095825
+        ],
+        "max": [
+          2.6600000858306885,
+          0.06750000268220901,
+          2.609999895095825
+        ]
+      },
+      "name": "大地毯",
+      "file": "rug.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 12439,
+      "sha256": "3238382d745ae4c7eb7bb14b1fb8a63c618f4af486b67b6362ce4a356982da3e"
+    },
+    {
+      "sku": "lamp-cabinet",
+      "category": "builtin",
+      "triangles": 852,
+      "meshes": 5,
+      "bounds": {
+        "min": [
+          -0.6349999904632568,
+          0,
+          -0.5699999928474426
+        ],
+        "max": [
+          0.6349999904632568,
+          1.08500000461936,
+          0.5699999928474426
+        ]
+      },
+      "name": "小柜子",
+      "file": "lamp-cabinet.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 43241,
+      "sha256": "e6940852af149cc61e22e8d9568a2667b5802d9882aae20b553e9d301182aecf"
+    },
+    {
+      "sku": "plant-shelf",
+      "category": "builtin",
+      "triangles": 1568,
+      "meshes": 11,
+      "bounds": {
+        "min": [
+          -0.4699999988079071,
+          0,
+          -0.38239622116088867
+        ],
+        "max": [
+          0.4699999988079071,
+          3.317922482267022,
+          0.38239622116088867
+        ]
+      },
+      "name": "花架",
+      "file": "plant-shelf.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 25806,
+      "sha256": "684008a683930a5e884f73dbc568b040d389ed30212cac516625f484df00f184"
+    },
+    {
+      "sku": "wall-pictures",
+      "category": "wall",
+      "triangles": 648,
+      "meshes": 4,
+      "bounds": {
+        "min": [
+          -0.6699999868869781,
+          0,
+          -0.035250067710876465
+        ],
+        "max": [
+          0.6699999868869781,
+          0.7999999523162842,
+          0.035250067710876465
+        ]
+      },
+      "name": "装饰画",
+      "file": "wall-pictures.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 10065,
+      "sha256": "87c019020244d7dc933a6ea61838f5bff7b4ad42e5a1f8dc379ade02c470ddce"
+    },
+    {
+      "sku": "floor-pot",
+      "category": "builtin",
+      "triangles": 576,
+      "meshes": 4,
+      "bounds": {
+        "min": [
+          -0.269268661737442,
+          0,
+          -0.27039219439029694
+        ],
+        "max": [
+          0.269268661737442,
+          0.8937645619735122,
+          0.27039219439029694
+        ]
+      },
+      "name": "地面盆栽",
+      "file": "floor-pot.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 36143,
+      "sha256": "6fb72842599e2f14e1e528838f24b20481e3b34ccf3abc17e19117c81032cce0"
+    },
+    {
+      "sku": "ottoman-a",
+      "category": "builtin",
+      "triangles": 484,
+      "meshes": 3,
+      "bounds": {
+        "min": [
+          -0.5899999737739563,
+          0,
+          -0.4699999988079071
+        ],
+        "max": [
+          0.5899999737739563,
+          0.7200000183656812,
+          0.4699999988079071
+        ]
+      },
+      "name": "软凳A",
+      "file": "ottoman-a.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 45571,
+      "sha256": "95895f56e8da570195af3f53038f1f2a3bea4a1695ae3767b87e030b9bf01d66"
+    },
+    {
+      "sku": "ottoman-b",
+      "category": "builtin",
+      "triangles": 484,
+      "meshes": 3,
+      "bounds": {
+        "min": [
+          -0.5899999737739563,
+          0,
+          -0.4699999988079071
+        ],
+        "max": [
+          0.5899999737739563,
+          0.7200000183656812,
+          0.4699999988079071
+        ]
+      },
+      "name": "软凳B",
+      "file": "ottoman-b.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 45586,
+      "sha256": "02ed46514095df4109958ad5b69f9467d2add759fde049372b4455a79f555246"
+    },
+    {
+      "sku": "front-fence",
+      "category": "builtin",
+      "triangles": 1188,
+      "meshes": 1,
+      "bounds": {
+        "min": [
+          -0.04749999940395355,
+          0,
+          -1.8449999690055847
+        ],
+        "max": [
+          0.04749999940395355,
+          0.8899999968707561,
+          1.8449999690055847
+        ]
+      },
+      "name": "前栅栏",
+      "file": "front-fence.png",
+      "width": 512,
+      "height": 384,
+      "bytes": 39480,
+      "sha256": "bc447c018b268854eb6c538458891b88d2e47e4d3dfbd15b4da6d36e3f6c613b"
+    }
+  ]
+}

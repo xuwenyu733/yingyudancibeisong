@@ -1,0 +1,111 @@
+{
+  "environment": "Chromium with software WebGL; Vite subdirectory build",
+  "versions": {
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-vue": "6.0.10",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "svelte": "5.57.3",
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vue": "3.5.44"
+  },
+  "mode": "production",
+  "summary": "验证完成：22 项通过 / 0 项失败",
+  "result": "pass",
+  "checks": [
+    {
+      "passed": true,
+      "name": "通过 · Vite 子目录生产产物：React 与 Vue 均成功加载真实模型"
+    },
+    {
+      "passed": true,
+      "name": "通过 · React生产运行时正常挂载且没有重复场景"
+    },
+    {
+      "passed": true,
+      "name": "通过 · React 回调更新不重建场景或重置账户"
+    },
+    {
+      "passed": true,
+      "name": "通过 · 多实例共用一个样式资源，商店与主页均已加载样式"
+    },
+    {
+      "passed": true,
+      "name": "通过 · React 兑换扣分，与 Vue 的账户和宠物相互隔离"
+    },
+    {
+      "passed": true,
+      "name": "通过 · 嵌入宿主 form 后，打开商店不会提交表单"
+    },
+    {
+      "passed": true,
+      "name": "通过 · 生产包中5张实际角色图片均加载，商店静置不继续提交WebGL帧"
+    },
+    {
+      "passed": true,
+      "name": "通过 · 生产包中41张商品实图及4类未解锁收藏预览、获取提示均可加载"
+    },
+    {
+      "passed": true,
+      "name": "通过 · React 路由卸载清理 UI，旧 API 无法继续写存档"
+    },
+    {
+      "passed": true,
+      "name": "通过 · React 回到路由后恢复兑换过的宠物和700积分"
+    },
+    {
+      "passed": true,
+      "name": "通过 · Vue 切换账户重新挂载，旧账户 API 和昵称不串到新账户"
+    },
+    {
+      "passed": true,
+      "name": "通过 · Vue 组件暴露API并可显式重挂"
+    },
+    {
+      "passed": true,
+      "name": "通过 · Svelte 5 挂载、回调变更、账户切换及卸载均正常"
+    },
+    {
+      "passed": true,
+      "name": "通过 · 导入成功后旧实例停止写入，重新挂载才启用新存档"
+    },
+    {
+      "passed": true,
+      "name": "通过 · AbortSignal 在加载中取消，整个 UI 和回调一起释放"
+    },
+    {
+      "passed": true,
+      "name": "通过 · 桌面上的320px窄容器与隐藏后显示均正常"
+    },
+    {
+      "passed": true,
+      "name": "通过 · 相对 assetsBaseUrl 在子目录部署中能加载3个模型"
+    },
+    {
+      "passed": true,
+      "name": "通过 · assetUrls覆盖与手动样式模式可用于原生宿主"
+    },
+    {
+      "passed": true,
+      "name": "通过 · uni-app H5条件编译适配器透传配置、事件和API"
+    },
+    {
+      "passed": true,
+      "name": "通过 · Custom Element / Shadow DOM宿主样式与弹窗生命周期隔离"
+    },
+    {
+      "passed": true,
+      "name": "通过 · iframe/WebView 页面：限定来源的桥接能查询与兑换宠物"
+    },
+    {
+      "passed": true,
+      "name": "通过 · 全部卸载后，场景、共享样式、工具提示均清空且无未处理异常"
+    }
+  ],
+  "remainingScenes": 0,
+  "errors": [],
+  "missing": []
+}

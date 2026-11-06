@@ -1,0 +1,13 @@
+{
+  "host": "db",
+  "port": 3306,
+  "user": "pet_room_app",
+  "password": "",
+  "database": "pet_room",
+  "sourceRoot": "../source-connected",
+  "httpPort": 8899,
+  "httpHost": "0.0.0.0",
+  "socialEnabled": true,
+  "trustProxy": true,
+  "designCodesEnabled": true
+}

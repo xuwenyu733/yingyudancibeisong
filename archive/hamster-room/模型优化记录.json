@@ -1,0 +1,505 @@
+{
+  "createdAt": "2026-10-22T11:54:59.226Z",
+  "assets": [
+    {
+      "source": "C:\\Users\\19723\\Desktop\\3D测试\\沙发3d模型.glb",
+      "output": "C:\\Users\\19723\\Documents\\Codex\\2026-10-20\\wo-p\\outputs\\hamster-room\\assets\\sofa.glb",
+      "originalSHA256": "4bc84ea7b9320fd0946ee4cc16d55c738e98a86d9ed97b8ef21735502bc32c31",
+      "originalUnchanged": true,
+      "originalBytes": 15606072,
+      "optimizedBytes": 1671928,
+      "sizeReductionPercent": 89.29,
+      "before": {
+        "triangles": 501246,
+        "vertices": 258694,
+        "meshes": 1,
+        "nodes": 1,
+        "materials": 1,
+        "textures": [
+          {
+            "name": "沙发3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              4096,
+              4096
+            ],
+            "bytes": 1311219
+          }
+        ],
+        "skins": 0,
+        "animations": 0,
+        "bounds": {
+          "min": [
+            -0.355377197265625,
+            0,
+            -0.5
+          ],
+          "max": [
+            0.355377197265625,
+            0.4939422607421875,
+            0.5
+          ]
+        },
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ]
+      },
+      "after": {
+        "triangles": 60000,
+        "vertices": 36714,
+        "meshes": 1,
+        "nodes": 1,
+        "materials": 1,
+        "textures": [
+          {
+            "name": "沙发3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              1024,
+              1024
+            ],
+            "bytes": 135611
+          }
+        ],
+        "skins": 0,
+        "animations": 0,
+        "bounds": {
+          "min": [
+            -0.3553466796875,
+            0.0000457763671875,
+            -0.49993896484375
+          ],
+          "max": [
+            0.355377197265625,
+            0.4939117431640625,
+            0.499969482421875
+          ]
+        },
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ]
+      },
+      "selectedError": 0.003,
+      "attempts": [
+        {
+          "error": 0.003,
+          "triangles": 60000,
+          "vertices": 36714
+        }
+      ],
+      "textureChanges": [
+        {
+          "name": "沙发3d模型_basecolor.jpg",
+          "from": [
+            4096,
+            4096
+          ],
+          "to": [
+            1024,
+            1024
+          ],
+          "fromBytes": 1311219,
+          "toBytes": 135611
+        }
+      ],
+      "requiredExtensions": [],
+      "note": "Plain GLB; original positions, scene transforms, material colors and UVs retained. Mesh simplification and texture resizing are lossy and confined to this output copy.",
+      "validation": {
+        "reopenedSuccessfully": true,
+        "originalSHA256StillMatches": true,
+        "materialsUnchanged": true,
+        "maxBoundsCoordinateDelta": 0.00006103515625,
+        "textureColorChecks": [
+          {
+            "beforeMeanRGB": [
+              247.48354357481003,
+              195.10265815258026,
+              109.20879822969437
+            ],
+            "afterMeanRGB": [
+              247.39457321166992,
+              195.11572933197021,
+              109.24345302581787
+            ],
+            "maxMeanColorDelta": 0.0889703631401062
+          }
+        ]
+      }
+    },
+    {
+      "source": "C:\\Users\\19723\\Desktop\\3D测试\\桌灯3d模型.glb",
+      "output": "C:\\Users\\19723\\Documents\\Codex\\2026-10-20\\wo-p\\outputs\\hamster-room\\assets\\lamp.glb",
+      "originalSHA256": "0e19cc2744b8430f9ac5a05d122c1a28957739f8f74f08c45832c80791607a76",
+      "originalUnchanged": true,
+      "originalBytes": 16334024,
+      "optimizedBytes": 1884464,
+      "sizeReductionPercent": 88.46,
+      "before": {
+        "triangles": 502234,
+        "vertices": 264796,
+        "meshes": 1,
+        "nodes": 1,
+        "materials": 1,
+        "textures": [
+          {
+            "name": "桌灯3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              4096,
+              4096
+            ],
+            "bytes": 1832033
+          }
+        ],
+        "skins": 0,
+        "animations": 0,
+        "bounds": {
+          "min": [
+            -0.4352874755859375,
+            0,
+            -0.434783935546875
+          ],
+          "max": [
+            0.4352874755859375,
+            1,
+            0.434783935546875
+          ]
+        },
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ]
+      },
+      "after": {
+        "triangles": 59998,
+        "vertices": 41118,
+        "meshes": 1,
+        "nodes": 1,
+        "materials": 1,
+        "textures": [
+          {
+            "name": "桌灯3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              1024,
+              1024
+            ],
+            "bytes": 207265
+          }
+        ],
+        "skins": 0,
+        "animations": 0,
+        "bounds": {
+          "min": [
+            -0.4352569580078125,
+            0,
+            -0.4346923828125
+          ],
+          "max": [
+            0.4352874755859375,
+            1,
+            0.4346923828125
+          ]
+        },
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ]
+      },
+      "selectedError": 0.003,
+      "attempts": [
+        {
+          "error": 0.003,
+          "triangles": 59998,
+          "vertices": 41118
+        }
+      ],
+      "textureChanges": [
+        {
+          "name": "桌灯3d模型_basecolor.jpg",
+          "from": [
+            4096,
+            4096
+          ],
+          "to": [
+            1024,
+            1024
+          ],
+          "fromBytes": 1832033,
+          "toBytes": 207265
+        }
+      ],
+      "requiredExtensions": [],
+      "note": "Plain GLB; original positions, scene transforms, material colors and UVs retained. Mesh simplification and texture resizing are lossy and confined to this output copy.",
+      "validation": {
+        "reopenedSuccessfully": true,
+        "originalSHA256StillMatches": true,
+        "materialsUnchanged": true,
+        "maxBoundsCoordinateDelta": 0.000091552734375,
+        "textureColorChecks": [
+          {
+            "beforeMeanRGB": [
+              236.0738576054573,
+              196.85819905996323,
+              146.58932203054428
+            ],
+            "afterMeanRGB": [
+              235.9856309890747,
+              196.8644037246704,
+              146.5976161956787
+            ],
+            "maxMeanColorDelta": 0.08822661638259888
+          }
+        ]
+      }
+    },
+    {
+      "source": "C:\\Users\\19723\\Desktop\\3D测试\\木质矮桌3d模型.glb",
+      "output": "C:\\Users\\19723\\Documents\\Codex\\2026-10-20\\wo-p\\outputs\\hamster-room\\assets\\table.glb",
+      "originalSHA256": "651dafc4ac25bbb7ebaef5de8c751cc86e81e99b81a8c55c4c1438e672b48478",
+      "originalUnchanged": true,
+      "originalBytes": 15587596,
+      "optimizedBytes": 1646872,
+      "sizeReductionPercent": 89.43,
+      "before": {
+        "triangles": 501548,
+        "vertices": 257981,
+        "meshes": 1,
+        "nodes": 1,
+        "materials": 1,
+        "textures": [
+          {
+            "name": "木质矮桌3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              4096,
+              4096
+            ],
+            "bytes": 1311938
+          }
+        ],
+        "skins": 0,
+        "animations": 0,
+        "bounds": {
+          "min": [
+            -0.49462890625,
+            0,
+            -0.5
+          ],
+          "max": [
+            0.49462890625,
+            0.4106292724609375,
+            0.5
+          ]
+        },
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ]
+      },
+      "after": {
+        "triangles": 60000,
+        "vertices": 36141,
+        "meshes": 1,
+        "nodes": 1,
+        "materials": 1,
+        "textures": [
+          {
+            "name": "木质矮桌3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              1024,
+              1024
+            ],
+            "bytes": 128919
+          }
+        ],
+        "skins": 0,
+        "animations": 0,
+        "bounds": {
+          "min": [
+            -0.494598388671875,
+            0,
+            -0.499969482421875
+          ],
+          "max": [
+            0.49462890625,
+            0.410614013671875,
+            0.5
+          ]
+        },
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ]
+      },
+      "selectedError": 0.003,
+      "attempts": [
+        {
+          "error": 0.003,
+          "triangles": 60000,
+          "vertices": 36141
+        }
+      ],
+      "textureChanges": [
+        {
+          "name": "木质矮桌3d模型_basecolor.jpg",
+          "from": [
+            4096,
+            4096
+          ],
+          "to": [
+            1024,
+            1024
+          ],
+          "fromBytes": 1311938,
+          "toBytes": 128919
+        }
+      ],
+      "requiredExtensions": [],
+      "note": "Plain GLB; original positions, scene transforms, material colors and UVs retained. Mesh simplification and texture resizing are lossy and confined to this output copy.",
+      "validation": {
+        "reopenedSuccessfully": true,
+        "originalSHA256StillMatches": true,
+        "materialsUnchanged": true,
+        "maxBoundsCoordinateDelta": 0.000030517578125,
+        "textureColorChecks": [
+          {
+            "beforeMeanRGB": [
+              228.98108333349228,
+              173.34728610515594,
+              104.80254942178726
+            ],
+            "afterMeanRGB": [
+              228.95765495300293,
+              173.3504114151001,
+              104.83946704864502
+            ],
+            "maxMeanColorDelta": 0.03691762685775757
+          }
+        ]
+      }
+    },
+    {
+      "source": "C:\\Users\\19723\\Desktop\\3D测试\\蓝色卡通动物3d模型.glb",
+      "output": "C:\\Users\\19723\\Documents\\Codex\\2026-10-20\\wo-p\\outputs\\hamster-room\\assets\\pet.glb",
+      "originalSHA256": "703e2e122a1524313240aeb20cb928dc9aaceec02a7b1726134ca428fbe9ec42",
+      "originalUnchanged": true,
+      "originalBytes": 16158124,
+      "optimizedBytes": 2537276,
+      "sizeReductionPercent": 84.3,
+      "before": {
+        "triangles": 501380,
+        "vertices": 260702,
+        "meshes": 1,
+        "nodes": 1,
+        "materials": 1,
+        "textures": [
+          {
+            "name": "蓝色卡通动物3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              4096,
+              4096
+            ],
+            "bytes": 1797387
+          }
+        ],
+        "skins": 0,
+        "animations": 0,
+        "bounds": {
+          "min": [
+            -0.3275146484375,
+            0,
+            -0.395294189453125
+          ],
+          "max": [
+            0.3275146484375,
+            1,
+            0.395294189453125
+          ]
+        },
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ]
+      },
+      "after": {
+        "triangles": 79998,
+        "vertices": 48071,
+        "meshes": 1,
+        "nodes": 1,
+        "materials": 1,
+        "textures": [
+          {
+            "name": "蓝色卡通动物3d模型_basecolor.jpg",
+            "mimeType": "image/jpeg",
+            "size": [
+              2048,
+              2048
+            ],
+            "bytes": 517566
+          }
+        ],
+        "skins": 0,
+        "animations": 0,
+        "bounds": {
+          "min": [
+            -0.3275146484375,
+            0.000030517578125,
+            -0.395111083984375
+          ],
+          "max": [
+            0.3275146484375,
+            1,
+            0.395172119140625
+          ]
+        },
+        "extensionsUsed": [
+          "KHR_materials_volume"
+        ]
+      },
+      "selectedError": 0.0025,
+      "attempts": [
+        {
+          "error": 0.0025,
+          "triangles": 79998,
+          "vertices": 48071
+        }
+      ],
+      "textureChanges": [
+        {
+          "name": "蓝色卡通动物3d模型_basecolor.jpg",
+          "from": [
+            4096,
+            4096
+          ],
+          "to": [
+            2048,
+            2048
+          ],
+          "fromBytes": 1797387,
+          "toBytes": 517566
+        }
+      ],
+      "requiredExtensions": [],
+      "note": "Plain GLB; original positions, scene transforms, material colors and UVs retained. Mesh simplification and texture resizing are lossy and confined to this output copy.",
+      "validation": {
+        "reopenedSuccessfully": true,
+        "originalSHA256StillMatches": true,
+        "materialsUnchanged": true,
+        "maxBoundsCoordinateDelta": 0.00018310546875,
+        "textureColorChecks": [
+          {
+            "beforeMeanRGB": [
+              126.29768854379654,
+              135.32718455791473,
+              149.65023171901703
+            ],
+            "afterMeanRGB": [
+              126.30876517295837,
+              135.33065485954285,
+              149.66970205307007
+            ],
+            "maxMeanColorDelta": 0.01947033405303955
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+.pet-room-view .estate-trigger{position:absolute;z-index:39;right:18px;bottom:116px;min-height:40px;padding:8px 14px;border:1px solid var(--room-line,#ded8c6);border-radius:14px;background:var(--room-card,#fffdf7);color:var(--room-text,#4f614f);box-shadow:0 3px 14px #655d3820;font:650 12px/1.4 system-ui,sans-serif;}
+.pet-room-view[data-room-decorating="true"] .estate-trigger{display:none;}
+.pet-room-view .estate-panel{position:absolute;z-index:51;left:16px;top:74px;bottom:120px;width:min(400px,calc(100% - 32px));display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--room-line,#dedbc8);border-radius:24px;background:var(--room-bg,#fbfaf3);color:var(--room-text,#4e5b45);box-shadow:0 14px 60px #514d3d35;font:13px/1.6 system-ui,sans-serif;text-align:left;}
+.pet-room-view .estate-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;padding:16px 17px 11px;}
+.pet-room-view .estate-header small{font-size:10px;color:var(--room-text-soft,#828a70);}
+.pet-room-view .estate-header h2{font-size:19px;line-height:1.3;margin:3px 0 0;}
+.pet-room-view .estate-close{border:0;background:transparent;color:inherit;flex:none;width:32px;height:32px;font:25px/1 system-ui,sans-serif;padding:0;}
+.pet-room-view .estate-account{display:flex;flex-direction:column;gap:2px;margin:0 14px 11px;padding:10px 12px;border-radius:13px;background:var(--room-card,#fffefa);border:1px solid var(--room-line,#e2e3d3);flex:none;}
+.pet-room-view .estate-account strong{font-size:13px;color:var(--room-accent,#5d784f);}
+.pet-room-view .estate-account span{font-size:10px;color:var(--room-text-soft,#80876f);}
+.pet-room-view .estate-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 13px 13px;scrollbar-width:thin;}
+.pet-room-view .estate-card{padding:13px 12px;margin:0 0 12px;border:1px solid var(--room-line,#e0e2d2);border-radius:17px;background:var(--room-card,#fffefa);}
+.pet-room-view .estate-card h3{margin:0 0 8px;font-size:14px;line-height:1.4;}
+.pet-room-view .estate-help{font-size:10px;line-height:1.75;color:var(--room-text-soft,#828a73);margin:8px 0 0;}
+.pet-room-view .estate-castle-help{margin:0 2px 10px;font-size:11px;line-height:1.75;}
+.pet-room-view .estate-tools button,.pet-room-view .estate-confirm-actions button,.pet-room-view .estate-primary{min-height:39px;border:1px solid var(--room-line,#d9dfc9);border-radius:11px;background:var(--room-bg,#f5f6ec);color:var(--room-text,#5d704d);padding:8px 9px;font:650 11px/1.45 system-ui,sans-serif;}
+.pet-room-view .estate-room-summary{margin:12px 2px 9px;font-size:12px;font-weight:750;}
+.pet-room-view .estate-room-card{min-width:0;width:100%;display:flex;flex-direction:column;align-items:stretch;overflow:hidden;padding:0;text-align:left;border:1px solid #e0d2b7;border-radius:15px;background:#fffcf3;color:#776142;font:12px/1.5 system-ui,sans-serif;}
+.pet-room-view .estate-room-card[aria-current="page"]{outline:2px solid #92ad7b;outline-offset:1px;opacity:1;}
+.pet-room-view .estate-room-copy{display:flex;flex-direction:column;gap:2px;padding:9px 10px;min-width:0;}
+.pet-room-view .estate-room-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+.pet-room-view .estate-room-copy small{font-size:9px;opacity:.7;}
+.pet-room-view .estate-room-state{font-size:9px;color:#75875d;margin-top:2px;}
+.pet-room-view .estate-room-preview{height:75px;position:relative;display:block;background:linear-gradient(0deg,#e5ce9e 0 27%,#fff0cd 28%);overflow:hidden;border-bottom:1px solid #d7c5a5;}
+.pet-room-view .estate-room-preview::before{content:'';position:absolute;top:0;bottom:25%;left:0;width:25%;background:#ecd7a8;clip-path:polygon(0 0,100% 15%,100% 100%,0 100%);}
+.pet-room-view .estate-preview-window{position:absolute;width:31px;height:33px;right:21px;top:9px;background:linear-gradient(90deg,transparent 46%,#e7c88e 47% 54%,transparent 55%),linear-gradient(0deg,#d9e7c7 0 45%,#e8f1f0 46%);border:3px solid #d5ae74;border-radius:16px 16px 2px 2px;}
+.pet-room-view .estate-preview-sofa{position:absolute;right:17px;bottom:13px;width:60px;height:22px;background:#ecc381;border-radius:9px 9px 6px 6px;box-shadow:0 4px 0 #c6a269;}
+.pet-room-view .estate-preview-sofa::before{content:'';position:absolute;left:-5px;right:-5px;bottom:0;height:13px;border:4px solid #e3b675;border-radius:6px;}
+.pet-room-view .estate-preview-plant{position:absolute;left:23px;bottom:15px;width:13px;height:13px;background:#c79870;border-radius:2px 2px 5px 5px;}
+.pet-room-view .estate-preview-plant::before{content:'✿';position:absolute;color:#86a36d;font:24px/1 system-ui,sans-serif;bottom:10px;left:-6px;}
+.pet-room-view .estate-room-card[data-template="mint"]{background:#f1f9f3;border-color:#bdcfc0;color:#587461;}
+.pet-room-view .estate-room-card[data-template="mint"] .estate-room-preview{background:linear-gradient(0deg,#d5d4b3 0 27%,#d9eadb 28%);border-color:#bfccba;}
+.pet-room-view .estate-room-card[data-template="mint"] .estate-room-preview::before{background:#bcd5c6;}
+.pet-room-view .estate-room-card[data-template="mint"] .estate-preview-sofa{background:#a6cbb9;box-shadow:0 4px 0 #7eab98;}
+.pet-room-view .estate-room-card[data-template="mint"] .estate-preview-sofa::before{border-color:#91baa7;}
+.pet-room-view .estate-room-card[data-template="candy"]{background:#fff4f7;border-color:#e0c2d3;color:#986c85;}
+.pet-room-view .estate-room-card[data-template="candy"] .estate-room-preview{background:linear-gradient(0deg,#e8d3da 0 27%,#f9dfeb 28%);border-color:#d9bdd1;}
+.pet-room-view .estate-room-card[data-template="candy"] .estate-room-preview::before{background:#e6bcd5;}
+.pet-room-view .estate-room-card[data-template="candy"] .estate-preview-sofa{background:#d7bce8;box-shadow:0 4px 0 #b899cc;}
+.pet-room-view .estate-room-card[data-template="candy"] .estate-preview-sofa::before{border-color:#c5a4dc;}
+.pet-room-view .estate-empty{grid-column:1/-1;border:1px dashed var(--room-line,#d9dfca);border-radius:13px;padding:20px 12px;font-size:12px;color:var(--room-text-soft,#879477);}
+.pet-room-view .estate-castle{max-width:320px;margin:0 auto 16px;position:relative;}
+.pet-room-view .estate-castle-roof{padding:12px 9px 8px;margin:0 19px 0 66px;border-radius:35px 35px 0 0;background:#d2becd;border:1px solid #bda4b4;text-align:center;font-size:10px;color:#785e74;}
+.pet-room-view .estate-floor{display:grid;grid-template-columns:53px minmax(0,1fr);gap:8px;align-items:center;padding:8px 9px 8px 0;border-bottom:4px solid #cbb8c5;background:linear-gradient(90deg,transparent 0 59px,#eadfe5 60px);}
+.pet-room-view .estate-floor-button{border:1px solid #d9c5cf;border-radius:11px;background:#fff8fc;color:#8a6c80;font:700 11px/1.3 system-ui,sans-serif;min-height:39px;max-width:53px;padding:7px 3px;}
+.pet-room-view .estate-floor-button[aria-current="step"]{background:#8c7692;color:#fff;opacity:1;}
+.pet-room-view .estate-floor-rooms{display:grid;gap:7px;min-width:0;}
+.pet-room-view .estate-floor .estate-room-card{display:grid;grid-template-columns:80px minmax(0,1fr);min-height:80px;border-radius:10px;}
+.pet-room-view .estate-floor .estate-room-preview{height:100%;border-bottom:0;border-right:1px solid #d7c5a5;min-height:80px;}
+.pet-room-view .estate-floor .estate-room-copy{justify-content:center;padding:7px 8px;}
+.pet-room-view .estate-floor .estate-preview-sofa{right:9px;width:41px;}
+.pet-room-view .estate-floor .estate-preview-window{right:11px;width:24px;}
+.pet-room-view .estate-floor .estate-preview-plant{left:8px;}
+.pet-room-view .estate-castle-base{padding:8px 6px;margin-left:60px;background:#d8c7d2;border-radius:0 0 13px 13px;text-align:center;font-size:9px;color:#866e7f;}
+.pet-room-view .estate-free{font-size:11px;font-weight:750;color:var(--room-accent,#658452);background:var(--room-bg,#edf4e5);padding:8px 9px;border-radius:10px;margin:8px 0 13px;}
+.pet-room-view .estate-field{display:flex;flex-direction:column;gap:6px;font-size:12px;margin:12px 0;}
+.pet-room-view .estate-field input{width:100%;min-width:0;padding:10px 11px;border:1px solid var(--room-line,#d9dfca);border-radius:11px;background:var(--room-bg,#fdfcf5);color:var(--room-text,#566b46);font:13px/1.4 system-ui,sans-serif;}
+.pet-room-view .estate-field-label{font-size:12px;margin:11px 0 7px;}
+.pet-room-view .estate-templates{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+.pet-room-view .estate-template{display:flex;align-items:center;flex-direction:column;gap:5px;min-width:0;border:1px solid var(--room-line,#dce0d0);border-radius:12px;background:transparent;color:inherit;font-size:10px;padding:7px 3px;}
+.pet-room-view .estate-template[aria-pressed="true"]{outline:2px solid var(--room-accent,#789761);outline-offset:1px;}
+.pet-room-view .estate-template-swatch{display:block;width:42px;height:28px;border-radius:8px;background:linear-gradient(130deg,#fff2cb,#e7bc83);}
+.pet-room-view [data-estate-template="mint"] .estate-template-swatch{background:linear-gradient(130deg,#d4ecd8,#93bea6);}
+.pet-room-view [data-estate-template="candy"] .estate-template-swatch{background:linear-gradient(130deg,#f9d5e7,#c7b3e0);}
+.pet-room-view .estate-primary{display:block;width:100%;background:var(--room-accent,#648157);border-color:transparent;color:#fff;}
+.pet-room-view .estate-tool{padding:9px 0 0;}
+.pet-room-view .estate-tool+.estate-tool{border-top:1px dashed var(--room-line,#e0dfcd);margin-top:11px;padding-top:12px;}
+.pet-room-view .estate-tool button{width:100%;}
+.pet-room-view .estate-tool small{display:block;font-size:10px;color:var(--room-text-soft,#889277);line-height:1.7;margin-top:5px;}
+.pet-room-view .estate-tool .estate-reset-button{color:#936f57;border-color:#dfcbb9;background:#fff9f0;}
+.pet-room-view .estate-confirm{padding:14px 12px;margin:0 0 13px;border:1.5px solid #d7b174;border-radius:16px;background:#fff7df;color:#81663b;}
+.pet-room-view .estate-confirm strong{font-size:12px;}
+.pet-room-view .estate-confirm p{font-size:11px;line-height:1.75;margin:7px 0 11px;}
+.pet-room-view .estate-confirm-actions{display:flex;gap:7px;}
+.pet-room-view .estate-confirm-actions button{flex:1;background:#fffdf6;}
+.pet-room-view .estate-confirm-actions .estate-confirm-yes{background:#977750;color:#fff;border-color:transparent;}
+.pet-room-view .estate-music{padding:4px 5px 8px;display:flex;flex-direction:column;gap:3px;}
+.pet-room-view .estate-music-label{font-size:10px;color:var(--room-text-soft,#899279);}
+.pet-room-view .estate-music strong{font-size:12px;font-weight:650;}
+.pet-room-view .estate-music small,.pet-room-view .estate-music p{font-size:10px;color:var(--room-text-soft,#879274);margin:0;}
+.pet-room-view .estate-status{flex:none;margin:0;min-height:39px;padding:10px 15px;border-top:1px solid var(--room-line,#dfe2d0);background:var(--room-card,#fffef7);font-size:11px;line-height:1.6;color:var(--room-accent,#668652);}
+.pet-room-view .estate-status[data-tone="error"]{color:#a8614a;}
+.pet-room-view .estate-world{margin-top:4px;}
+.pet-room-view .estate-world-help{font-size:11px;line-height:1.75;margin:0 0 9px;color:var(--room-text-soft,#828a73);}
+.pet-room-view .estate-world-state{margin:8px 0 10px;padding:7px 9px;border-radius:9px;background:var(--room-bg,#edf4e5);color:var(--room-accent,#5d784f);font-size:10px;overflow-wrap:anywhere;}
+.pet-room-view .estate-world .estate-field{margin:10px 0;}
+.pet-room-view .estate-world .estate-field input{box-sizing:border-box;}
+.pet-room-view .estate-world-saves{display:grid;gap:7px;margin:10px 0;}
+.pet-room-view .estate-world-save{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--room-line,#dfe2d0);}
+.pet-room-view .estate-world-save-copy{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.pet-room-view .estate-world-save-copy strong{font-size:11px;overflow-wrap:anywhere;}
+.pet-room-view .estate-world-save-copy small{font-size:9px;color:var(--room-text-soft,#828a73);}
+.pet-room-view .estate-world-save-actions{display:flex;gap:5px;flex:none;}
+.pet-room-view .estate-world-button{min-height:36px;border:1px solid var(--room-line,#d9dfc9);border-radius:9px;padding:6px 9px;background:var(--room-bg,#f5f6ec);color:var(--room-text,#5d704d);font:650 11px/1.45 system-ui,sans-serif;}
+.pet-room-view .estate-world-remove{color:#96705d;}
+.pet-room-view .estate-world-files{display:flex;flex-direction:column;gap:10px;padding-top:11px;border-top:1px dashed var(--room-line,#dfe2d0);}
+.pet-room-view .estate-world-import{display:flex;flex-direction:column;gap:7px;font-size:11px;}
+.pet-room-view .estate-world-import input{max-width:100%;width:100%;min-width:0;color:inherit;font:10px/1.5 system-ui,sans-serif;}
+.pet-room-view .estate-world-confirm{margin-top:12px;padding:11px;border:1px solid #d7b174;border-radius:12px;background:var(--room-bg,#fff7df);color:var(--room-text,#81663b);}
+.pet-room-view .estate-world-confirm strong{font-size:12px;}
+.pet-room-view .estate-world-confirm p{font-size:11px;line-height:1.8;margin:7px 0 10px;}
+.pet-room-view .estate-world-confirm .estate-confirm-actions{flex-wrap:wrap;}
+.pet-room-view .estate-world-confirm .estate-confirm-actions button{min-width:95px;}
+@container pet-room (max-width:340px){.pet-room-view .estate-world-save{grid-template-columns:minmax(0,1fr);}.pet-room-view .estate-world-save-actions{justify-content:flex-end;}}
+@container pet-room (max-width:520px){
+  .pet-room-view .estate-trigger{right:12px;bottom:114px;font-size:11px;padding:8px 11px;}
+  .pet-room-view .estate-panel{left:8px;right:8px;top:10px;bottom:116px;width:auto;border-radius:20px;}
+  .pet-room-view .estate-header{padding:13px 13px 10px;}
+  .pet-room-view .estate-header h2{font-size:18px;}
+  .pet-room-view .estate-account{margin:0 11px 10px;}
+  .pet-room-view .estate-body{padding:0 10px 11px;}
+  .pet-room-view .estate-room-preview{height:68px;}
+  .pet-room-view .estate-castle{max-width:310px;}
+}
+@container pet-room (max-height:440px){.pet-room-view .estate-panel{top:8px;bottom:64px;}.pet-room-view .estate-header{padding-top:8px;padding-bottom:6px;}.pet-room-view .estate-account{padding:6px 9px;margin-bottom:7px;}}
+.estate-world-new{margin:14px 0;padding:13px;border:1px solid #d7e1ce;border-radius:14px;background:#f4f7ee}.estate-world-new h4{margin:0 0 8px;color:#496444;font-size:15px}.estate-world-new .estate-templates{margin:10px 0}

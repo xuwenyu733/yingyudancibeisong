@@ -1,0 +1,313 @@
+.pet-room-view .room-shop{position:absolute;inset:0;z-index:20;pointer-events:none;color:#574d3d;font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+.pet-room-view .room-shop[data-open="true"]{z-index:50;}
+.pet-room-view .room-shop [hidden]{display:none!important;}
+.pet-room-view .room-shop button{appearance:none;-webkit-appearance:none;font:inherit;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.pet-room-view .room-shop button:disabled{cursor:default;opacity:.45;}
+.pet-room-view .room-shop button:focus-visible{outline:3px solid #6c967d;outline-offset:3px;}
+.pet-room-view .room-shop__hud{position:absolute;inset:0;pointer-events:none;}
+/* 左上角工具行：钱包与商店按钮并排；右上角让位给个人主页等级徽章，避免按钮重叠。 */
+.pet-room-view .room-shop__topbar{position:absolute;left:18px;top:max(18px,env(safe-area-inset-top));display:flex;align-items:center;gap:8px;pointer-events:none;}
+.pet-room-view .room-shop__wallet,.pet-room-view .room-shop__trigger{pointer-events:auto;display:flex;align-items:center;gap:8px;min-height:42px;box-shadow:0 4px 16px #6a583714;border:1px solid #e0d3b8!important;background:#fffaf0ed;color:#706047;}
+.pet-room-view .room-shop__wallet{padding:6px 13px 6px 8px;border-radius:17px;gap:7px;}
+.pet-room-view .room-shop__wallet>svg{width:29px;height:29px;flex:none;}
+.pet-room-view .room-shop__wallet-copy{display:flex;align-items:baseline;gap:9px;}
+.pet-room-view .room-shop__wallet-label{font-size:11px;font-weight:600;color:#8a7c64;}
+.pet-room-view .room-shop__balance{font-size:18px;line-height:1.1;letter-spacing:-.4px;color:#665235;font-variant-numeric:tabular-nums;}
+.pet-room-view .room-shop__trigger{border-radius:13px;padding:9px 13px;font-weight:650;}
+.pet-room-view .room-shop__trigger svg{width:19px;height:19px;}
+.pet-room-view .room-shop__trigger:disabled{color:#ac9c81;}
+.pet-room-view .room-shop__decorate{pointer-events:auto;display:flex;align-items:center;gap:6px;border-radius:13px;padding:8px 13px;font-weight:650;white-space:nowrap;border:1px solid #e0d3b8!important;background:#fffaf0ed;color:#706047;box-shadow:0 4px 16px #6a583714;min-height:42px;}
+.pet-room-view .room-shop__decorate::before{content:'✦';font-size:11px;color:#b89668;}
+.pet-room-view .room-shop__decorate:hover{filter:brightness(.98);}
+.pet-room-view .room-shop__shade{position:absolute;inset:0;background:#4c4b364f;pointer-events:auto;}
+.pet-room-view .room-shop__sheet{position:absolute;right:16px;bottom:16px;width:min(442px,calc(100% - 32px));max-height:calc(100% - 88px);display:flex;flex-direction:column;overflow:hidden;border:1px solid #fffaf2;border-radius:29px;background:#fffcf4;box-shadow:0 16px 70px #413c3636;pointer-events:auto;}
+.pet-room-view .room-shop__header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 23px 14px;flex:none;}
+.pet-room-view .room-shop__eyebrow{margin:0 0 4px;color:#9a9e82;font-size:10px;font-weight:650;letter-spacing:1.5px;}
+.pet-room-view .room-shop__title{margin:0;font-size:23px;line-height:1.3;letter-spacing:1px;font-weight:750;color:#514d3c;}
+.pet-room-view .room-shop__close{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:50%;background:#f1eee2;color:#938875;}
+.pet-room-view .room-shop__close svg{width:22px;height:22px;}
+.pet-room-view .room-shop__tabs{display:flex;gap:5px;padding:5px;margin:0 22px 4px;background:#eeeee1;border-radius:15px;flex:none;overflow-x:auto;}
+.pet-room-view .room-shop__tab{flex:1 0 auto;min-width:44px;padding:0 7px;min-height:35px;border-radius:11px;background:transparent;color:#91927d;font-weight:650;font-size:13px;white-space:nowrap;transition:background .15s,color .15s;}
+.pet-room-view .room-shop__pet-card[data-active=true]{border-color:#89ac8c;box-shadow:0 0 0 2px #a5c7a82b;}
+.pet-room-view .room-shop__tab[aria-selected=true]{background:#fffdf7;color:#637e65;box-shadow:0 2px 5px #6a70470d,inset 0 0 0 1px #d5dec9;}
+.pet-room-view .room-shop__body{overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;min-height:0;padding:0 22px 16px;scrollbar-width:thin;scrollbar-color:#d6ddc7 transparent;}
+.pet-room-view .room-shop__intro{margin:15px 0 13px;color:#a1947c;font-size:12px;}
+.pet-room-view .room-shop__collection-goal{display:flex;align-items:center;gap:12px;min-height:138px;margin:0 0 14px;padding:12px;border:1px solid var(--room-line,#dcd6bd);border-radius:17px;background:var(--room-card,#fffdf4);}
+.pet-room-view .room-shop__goal-art{display:grid;place-items:center;flex:0 0 85px;height:90px;overflow:hidden;border:1px solid var(--room-line,#e7e2cc);border-radius:13px;background:var(--room-bg,#f1f4e7);}
+.pet-room-view .room-shop__goal-art>img,.pet-room-view .room-shop__goal-art>svg{display:block;width:100%;height:100%;object-fit:contain;}
+.pet-room-view .room-shop__goal-copy{flex:1;min-width:0;}
+.pet-room-view .room-shop__goal-count{display:block;color:var(--room-accent,#678369);font-size:10px;line-height:1.5;margin-bottom:3px;}
+.pet-room-view .room-shop__goal-title{display:block;font-size:12px;line-height:1.6;color:var(--room-text,#554d3e);}
+.pet-room-view .room-shop__goal-hint{margin:4px 0 7px;font-size:10px;line-height:1.6;min-height:32px;color:var(--room-text-soft,#81735d);}
+.pet-room-view .room-shop__goal-track{height:5px;border-radius:5px;background:var(--room-line,#e5dfce);overflow:hidden;}
+.pet-room-view .room-shop__goal-track>span{display:block;height:100%;border-radius:inherit;background:var(--room-accent,#7e9f86);}
+.pet-room-view .room-shop__goal-action{margin-top:8px;padding:5px 8px;min-height:28px;border-radius:8px;background:var(--room-bg,#f0f3e7);color:var(--room-accent,#587a65);font-size:10px;font-weight:650;}
+/* v2.17/F4：心愿目标高亮（自选目标会显示「心愿收藏」与星标） */
+.pet-room-view .room-shop__collection-goal[data-wished="true"]{border-color:#e0c36f;background:#fffbe9;box-shadow:0 0 0 3px #f3e2a933;}
+.pet-room-view .room-shop__collection-goal[data-wished="true"] .room-shop__goal-title::before{content:"★ ";color:#d9a928;}
+/* v2.17/F4：每类筛选工具条（搜索 / 价格排序 / 只看未拥有） */
+.pet-room-view .room-shop__view-bar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 10px;}
+.pet-room-view .room-shop__view-search{flex:1 1 140px;min-width:120px;padding:7px 10px;border:1px solid var(--room-line,#ddd6be);border-radius:10px;background:var(--room-card,#fffdf4);color:var(--room-text,#554d3e);font-size:11px;}
+.pet-room-view .room-shop__view-search:focus{outline:2px solid var(--room-accent,#7e9f86);outline-offset:1px;}
+.pet-room-view .room-shop__view-sort{padding:7px 8px;border:1px solid var(--room-line,#ddd6be);border-radius:10px;background:var(--room-card,#fffdf4);color:var(--room-text,#554d3e);font-size:11px;}
+.pet-room-view .room-shop__view-unowned{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--room-text-soft,#81735d);white-space:nowrap;}
+.pet-room-view .room-shop__view-unowned input{accent-color:var(--room-accent,#7e9f86);}
+.pet-room-view .room-shop__view-empty{margin:-4px 0 10px;font-size:11px;color:var(--room-text-soft,#81735d);}
+/* v2.17/F4：心愿星标按钮 */
+.pet-room-view .room-shop__wish{flex:none;width:30px;height:30px;padding:0;display:grid;place-items:center;border:1px solid var(--room-line,#ddd6be);border-radius:9px;background:var(--room-card,#fffdf4);color:#b59a5a;font-size:15px;line-height:1;}
+.pet-room-view .room-shop__wish[aria-pressed="true"]{border-color:#e0c36f;background:#fff6dd;color:#d9a928;}
+.pet-room-view .room-shop__wish[hidden]{display:none;}
+.pet-room-view .room-shop__card:focus-visible{outline:3px solid var(--room-accent,#6c967d);outline-offset:3px;}
+.pet-room-view .room-shop__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.pet-room-view .room-shop__card{position:relative;min-width:0;padding:9px 10px 12px;border:1px solid #e6e1d0;border-radius:20px;background:#fffef9;box-shadow:0 3px 8px #6f5c3910;}
+.pet-room-view .room-shop__product-art{position:relative;display:flex;align-items:center;justify-content:center;height:148px;margin:-1px -3px 7px;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#fffdf1 0,#f0f3e5 75%);border:1px solid #e8e5d6;border-radius:14px;}
+.pet-room-view .room-shop__card:nth-child(2n) .room-shop__product-art{background:#f6efe1;}
+.pet-room-view .room-shop__card:nth-child(3n) .room-shop__product-art{background:#eaf0eb;}
+.pet-room-view .room-shop__product-art>svg{width:128px;height:108px;max-width:100%;}
+.pet-room-view .room-shop__product-art>.room-shop__pet-model-preview{display:block;width:100%;height:100%;object-fit:contain;}
+.pet-room-view .room-shop__product-art>.room-shop__model-preview{display:block;width:100%;height:100%;object-fit:contain;}
+.pet-room-view .room-shop__product-art::after{content:'';position:absolute;inset:5px;border:1px solid #fffdf2aa;border-radius:10px;pointer-events:none;}
+.pet-room-view .room-shop__card[data-rarity="heirloom"] .room-shop__product-art{border-color:#dfcc9f;background:radial-gradient(ellipse at 50% 35%,#fff9e5 0,#eae3d0 85%);}
+.pet-room-view .room-shop__finish{display:flex;align-items:center;justify-content:space-between;gap:5px;margin:0 0 10px;min-height:19px;padding-top:6px;border-top:1px solid #eee9dc;}
+.pet-room-view .room-shop__finish-label{min-width:0;font-size:9px;line-height:1.4;color:#a39170;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pet-room-view .room-shop__palette{display:flex;gap:3px;flex:none;}
+.pet-room-view .room-shop__palette i{display:block;width:7px;height:7px;border:1px solid #9f93724a;border-radius:50%;}
+.pet-room-view .room-shop__collection-label{position:absolute;left:7px;bottom:5px;padding:2px 6px;border:1px solid #e0d3b1;border-radius:6px;background:#fffaf0e8;color:#8b784f;font-size:8px;line-height:1.4;letter-spacing:.6px;pointer-events:none;}
+.pet-room-view .room-shop__card[data-rarity="heirloom"]{border-color:#d8c18d;background:linear-gradient(145deg,#fffdf6,#f8f2e3);}
+.pet-room-view .room-shop__card[data-rarity="premium"]{border-color:#d9cbb1;background:linear-gradient(145deg,#fffef8,#faf5eb);}
+.pet-room-view .room-shop__card[data-rarity="heirloom"] .room-shop__collection-label{background:#665c44;color:#fff2c5;border-color:#9c875a;}
+.pet-room-view .room-shop__card[data-rarity="premium"] .room-shop__collection-label{background:#eee3c9;color:#90713e;border-color:#dbc799;}
+.pet-room-view .room-shop__card[data-applied="true"]{border-color:#8fae8c;box-shadow:0 0 0 2px #97b18b25;}
+.pet-room-view .room-shop__card[data-category="flooring"][data-owned="true"] .room-shop__buy{background:#dbe8cf;color:#557347;}
+.pet-room-view .room-shop__card[data-category="flooring"][data-applied="true"] .room-shop__buy{background:#edf1e4;color:#8d9b7d;}
+.pet-room-view .room-shop__owned{position:absolute;top:7px;right:6px;padding:3px 6px;border-radius:7px;background:#dce9d4;color:#6a8261;font-size:9px;font-weight:650;}
+.pet-room-view .room-shop__product-name{font-size:14px;font-weight:750;margin:8px 0 5px;color:#5e5745;letter-spacing:.2px;}
+.pet-room-view .room-shop__product-description{font-size:10px;line-height:1.7;margin:0 0 9px;color:#958871;min-height:34px;}
+.pet-room-view .room-shop__card-bottom{display:flex;align-items:center;justify-content:space-between;gap:5px;}
+.pet-room-view .room-shop__price{color:#9d8453;font-size:11px;font-weight:700;white-space:nowrap;}
+.pet-room-view .room-shop__buy{padding:7px 12px;min-height:31px;border-radius:10px;background:#c5d8ba;color:#4e6c48;font-size:11px;font-weight:700;white-space:nowrap;}
+.pet-room-view .room-shop__buy:disabled{background:#f0eee4;color:#b0a68e;}
+.pet-room-view .room-shop__card[data-owned=true] .room-shop__buy{background:#edf3e6;color:#8f9e7d;}
+.pet-room-view .room-shop__footer{flex:none;padding:12px 22px 16px;border-top:1px solid #eeeade;background:#faf8ef;}
+.pet-room-view .room-shop__status{margin:0;min-height:18px;color:#a0957b;font-size:11px;line-height:1.6;}
+.pet-room-view .room-shop__status[data-tone=success]{color:#6a8b60;}
+.pet-room-view .room-shop__status[data-tone=error]{color:#b2775e;}
+.pet-room-view .room-shop__room-art{margin:9px auto 0;max-width:260px;height:127px;}
+.pet-room-view .room-shop__room-art svg{display:block;width:100%;height:100%;}
+.pet-room-view .room-shop__room-name{margin:0;text-align:center;font-size:20px;color:#616b51;}
+.pet-room-view .room-shop__dimensions{text-align:center;margin:5px 0 17px;color:#a19b82;font-size:12px;font-variant-numeric:tabular-nums;}
+.pet-room-view .room-shop__area-compare{margin:0 0 16px;padding:13px 14px 10px;border:1px solid #e4dfca;border-radius:18px;background:linear-gradient(140deg,#f4f5e9,#fffcf1);}
+.pet-room-view .room-shop__area-heading{margin:0 0 10px;color:#889272;font-size:11px;font-weight:650;text-align:center;}
+.pet-room-view .room-shop__area-plans{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.pet-room-view .room-shop__area-item{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;}
+.pet-room-view .room-shop__area-space{display:flex;align-items:flex-end;justify-content:center;width:100px;height:100px;max-width:100%;padding:0 2px 4px;}
+.pet-room-view .room-shop__area-plan{min-width:1px;min-height:1px;max-height:100%;border:2px solid #b9c3a5;border-radius:7px;background:repeating-linear-gradient(0deg,transparent 0 13px,#a5b59033 13px 14px),repeating-linear-gradient(90deg,#e8eedc 0 13px,#a5b59033 13px 14px);box-shadow:3px 4px 0 #c2c9ae45;transition:width .3s ease,height .3s ease;}
+.pet-room-view .room-shop__area-item--target .room-shop__area-plan{border-color:#c3a66a;background:repeating-linear-gradient(0deg,transparent 0 13px,#c9a76340 13px 14px),repeating-linear-gradient(90deg,#f1e6c5 0 13px,#c9a76340 13px 14px);box-shadow:3px 4px 0 #c7b27d38;}
+.pet-room-view .room-shop__area-label{margin-top:6px;color:#9b947e;font-size:10px;}
+.pet-room-view .room-shop__area-value{color:#6d795c;font-size:15px;font-variant-numeric:tabular-nums;}
+.pet-room-view .room-shop__area-item--target .room-shop__area-value{color:#9b7e42;}
+.pet-room-view .room-shop__area-gain{margin:10px 0 0;padding-top:9px;border-top:1px solid #e4dfca;text-align:center;color:#7a8a62;font-size:11px;font-weight:700;}
+.pet-room-view .room-shop__tier-steps{display:flex;gap:7px;margin:0 0 18px;}
+.pet-room-view .room-shop__tier{flex:1;padding:7px 3px;text-align:center;font-size:10px;border:1px solid #e8e7da;color:#aaa68f;border-radius:10px;}
+.pet-room-view .room-shop__tier[data-active=true]{border-color:#c0d1b0;color:#69805e;background:#edf3e5;font-weight:700;}
+.pet-room-view .room-shop__tier[data-complete=true]{color:#8ca07e;background:#f3f5ec;}
+.pet-room-view .room-shop__next{padding:17px 18px;border:1px solid #dfe6d1;border-radius:18px;background:linear-gradient(125deg,#f0f5e8,#faf8ec);}
+.pet-room-view .room-shop__next>strong{font-size:14px;color:#718364;}
+.pet-room-view .room-shop__next>p{margin:8px 0 5px;color:#7e8871;font-size:12px;}
+.pet-room-view .room-shop__muted{font-size:11px;color:#9ca48d;}
+.pet-room-view .room-shop__primary{width:100%;min-height:44px;border-radius:14px;background:#9db58b;color:#fffef5;font-weight:700;font-size:13px;}
+.pet-room-view .room-shop__primary:disabled{background:#eaece0;color:#a9ac96;}
+.pet-room-view .room-shop__expand{margin:12px 0 0;min-height:48px;padding:10px 12px;line-height:1.5;}
+.pet-room-view .room-shop__switch-box{margin:2px 0 6px;padding:13px 15px;border:1px dashed #d8dcc4;border-radius:16px;background:#fbfbf4;}
+.pet-room-view .room-shop__switch-label{margin:0 0 9px;font-size:12px;color:#7e8871;font-weight:700;}
+.pet-room-view .room-shop__switch-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+.pet-room-view .room-shop__switch{min-height:46px;padding:6px 4px;border:1px solid #d5dcc4;border-radius:11px;background:#fffef8;color:#7d9468;font-weight:700;font-size:11px;white-space:pre-line;line-height:1.5;cursor:pointer;}
+.pet-room-view .room-shop__switch:hover{background:#eef3e3;}
+.pet-room-view .room-shop__switch[data-active=true]{background:#9db58b;border-color:#9db58b;color:#fffef5;cursor:default;}
+.pet-room-view .room-shop__switch:disabled{opacity:.55;cursor:default;}
+.pet-room-view .room-shop__switch[data-active=true]:disabled{opacity:1;}
+.pet-room-view .room-shop__switch-hint{margin:9px 0 0;font-size:10px;line-height:1.6;color:#a19b82;}
+.pet-room-view .room-shop__points-mark{display:grid;place-items:center;width:64px;height:64px;margin:23px auto 12px;border-radius:23px;background:#f4ecd0;transform:rotate(-5deg);}
+.pet-room-view .room-shop__points-mark svg{width:42px;height:42px;}
+.pet-room-view .room-shop__points-title{text-align:center;margin:0 0 9px;font-size:19px;color:#68725a;}
+.pet-room-view .room-shop__points-copy{font-size:12px;line-height:1.8;text-align:center;max-width:290px;margin:0 auto 20px;color:#9e9b84;}
+.pet-room-view .room-shop__rewards{display:flex;flex-direction:column;gap:9px;}
+.pet-room-view .room-shop__reward{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 14px;border:1px solid #e9e8da;border-radius:15px;background:#fffef8;}
+.pet-room-view .room-shop__reward strong{display:block;font-size:13px;color:#6e725c;}
+.pet-room-view .room-shop__reward small{display:block;margin-top:3px;font-size:10px;color:#aaa38f;}
+.pet-room-view .room-shop__reward-button{min-width:60px;min-height:33px;padding:6px 10px;border-radius:11px;background:#e8efdc;color:#7d9468;font-weight:750;font-size:12px;white-space:nowrap;}
+.pet-room-view .room-shop__reward-button:disabled{color:#acae95;background:#f1f1e7;font-size:10px;}
+.pet-room-view .room-shop__reward-rate{color:#a28c54;font-size:12px;font-weight:650;white-space:nowrap;}
+.pet-room-view .room-shop__footnote{margin:17px 6px 3px;text-align:center;font-size:10px;line-height:1.7;color:#b1a78e;}
+@keyframes room-shop-enter{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.pet-room-view .room-shop__topbar{flex-wrap:wrap;max-width:calc(100% - 24px);}.pet-room-view .room-shop__wallet{left:12px;padding:6px 10px 6px 7px;gap:5px;}.pet-room-view .room-shop__wallet-label{font-size:9px;}.pet-room-view .room-shop__wallet-copy{gap:6px;}.pet-room-view .room-shop__balance{font-size:17px;}.pet-room-view .room-shop__trigger{padding:9px 10px;gap:5px;}.pet-room-view .room-shop__decorate{padding:7px 10px;font-size:12px;}.pet-room-view .room-shop__sheet{right:12px;bottom:max(12px,env(safe-area-inset-bottom));width:calc(100% - 24px);max-height:calc(100% - 82px);border-radius:25px;}.pet-room-view .room-shop__header{padding:18px 18px 12px;}.pet-room-view .room-shop__tabs{margin:0 17px 3px;}.pet-room-view .room-shop__body{padding:0 17px 14px;}.pet-room-view .room-shop__footer{padding:10px 17px 13px;}.pet-room-view .room-shop__grid{gap:9px;}.pet-room-view .room-shop__card{padding:7px 9px 10px;}.pet-room-view .room-shop__product-art{height:99px;}.pet-room-view .room-shop__buy{padding:7px 10px;}}
+@media(max-width:360px){.pet-room-view .room-shop__wallet-label{display:none;}.pet-room-view .room-shop__wallet{min-height:40px;}.pet-room-view .room-shop__trigger{font-size:12px;}.pet-room-view .room-shop__product-name{font-size:13px;}.pet-room-view .room-shop__price{font-size:10px;}.pet-room-view .room-shop__buy{padding:6px 8px;font-size:10px;}.pet-room-view .room-shop__body{padding-left:12px;padding-right:12px;}}
+@media(prefers-reduced-motion:reduce){.pet-room-view .room-shop__sheet{animation:none;}.pet-room-view .room-shop__tab{transition:none;}}
+@media(max-width:600px){.pet-room-view .room-shop__product-art{height:130px;}.pet-room-view .room-shop__finish-label{font-size:9px;}}
+
+/* ===== 个人主页（v2.5） ===== */
+.pet-room-view .room-hud{position:absolute;display:flex;align-items:center;gap:8px;z-index:14;}
+.pet-room-view .room-hud-right{right:16px;top:14px;display:flex;align-items:center;gap:8px;}
+.pet-room-view .room-profile-level{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid #e8dcc2;border-radius:14px;background:#fffdf4;color:#7d6a45;font-weight:800;font-size:12px;cursor:pointer;box-shadow:0 2px 8px rgba(120,95,50,.12);}
+.pet-room-view .room-profile-level:hover{background:#fff8e2;}
+.pet-room-view .room-profile-level:disabled{opacity:.55;cursor:default;}
+.pet-room-view .room-profile-level-num{display:inline-block;padding:2px 7px;border-radius:9px;background:#f0e0bd;color:#8a6b33;font-size:11px;}
+.pet-room-view .room-profile-level-name{font-size:11px;color:#9c8658;}
+.pet-room-view .room-profile-level-new .room-profile-level-num{background:#e98ba7;color:#fff;}
+.pet-room-view .room-profile{position:absolute;right:16px;top:58px;bottom:16px;width:min(372px,calc(100% - 32px));display:flex;flex-direction:column;border:1px solid #efe4ce;border-radius:24px;background:rgba(255,253,244,.97);box-shadow:0 12px 36px rgba(90,70,35,.22);z-index:15;overflow:hidden;}
+.pet-room-view .room-profile[hidden]{display:none;}
+.pet-room-view .room-profile-header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:16px 18px 10px;}
+.pet-room-view .room-profile-header h2{margin:0;font-size:17px;color:#6e5a36;}
+.pet-room-view .room-profile-sub{display:block;font-size:10px;color:#b1a78e;margin-top:2px;}
+.pet-room-view .room-profile-close{border:0;background:transparent;font-size:21px;line-height:1;color:#b1a78e;cursor:pointer;padding:2px 6px;}
+.pet-room-view .room-profile-close:hover{color:#8a6b33;}
+.pet-room-view .room-profile-body{overflow-y:auto;padding:4px 18px 20px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;}
+.pet-room-view .room-profile-card{background:#fffef8;border:1px solid #efe6d3;border-radius:18px;padding:14px 15px;}
+.pet-room-view .room-profile-card h3{margin:0 0 10px;font-size:13px;color:#7d6a45;}
+.pet-room-view .room-profile-avatar-row{display:flex;gap:14px;align-items:center;}
+.pet-room-view .room-profile-avatar{width:76px;height:76px;border-radius:50%;overflow:hidden;border:2px solid #f0e0bd;background:#fff6e2;flex:none;}
+.pet-room-view .room-profile-avatar svg{width:100%;height:100%;display:block;}
+.pet-room-view .room-profile-genders{display:flex;gap:8px;}
+.pet-room-view .room-profile-gender{display:flex;flex-direction:column;align-items:center;gap:3px;border:1.5px solid #e9e0cd;border-radius:13px;background:#fff;color:#7d6a45;font-size:10px;cursor:pointer;padding:5px 8px;}
+.pet-room-view .room-profile-gender svg{width:42px;height:42px;}
+.pet-room-view .room-profile-gender.selected{border-color:#e09db4;background:#fdf0f5;color:#c06a86;font-weight:750;}
+.pet-room-view .room-profile-name-row{display:flex;gap:8px;margin-top:12px;}
+.pet-room-view .room-profile-name{flex:1;min-width:0;border:1px solid #e7dcc4;border-radius:11px;background:#fff;padding:8px 11px;font-size:12px;color:#6e5a36;}
+.pet-room-view .room-profile-name:focus{outline:2px solid #e8cf9d;}
+.pet-room-view .room-profile-level-title{display:flex;align-items:baseline;gap:10px;}
+.pet-room-view .room-profile-level-big{font-size:22px;font-weight:850;color:#8a6b33;}
+.pet-room-view .room-profile-level-desc{font-size:11px;color:#a28c54;}
+.pet-room-view .room-profile-bar{height:11px;border-radius:8px;background:#f2ead6;margin-top:10px;overflow:hidden;}
+.pet-room-view .room-profile-bar-fill{height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#e8cf9d,#d9a464);transition:width .35s ease;}
+.pet-room-view .room-profile-bar-text{margin-top:7px;font-size:10px;color:#a28c54;}
+.pet-room-view .room-profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.pet-room-view .room-profile-stat{background:#fffef8;border:1px solid #efe6d3;border-radius:15px;padding:11px 8px;text-align:center;}
+.pet-room-view .room-profile-stat-value{font-size:15px;font-weight:800;color:#7d6a45;}
+.pet-room-view .room-profile-stat-name{margin-top:4px;font-size:10px;color:#b1a78e;}
+.pet-room-view .room-profile-checkin-preview{margin:0 0 10px;font-size:12px;line-height:1.6;color:#6e725c;}
+.pet-room-view .room-profile-checkin-result{margin:9px 0 0;font-size:11px;line-height:1.6;color:#a28c54;min-height:15px;}
+.pet-room-view .room-profile-badges{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.pet-room-view .room-profile-badge{background:#fdf6e3;border:1px solid #efdfbe;border-radius:14px;padding:10px 6px;text-align:center;}
+.pet-room-view .room-profile-badge-mark{display:block;font-size:20px;line-height:1;}
+.pet-room-view .room-profile-badge-name{margin-top:6px;font-size:11px;font-weight:750;color:#7d6a45;}
+.pet-room-view .room-profile-badge-desc{margin-top:3px;font-size:9px;line-height:1.4;color:#b1a78e;}
+.pet-room-view .room-profile-badge.locked{background:#f4f1ea;border-color:#e6e1d5;filter:saturate(0);}
+.pet-room-view .room-profile-badge.locked .room-profile-badge-name{color:#a9a291;}
+@media(max-width:600px){.pet-room-view .room-profile{right:12px;left:12px;width:auto;top:52px;bottom:12px;border-radius:22px;}.pet-room-view .room-hud-right{right:12px;top:10px;}}
+@media(prefers-reduced-motion:reduce){.pet-room-view .room-profile-bar-fill{transition:none;}}
+
+/* ===== 个人主页 v2.5 增补：连签角标 / 签到日历 / 庆祝动画 ===== */
+.pet-room-view .room-profile-hud-streak{margin-left:2px;padding:2px 7px;border-radius:9px;background:#fff0e1;color:#d97f33;font-size:10px;font-weight:800;}
+.pet-room-view .room-profile-calendar{margin-top:12px;display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
+.pet-room-view .room-profile-calendar-title{grid-column:1/-1;font-size:11px;color:#a28c54;padding-bottom:2px;}
+.pet-room-view .room-profile-calendar-head{font-size:9px;color:#c4b896;padding:2px 0;}
+.pet-room-view .room-profile-calendar-day{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:9px;font-size:10px;color:#b1a78e;background:#f8f4ea;}
+.pet-room-view .room-profile-calendar-day.checked{background:#f0e0bd;color:#8a6b33;font-weight:800;}
+.pet-room-view .room-profile-calendar-day.today{box-shadow:inset 0 0 0 1.5px #d9a464;}
+.pet-room-view .room-profile-card.celebrate{animation:room-profile-celebrate .38s ease;}
+@keyframes room-profile-celebrate{0%{transform:scale(1)}35%{transform:scale(1.03)}60%{transform:scale(.99)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.pet-room-view .room-profile-card.celebrate{animation:none;}}
+
+/* ===== 个人主页 v2.5 b：统计 5 格 / 下一勋章 / 勋章分组 / 未签角标 / 移动端全屏 ===== */
+.pet-room-view .room-profile-hud-streak.warn{background:#fde8e2;color:#c0503c;}
+.pet-room-view .room-profile-stats{grid-template-columns:repeat(auto-fit,minmax(86px,1fr));}
+.pet-room-view .room-profile-next-badge{margin-top:8px;font-size:11px;color:#9a8a5e;background:#fbf6ea;border-radius:8px;padding:5px 8px;}
+.pet-room-view .room-profile-badge-group-title{grid-column:1/-1;font-size:11px;font-weight:800;color:#a28c54;margin:6px 0 2px;}
+.pet-room-view .room-profile-badge-group-title:first-child{margin-top:0;}
+@media(max-width:600px){
+  .pet-room-view .room-profile{right:0;left:0;top:0;bottom:0;width:100vw;height:100vh;max-width:none;border-radius:0;transform:translateX(100%);}
+  .pet-room-view .room-profile.open{transform:translateX(0);}
+  .pet-room-view .room-profile-close{right:14px;top:14px;}
+}
+
+/* ===== 个人主页 v2.6：日历跨月翻页 + 勋章解锁弹层 ===== */
+.pet-room-view .room-profile-calendar-head-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 4px;}
+.pet-room-view .room-profile-calendar-title{font-size:12px;font-weight:800;color:#8a7440;padding:0 4px;border-radius:8px;cursor:pointer;}
+.pet-room-view .room-profile-calendar-title:hover{background:#f4ead2;}
+.pet-room-view .room-profile-calendar-nav{width:28px;height:28px;border:1px solid #e8dcc0;border-radius:50%;background:#fdf8ec;color:#8a7440;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.pet-room-view .room-profile-calendar-nav:disabled{opacity:.35;cursor:default;}
+.pet-room-view .room-profile-calendar-nav:not(:disabled):hover{background:#f4ead2;}
+.pet-room-view .room-profile-toast{position:absolute;left:16px;right:16px;bottom:16px;z-index:21;display:flex;flex-direction:column;gap:5px;padding:10px 12px;border-radius:14px;background:rgba(64,52,26,.93);color:#fff5df;box-shadow:0 8px 24px rgba(70,52,20,.35);opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .22s ease,transform .22s ease;}
+.pet-room-view .room-profile-toast.show{opacity:1;transform:translateY(0);pointer-events:auto;cursor:pointer;}
+.pet-room-view .room-profile-toast-line{display:flex;align-items:center;gap:8px;font-size:12px;}
+.pet-room-view .room-profile-toast-mark{font-size:18px;}
+@media(prefers-reduced-motion:reduce){.pet-room-view .room-profile-toast{transition:none;}}
+
+/* ===== 个人主页 v2.7：勋章进度总览 ===== */
+.pet-room-view .room-profile-badge-progress{margin:0 0 12px;padding:9px 11px;border:1px solid #e8dcc0;border-radius:13px;background:#fdf8ec;}
+.pet-room-view .room-profile-badge-progress-label{display:block;font-size:11px;font-weight:700;color:#8a7440;margin-bottom:6px;}
+.pet-room-view .room-profile-badge-progress-track{display:block;height:8px;border-radius:5px;background:#eee4cf;overflow:hidden;}
+.pet-room-view .room-profile-badge-progress-fill{display:block;height:100%;border-radius:5px;background:#e8b64c;transition:width .3s ease;}
+@media(prefers-reduced-motion:reduce){.pet-room-view .room-profile-badge-progress-fill{transition:none;}}
+
+/* ===== 个人主页 v2.7/batch1：主题变量层 + 快捷签到/主题/周报/补签/勋章搜索与详情/骨架屏 ===== */
+.pet-room-view{--room-bg:#fff8ea;--room-card:#fffdf5;--room-line:#e8dcc0;--room-text:#5c4a2f;--room-text-soft:#9a865c;--room-accent:#e8b64c;}
+.pet-room-view .room-profile.room-profile-dark{--room-bg:#382f24;--room-card:#443a2c;--room-line:#5a4e3a;--room-text:#f1e6cd;--room-text-soft:#bcae8a;--room-accent:#eec25f;}
+.pet-room-view .room-profile{background:var(--room-bg);border-color:var(--room-line);}
+.pet-room-view .room-profile-header h2{color:var(--room-text);}
+.pet-room-view .room-profile-card{background:var(--room-card);border-color:var(--room-line);}
+.pet-room-view .room-profile-stat-value{color:var(--room-text);}
+.pet-room-view .room-profile-stat-name{color:var(--room-text-soft);}
+.pet-room-view .room-profile-checkin-preview,.pet-room-view .room-profile-checkin-result,.pet-room-view .room-profile-next-badge{color:var(--room-text-soft);}
+.pet-room-view .room-profile-checkin-tomorrow{margin:8px 0 0;font-size:11px;line-height:1.6;color:var(--room-text-soft);}
+.pet-room-view .room-profile-level-big{color:var(--room-text);}
+.pet-room-view .room-profile-level-desc{color:var(--room-text-soft);}
+
+.pet-room-view .room-profile-hud-quick{border:none;border-radius:13px;padding:7px 12px;font-size:12px;font-weight:700;color:#fff;background:var(--room-accent);cursor:pointer;box-shadow:0 2px 8px rgba(90,70,30,.25);}
+.pet-room-view .room-profile-hud-quick:hover{filter:brightness(.96);}
+.pet-room-view .room-profile-hud-quick:disabled{opacity:.55;cursor:default;}
+
+.pet-room-view .room-profile-theme{width:30px;height:30px;border:1px solid var(--room-line);border-radius:10px;background:var(--room-card);color:var(--room-text);font-size:14px;line-height:1;cursor:pointer;}
+.pet-room-view .room-profile-header{flex-wrap:wrap;}
+.pet-room-view .room-profile-header .room-profile-close{margin-left:auto;}
+
+.pet-room-view .room-profile-weekly{margin:0 0 14px;padding:10px 12px;border:1px solid var(--room-line);border-radius:13px;background:var(--room-card);}
+.pet-room-view .room-profile-weekly-label{display:block;font-size:11px;font-weight:700;color:var(--room-text-soft);margin-bottom:7px;}
+.pet-room-view .room-profile-weekly-days{display:flex;gap:5px;flex-wrap:wrap;}
+.pet-room-view .room-profile-weekly-day{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#eee4cf;color:var(--room-text-soft);font-size:11px;font-weight:700;}
+.pet-room-view .room-profile-weekly-day.checked{background:var(--room-accent);color:#fff;}
+
+.pet-room-view .room-profile-makeup{margin-top:8px;}
+.pet-room-view .room-profile-makeup .edit-button{font-size:12px;}
+
+.pet-room-view .room-profile-badge-search{width:100%;box-sizing:border-box;margin:2px 0 10px;padding:7px 10px;border:1px solid var(--room-line);border-radius:10px;background:var(--room-card);color:var(--room-text);font-size:12px;}
+.pet-room-view .room-profile-badge-detail{margin:0 0 10px;padding:9px 11px;border-left:3px solid var(--room-accent);border-radius:8px;background:var(--room-card);color:var(--room-text);font-size:12px;line-height:1.5;cursor:pointer;}
+.pet-room-view .room-profile-badge-empty{color:var(--room-text-soft);font-size:12px;padding:8px 0;}
+.pet-room-view .room-profile-badge{position:relative;cursor:pointer;}
+.pet-room-view .room-profile-badge:focus-visible{outline:2px solid var(--room-accent);outline-offset:2px;}
+
+/* 骨架屏：面板打开、数据未到时的脉动占位 */
+.pet-room-view .room-profile-loading .room-profile-card{position:relative;overflow:hidden;}
+.pet-room-view .room-profile-loading .room-profile-card::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.5) 50%,rgba(255,255,255,0) 70%);background-size:200% 100%;animation:room-shimmer 1.3s infinite;}
+@keyframes room-shimmer{to{background-position:-200% 0;}}
+@media(prefers-reduced-motion:reduce){.pet-room-view .room-profile-loading .room-profile-card::after{animation:none;}}
+
+/* 桌面 App 的侧栏也可能很窄：按房间容器调整，而非只看整个网页宽度。 */
+@container pet-room (max-width:620px){
+  .pet-room-view .room-shop__topbar{left:10px;right:10px;top:12px;flex-wrap:wrap;max-width:none;gap:6px;}
+  .pet-room-view .room-shop__wallet{padding:6px 8px;gap:5px;}
+  .pet-room-view .room-shop__wallet-label{display:none;}
+  .pet-room-view .room-shop__trigger{padding:8px 10px;gap:5px;}
+  .pet-room-view .room-shop__decorate{padding:8px 10px;font-size:12px;}
+  .pet-room-view .room-hud-right{right:10px;top:64px;gap:6px;}
+  .pet-room-view .room-profile{right:10px;top:112px;bottom:10px;width:calc(100% - 20px);}
+  .pet-room-view .room-shop__sheet{top:10px;bottom:10px;right:10px;width:calc(100% - 20px);max-height:none;border-radius:20px;}
+  .pet-room-view .room-shop__header{padding:12px 15px 8px;}
+  .pet-room-view .room-shop__eyebrow{display:none;}
+  .pet-room-view .room-shop__title{font-size:19px;}
+  .pet-room-view .room-shop__tabs{margin:0 12px 4px;}
+  .pet-room-view .room-shop__body{padding:0 12px 12px;}
+  .pet-room-view .room-shop__footer{padding:9px 12px;}
+  .pet-room-view .room-shop__grid{gap:8px;}
+  .pet-room-view .room-shop__card{padding:7px 8px 10px;}
+  .pet-room-view .room-profile-body{padding:4px 12px 16px;}
+  .pet-room-view .room-profile-header{padding:12px 14px 8px;}
+}
+@container pet-room (max-width:400px){
+  .pet-room-view .room-profile-level-name,.pet-room-view .room-profile-hud-streak{display:none;}
+  .pet-room-view .room-profile-level{padding:7px 9px;}
+  .pet-room-view .room-profile-hud-quick{padding:7px 9px;}
+  .pet-room-view .room-shop__price{font-size:10px;}
+  .pet-room-view .room-shop__buy{font-size:10px;padding:6px 8px;}
+  .pet-room-view .room-shop__product-name{font-size:12px;}
+}
