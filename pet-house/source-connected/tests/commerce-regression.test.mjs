@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import * as THREE from '../vendor/three/three.module.js';
-import {createEconomy,SHOP_CATALOG,ROOM_TIERS,STORAGE_CATALOG,BUILTIN_STORAGE} from '../economy.mjs';
+import {createEconomy,furnitureProduct,inventoryCatalog,SHOP_CATALOG,ROOM_TIERS,STORAGE_CATALOG,BUILTIN_STORAGE} from '../economy.mjs';
 import {createLayoutManager} from '../layout-manager.js';
 import {COLLIDERS,FURNITURE,ROOM,PLACEMENT_BOUNDS} from '../layout.js';
 import {buildDecor,buildDecorItem} from '../decor.js';
@@ -12,6 +12,7 @@ import {giftProduct,giftCatalog,giftSku} from '../gift-catalog.mjs';
 import {SEATS,WATER_TARGETS,resolveSeatApproach} from '../seats.mjs';
 import {placementOrder} from '../placement.mjs';
 import {createPetCharacter} from '../characters/pet-models.js';
+import {furnitureActivityKind,planFurnitureActivity} from '../furniture-activity.mjs';
 import {petNavigationBounds} from '../pet-boundary.mjs';
 import {compatibleRoomLayout} from '../room-layout.mjs';
 import {createWallHanging} from '../surface-models.mjs';
@@ -45,9 +46,11 @@ test('expired gifts stay visible until collection commits and failed collection 
  companion.replace({...companion.getState(),rewards:[reward]});room.economy.grantGift(sku,'gift:timed');assert.equal((await room.unstoreFurniture(sku,'gift:show')).ok,true);
  companion.replace({...companion.getState(),rewards:[{...reward,expiresAt:'2000-01-01T00:00:00Z'}]});const root=room.furniture.get(id),pending=[];
  const start=source.indexOf('function syncGiftInventory(){'),end=source.indexOf('function syncCompanion()',start);assert.ok(start>=0&&end>start);
- const context={...room.context,storeFurniture:(...args)=>{const p=room.storeFurniture(...args);pending.push(p);return p;},fx:null};
+ const context={...room.context,presentationPaused:false,storeFurniture:(...args)=>{const p=room.storeFurniture(...args);pending.push(p);return p;},fx:null};
  const sync=new Function('context',`with(context){${source.slice(start,end)};return syncGiftInventory;}`)(context);
  context.decoration.active=true;sync();assert.equal(root.visible,true);assert.equal(pending.length,0,'editing delays automatic collection');context.decoration.active=false;
+ context.presentationPaused=true;sync();assert.equal(pending.length,0,'a paused scene delays automatic inventory writes');context.presentationPaused=false;
+ context.options.economyService={busy:true};sync();assert.equal(pending.length,0,'server confirmation delays automatic inventory writes');context.options.economyService=undefined;
  room.storage.blocked=true;sync();await Promise.all(pending.splice(0));assert.equal(room.furniture.get(id),root);assert.equal(root.visible,true);assert.equal(Object.hasOwn(room.manager.definitions,id),true,'failed writes retain visible colliders');
  room.storage.blocked=false;sync();await Promise.all(pending.splice(0));assert.equal(room.furniture.has(id),false);assert.equal(room.economy.getState().stored.includes(sku),true);
  assert.equal((await room.unstoreFurniture(sku,'gift:expired')).code,'GIFT_EXPIRED');assert.equal(companion.getState().rewards[0].at,reward.at);
@@ -74,8 +77,8 @@ async function fixture(t,{storage=memory(),balance=1000,now=()=>new Date()}={}){
   }
   for(const [id,config] of Object.entries(FURNITURE))await loadFurniture(id,config);
   const context={THREE,economy,profile,companionStore,initialAccount,scene,furniture,furnitureDefinitions,interactive,solidMaterial,materialCache:materials,
-    createShopFurniture,giftProduct,giftCatalog,giftSku,createWallHanging,compatibleRoomLayout,buildDecorItem,loadFurniture,SHOP_CATALOG,ROOM_TIERS,STORAGE_CATALOG,WATER_TARGETS,FURNITURE,placementOrder,applyRoomTier,petNavigationBounds,createPetCharacter,
-    options:{},disposed:false,lifecycle:'ready',commerceBusy:false,decoration:{active:false,pending:false,dragging:false,refresh(){}},
+    createShopFurniture,giftProduct,giftCatalog,giftSku,createWallHanging,compatibleRoomLayout,buildDecorItem,loadFurniture,furnitureProduct,inventoryCatalog,SHOP_CATALOG,ROOM_TIERS,STORAGE_CATALOG,WATER_TARGETS,FURNITURE,placementOrder,applyRoomTier,petNavigationBounds,createPetCharacter,
+    furnitureActivityKind,planFurnitureActivity,options:{},disposed:false,lifecycle:'ready',commerceBusy:false,decoration:{active:false,pending:false,dragging:false,refresh(){}},
     prepareDecoration:()=>true,setTimeout,clearTimeout,resolveSeat(){},updateStatus(){},celebrateNewBadges(){},resize(){},schedule(){},syncCompanion(){},syncAppearance(){},feel:null,fx:null,defaultRoomLayout:null,
     notify:(type,detail)=>history.push({type,...detail}),gradient:null,
     disposer:{release(resource){released.add(resource);resource.dispose?.();}},

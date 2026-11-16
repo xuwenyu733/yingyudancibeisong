@@ -1,0 +1,19 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {readFile} from 'node:fs/promises';
+import {resolve,extname} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+let playwright;try{playwright=await import(process.env.PET_ROOM_PLAYWRIGHT_MODULE?pathToFileURL(resolve(process.env.PET_ROOM_PLAYWRIGHT_MODULE)).href:'playwright');}catch{}
+const root=fileURLToPath(new URL('../',import.meta.url));
+test('life panel unmount restores controls and stops late async work',{skip:!playwright&&'Requires Playwright'},async t=>{
+ const server=createServer(async(req,res)=>{try{const path=new URL(req.url,'http://local').pathname;if(path==='/'){res.setHeader('Content-Type','text/html');return res.end('<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/styles.css"><div id="app"><button>房间按钮</button></div>');}const file=resolve(root,'.'+path);if(!file.startsWith(root))throw Error();res.setHeader('Content-Type',extname(file)==='.css'?'text/css':'text/javascript');res.end(await readFile(file));}catch{res.writeHead(404).end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+ try{browser=await playwright.chromium.launch({headless:true,...process.env.PET_ROOM_CHROMIUM_EXECUTABLE?{executablePath:process.env.PET_ROOM_CHROMIUM_EXECUTABLE}:{}});
+ async function fixture(run){const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));try{await page.goto('http://127.0.0.1:'+server.address().port);await page.evaluate(async()=>{window.paused=false;window.intervals=new Set();const set=window.setInterval.bind(window),clear=window.clearInterval.bind(window);window.setInterval=(fn,ms)=>{const id=set(fn,ms);intervals.add(id);return id;};window.clearInterval=id=>{intervals.delete(id);clear(id);};window.createLifePanel=(await import('/life-ui.js')).createLifePanel;window.life=createLifePanel({client:{refresh:()=>new Promise((resolve,reject)=>window.rejectRefresh=reject)},getApi:()=>({setPresentationPaused:value=>paused=value})});});await run(page);assert.deepEqual(errors,[]);}finally{await page.close();}}
+ await t.test('disposing an open panel restores the room and clears the opened flag',()=>fixture(async page=>{await page.evaluate(()=>{window.opening=life.open('garden');});assert(await page.evaluate(()=>document.querySelector('#app').inert&&paused));await page.evaluate(()=>life.dispose());assert.deepEqual(await page.evaluate(()=>({inert:document.querySelector('#app').inert,paused,opened:life.opened,timers:intervals.size})),{inert:false,paused:false,opened:false,timers:0});}));
+ await t.test('a late failed refresh cannot create retry controls after disposal',()=>fixture(async page=>{const count=await page.evaluate(async()=>{window.opening=life.open('garden');life.dispose();let nodes=0;const create=document.createElement.bind(document);document.createElement=(...args)=>{nodes++;return create(...args);};rejectRefresh(Error('迟到的网络错误'));await opening;return nodes;});assert.equal(count,0);}));
+ await t.test('repeated open and dispose leaves no controls, timers or paused state',()=>fixture(async page=>{const result=await page.evaluate(async()=>{life.dispose();for(let i=0;i<30;i++){const panel=createLifePanel({client:{refresh:async()=>({})},getApi:()=>({setPresentationPaused:value=>paused=value})});const opening=panel.open('garden');panel.dispose();await opening;}return {panels:document.querySelectorAll('.room-life-shade').length,timers:intervals.size,inert:document.querySelector('#app').inert,paused};});assert.deepEqual(result,{panels:0,timers:0,inert:false,paused:false});}));
+ await t.test('disposing an unopened panel does not resume a separately paused room',()=>fixture(async page=>{await page.evaluate(()=>{paused=true;life.dispose();});assert.equal(await page.evaluate(()=>paused),true);}));
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+});

@@ -80,9 +80,9 @@ function normalizedDefinition(value) {
       || !finite3(box.size) || box.size.some((size) => size < 1e-4 || size > 100)) throw new TypeError('碰撞盒需要范围内的有限中心及正尺寸');
     return { center: [...box.center], size: [...box.size] };
   });
-  for (const key of ['blocksNavigation','blocksPlacement','draggable']) if (own(value, key) && typeof value[key] !== 'boolean') throw new TypeError(`${key} 必须为布尔值`);
+  for (const key of ['blocksNavigation','blocksPlacement','draggable','locked']) if (own(value, key) && typeof value[key] !== 'boolean') throw new TypeError(`${key} 必须为布尔值`);
   return { label: typeof value.label === 'string' ? value.label.slice(0, 100) : '', boxes,
-    blocksNavigation: value.blocksNavigation !== false, blocksPlacement: value.blocksPlacement !== false, draggable: value.draggable !== false };
+    blocksNavigation: value.blocksNavigation !== false, blocksPlacement: value.blocksPlacement !== false, draggable: value.draggable !== false, locked:value.locked===true };
 }
 function normalizedTransform(value, partial = false) {
   if (!record(value)) throw new TypeError('变换必须为对象');
@@ -306,7 +306,7 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
     lamp.position.copy(world); lamp.updateMatrixWorld(true);
   }
   function previewTransform(id, value) {
-    if (!own(definitions,id) || !definitions[id].draggable) return false;
+    if (!own(definitions,id) || !definitions[id].draggable || definitions[id].locked) return false;
     let transform;
     try { transform = normalizedTransform(value,true); } catch (error) { emit('layout-preview-rejected',{id,reason:messageOf(error)}); return false; }
     const before = snapshot();
@@ -402,7 +402,7 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
     const before=snapshot(), candidate=clone(definitions[id]);
     if (own(patch,'center')) candidate.boxes[boxIndex].center=patch.center;
     if (own(patch,'size')) candidate.boxes[boxIndex].size=patch.size;
-    for (const key of ['blocksNavigation','blocksPlacement']) if (own(patch,key)) candidate[key]=patch[key];
+    for (const key of ['blocksNavigation','blocksPlacement','locked']) if (own(patch,key)) candidate[key]=patch[key];
     try { definitions[id]=normalizedDefinition(candidate); refresh(); }
     catch (error) { restore(before); emit('layout-invalid',{id,reason:messageOf(error)}); return false; }
     return commit(before);
@@ -531,7 +531,7 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
     }
     editSession=null;lastGood=snapshot();acceptNavigationState();emit('layout-change',{saved:save,lampSupport});return true;
   }
-  function registerFurniture(id,root,definition) {
+  function registerFurniture(id,root,definition,{validatePlacement}={}) {
     if (typeof id!=='string' || !id || id.length>128 || ['pet','__proto__','prototype','constructor'].includes(id)
       || own(definitions,id) || furniture.get(id)!==root || !root?.isObject3D || ids.length>=128) return false;
     const before=snapshot(),goodBefore=lastGood,defaultsBefore=defaults;
@@ -541,6 +541,7 @@ export function createLayoutManager({ furniture, definitions: initialDefinitions
       ids.push(id);definitions[id]=normalized;
       if(id==='lamp')snapLamp();
       const result=validate();if (!result.valid) throw new Error(result.reason);
+      if(validatePlacement&&!validatePlacement({obstacles,bounds:navigationBounds}))throw new Error('请为互动家具保留伙伴能到达的位置');
       // v2.8.2 仓库：装修编辑会话内也允许注册（摆回家具），并同步入口快照，
       // 取消装修时新摆回的家具保持生效，与仓库事务一致。
       if (editSession) {

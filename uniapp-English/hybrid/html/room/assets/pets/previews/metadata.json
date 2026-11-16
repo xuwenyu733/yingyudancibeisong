@@ -1,7 +1,7 @@
 {
   "version": 2,
   "source": "characters/pet-models.js",
-  "sourceSha256": "3cb04925e4281a3cbdd10fd0d33b70185a190553365692241404f84f7aebbee2",
+  "sourceSha256": "d6412d1c912db808323448148b0bcf651801a00ea2c1b473032abcd624d8cda7",
   "kind": "runtime-model-studio-render",
   "transparent": true,
   "entries": [
@@ -104,12 +104,12 @@
       "triangles": 1980,
       "bounds": {
         "min": [
-          -0.38770411273864575,
+          -0.41405914952492145,
           2.0662490098640198e-18,
           -0.25270492909550346
         ],
         "max": [
-          0.38770411273864575,
+          0.41405914952492145,
           1.0048663355622223,
           0.3508902696053788
         ]
@@ -117,8 +117,8 @@
       "file": "starlight-penguin.png",
       "width": 512,
       "height": 512,
-      "bytes": 24274,
-      "sha256": "2f344ba72a96d930a582674ac5aa1b449615383091c25b3951764213612905c7"
+      "bytes": 24436,
+      "sha256": "1c70ec7db873d9ac26718be7669d945b62b3f3c071a208fd0efd41a53d5d0b63"
     }
   ]
 }

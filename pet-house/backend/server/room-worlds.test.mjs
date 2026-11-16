@@ -23,11 +23,12 @@ test('separate floor checkpoints, single-floor restore and transactional databas
     if(sql.startsWith('SELECT revision,extras'))return [[slot],[]];
     if(sql.startsWith('UPDATE sys_save_slots')){slot={revision:params[0],archive:JSON.parse(params[1]),extras:JSON.parse(params[2])};return [[],[]];}
     if(sql.startsWith('DELETE FROM usr_accounts'))worldRows=worldRows.filter(row=>row.account_key!==params[0]);
-    if(sql.startsWith('INSERT INTO room_world_saves')){const columns=sql.match(/\(([^)]+)\)/)[1].split(',');worldRows.push(Object.fromEntries(columns.map((key,i)=>[key,params[i]])));}
+    if(sql.startsWith('DELETE FROM room_world_saves'))worldRows=worldRows.filter(row=>!(row.account_key===params[0]&&row.room_id===params[1]&&row.save_key===params[2]));
+    if(sql.startsWith('INSERT INTO room_world_saves')){const columns=sql.match(/\(([^)]+)\)/)[1].split(','),row=Object.fromEntries(columns.map((key,i)=>[key,params[i]]));worldRows=worldRows.filter(x=>!(x.account_key===row.account_key&&x.room_id===row.room_id&&x.save_key===row.save_key));worldRows.push(row);}
     return [[],[]];
   }};
   const repository=createSaveRepository({async getConnection(){return conn;},async execute(){return [[slot],[]];}},validate,{sourceRoot});
-  assert.equal((await repository.save(namespace,0,Object.fromEntries(values))).ok,true);
+  assert.equal((await repository.save(namespace,0,Object.fromEntries(values),{trustedAuthority:true})).ok,true);
   assert.equal(worldRows.length,4);assert.equal(worldRows.filter(row=>row.save_kind==='checkpoint').length,2);
   const rowFor=id=>worldRows.find(row=>row.room_id===id&&row.save_kind==='checkpoint');
   assert.equal(rowFor('room-1').save_name,'蓝色阅读角');assert.equal(rowFor('room-2').save_name,'花园布置');

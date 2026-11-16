@@ -33,6 +33,7 @@ services:
       PET_ROOM_MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请先生成.env配置}
       PET_ROOM_ALLOW_REMOTE_DB: "1"
       PET_ROOM_SOCIAL: "1"
+      PET_ROOM_LEARNING_API: ${LEARNING_API_URL:?请填写容器可访问的学习API根地址}
       PET_ROOM_TRUST_PROXY: "1"
       PET_ROOM_PUBLIC_ORIGIN: https://${DOMAIN:?请填写域名}
     depends_on:

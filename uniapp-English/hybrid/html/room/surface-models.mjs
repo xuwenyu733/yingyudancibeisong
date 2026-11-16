@@ -1,3 +1,4 @@
+import {itemBaseSku,itemCopyNumber} from './inventory-key.mjs';
 import * as THREE from './vendor/three/three.module.js';
 import {RoundedBoxGeometry} from './vendor/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries,mergeVertices} from './vendor/addons/utils/BufferGeometryUtils.js';
@@ -29,7 +30,7 @@ function geometryBuilder(materials){
 
 /** Wall art uses local X/Y coordinates and faces +Z. The room mounts it to a wall. */
 export function createWallHanging(sku,materials){
-  const item=WALL_CATALOG.find(p=>p.sku===sku);if(!item)throw new RangeError(`未知墙上挂件：${sku}`);
+  const item=WALL_CATALOG.find(p=>p.sku===itemBaseSku(sku));if(!item)throw new RangeError(`未知墙上挂件：${sku}`);
   const b=geometryBuilder(materials),{box,oval,disc,ring,star,leaf,line,pearlRow}=b,c=item.colors;
   const root=new THREE.Group();root.name=`shop-${sku}`;Object.assign(root.userData,{furnitureId:root.name,shopSku:sku,wallHanging:true,hangingWidth:item.width,hangingHeight:item.height});
   const frame=(w,h,color,inner)=>{box([w,h,.075],[0,0,.035],color,.045);box([w-.10,h-.10,.04],[0,0,.085],inner,.035);};
@@ -128,7 +129,7 @@ export function createWallHanging(sku,materials){
   const transform=new THREE.Matrix4().makeTranslation(-center.x,-center.y,-bounds.min.z);
   const scaling=new THREE.Matrix4().makeScale(item.width/size.x,item.height/size.y,Math.min(1,.20/size.z));transform.premultiply(scaling);
   root.traverse(mesh=>{if(mesh.isMesh){mesh.geometry.applyMatrix4(transform);mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();}});root.updateMatrixWorld(true);
-  return {root,definition:{label:item.name,draggable:true,blocksNavigation:false,blocksPlacement:false,boxes:[{center:[0,0,.11],size:[item.width+.02,item.height+.02,.24]}]}};
+  return {root,definition:{label:item.name+(itemBaseSku(sku)!==sku?' · 第'+itemCopyNumber(sku)+'件':''),draggable:true,blocksNavigation:false,blocksPlacement:false,boxes:[{center:[0,0,.11],size:[item.width+.02,item.height+.02,.24]}]}};
 }
 
 /** A complete tiled surface. Material batches keep large rooms inexpensive. */

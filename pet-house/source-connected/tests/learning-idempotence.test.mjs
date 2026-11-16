@@ -21,6 +21,7 @@ function fixture(adapter = memory()) {
   const companionStore = createCompanionStore({ adapter, key: 'learning-companion' });
   const effects = { reaction: [], sounds: [], bubbles: [], notifications: [], syncs: 0 };
   const context = {
+    options: {},
     economy, profile, companionStore, lifecycle: 'ready', disposed: false,
     tradeFailure: (code, message) => ({ ok: false, code, message }),
     updateStatus() {},

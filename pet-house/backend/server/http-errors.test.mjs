@@ -6,10 +6,19 @@ import {createAppServer} from './server.mjs';
 
 test('missing static files return a public 404 without the server filesystem path or username',async()=>{
  const sourceRoot=resolve(fileURLToPath(new URL('../../source-connected/',import.meta.url)));
- const pool={async query(){return[[],[]];},async execute(sql){if(sql.includes('information_schema.TABLES'))return[[{TABLE_NAME:'room_world_saves'}],[]];throw new Error('unexpected SQL');},async end(){}};
+ const pool={async query(){return[[],[]];},async execute(sql){if(sql.includes('information_schema.TABLES'))return[[{TABLE_NAME:'room_world_saves'}],[]];if(sql.includes('information_schema.CHECK_CONSTRAINTS'))return [[{CHECK_CLAUSE:"age_mode IN ('kindergarten','primary')"}],[]];throw new Error('unexpected SQL');},async end(){}};
  const app=await createAppServer({sourceRoot,database:'pet_room',socialEnabled:false},{pool});
  try{await new Promise(resolve=>app.server.listen(0,'127.0.0.1',resolve));const base='http://127.0.0.1:'+app.server.address().port;
   const response=await fetch(base+'/missing-static-file-audit.js'),body=await response.json();assert.equal(response.status,404);assert.equal(body.message,'没有找到这个页面或文件');assert.equal(JSON.stringify(body).includes(sourceRoot),false);assert.equal(JSON.stringify(body).includes('ENOENT'),false);
   const head=await fetch(base+'/missing-static-file-audit.js',{method:'HEAD'});assert.equal(head.status,404);assert.equal(await head.text(),'');
+  assert.equal((await (await fetch(base+'/api/v1/status')).json()).juniorStyle,false);
  }finally{await app.close();}
+});
+
+for(const escaped of [false,true])test('status enables junior style with '+(escaped?'escaped':'plain')+' database constraint text',async()=>{
+ const sourceRoot=resolve(fileURLToPath(new URL('../../source-connected/',import.meta.url)));
+ const clause="age_mode IN ('kindergarten','primary','junior')";
+ const pool={async query(){return[[],[]];},async execute(sql){if(sql.includes('information_schema.TABLES'))return[[{TABLE_NAME:'room_world_saves'}],[]];if(sql.includes('information_schema.CHECK_CONSTRAINTS'))return [[{CHECK_CLAUSE:escaped?clause.replaceAll("'","\\'"):clause}],[]];throw Error('unexpected SQL');},async end(){}};
+ const app=await createAppServer({sourceRoot,database:'pet_room',socialEnabled:false},{pool});
+ try{await new Promise(resolve=>app.server.listen(0,'127.0.0.1',resolve));const status=await (await fetch('http://127.0.0.1:'+app.server.address().port+'/api/v1/status')).json();assert.equal(status.juniorStyle,true);assert.equal(status.timeLimits,false);}finally{await app.close();}
 });

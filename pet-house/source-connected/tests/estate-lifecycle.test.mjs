@@ -12,6 +12,6 @@ test('disposing during the travel curtain removes it synchronously and cannot co
 });
 test('unsaved drawings prevent travel until an explicit save or discard clears the current room flag',()=>{
  const start=source.indexOf('  const hasDrawingDraft='),end=source.indexOf('  function getEstate()',start);assert.ok(start>=0&&end>start);
- const context={current:{view:{root:{dataset:{roomDrawingDirty:'true'}}},api:{getState:()=>({ready:true,decoration:false}),getShop:()=>({busy:false})}},disposed:false,busy:false};
+ const context={roomOptions:{},current:{view:{root:{dataset:{roomDrawingDirty:'true'}}},api:{getState:()=>({ready:true,decoration:false}),getShop:()=>({busy:false})}},disposed:false,busy:false};
  const api=new Function('context',`with(context){${source.slice(start,end)};return {canTravel,unavailable};}`)(context);assert.equal(api.canTravel(),false);assert.equal(api.unavailable().code,'UNSAVED_DRAWING');context.current.view.root.dataset.roomDrawingDirty='false';assert.equal(api.canTravel(),true);context.current.view.root.dataset.roomWallDrawingDirty='true';assert.equal(api.canTravel(),false);context.current.view.root.dataset.roomWallDrawingDirty='false';assert.equal(api.canTravel(),true);
 });

@@ -14,6 +14,7 @@ const soundSettings=sound=>({muted:Boolean(sound?.muted),volume:Object.hasOwn(LE
 
 /** Locked background music. Runtime controls intentionally expose no track setter. */
 export function createRoomMusic({eventTarget=globalThis.document,configuration=DESIGNER_MUSIC_CONFIG,sound={},audioContext=null,clock=null}={}){
+  let accessPaused=false;
   const chosen=configuration?.track??DESIGNER_MUSIC_CONFIG.track;
   if(chosen!=='cloud-lullaby')throw new RangeError('未知的小屋背景音乐，请由设计者选择支持的曲目');
   const config=Object.freeze({track:chosen,title:typeof configuration?.title==='string'?[...configuration.title.trim().replace(/[\u0000-\u001f]/g,'')].slice(0,40).join('')||'云朵小屋':'云朵小屋',enabled:configuration?.enabled!==false,locked:true});
@@ -76,7 +77,7 @@ export function createRoomMusic({eventTarget=globalThis.document,configuration=D
     }catch{stop(true);}
   }
   function start(){
-    if(disposed||playing||!unlocked||hidden||settings.muted||!config.enabled)return false;
+    if(disposed||playing||!unlocked||hidden||accessPaused||settings.muted||!config.enabled)return false;
     if(!ensureContext())return false;
     playing=true;cursor=0;cycleStart=context.currentTime+.06;fadeMaster(LEVELS[settings.volume]);tick();return true;
   }
@@ -95,7 +96,7 @@ export function createRoomMusic({eventTarget=globalThis.document,configuration=D
   eventTarget?.addEventListener?.('pointerdown',gesture,{capture:true,passive:true});
   eventTarget?.addEventListener?.('keydown',gesture,true);
   ownerDocument?.addEventListener?.('visibilitychange',visibility);
-  return Object.freeze({configureSound,setPresentationHidden,getState:state,unlock,
+  return Object.freeze({configureSound,setPresentationHidden,setAccessPaused(value){accessPaused=Boolean(value);if(accessPaused)stop();else start();},getState:state,unlock,
     dispose(){if(disposed)return;disposed=true;stop(true);eventTarget?.removeEventListener?.('pointerdown',gesture,true);eventTarget?.removeEventListener?.('keydown',gesture,true);ownerDocument?.removeEventListener?.('visibilitychange',visibility);try{master?.disconnect?.();}catch{}master=null;if(ownsContext)try{context?.close?.()?.catch?.(()=>{});}catch{}context=null;},
   });
 }

@@ -5,6 +5,8 @@ import {PRODUCT_PREVIEW_INFO} from './product-previews.mjs';
 import {activeElementFor} from './dom.mjs';
 import {WISH_KEY_SUFFIX,readWishTargets,writeWishTargets,categoryOf,applyCatalogView,wishTargetOf,SORT_OPTIONS,WISH_CATEGORIES} from './shop-tools.mjs';
 import {dailyFeature} from './companion-extra.mjs';
+import {itemBaseSku,MAX_ITEM_COPIES} from './inventory-key.mjs';
+import {createPetSettings} from './pet-settings-ui.js';
 let nextPanel=0;
 const surfaceProducts=new Map(SURFACE_CATALOG.map(product=>[product.sku,product]));
 const petPreviewNames=Object.freeze({'apricot-fox':'杏橘狐','cloud-bunny':'云朵兔','mint-cat':'薄荷猫','cocoa-bear':'可可熊','starlight-penguin':'星光企鹅'});
@@ -18,7 +20,7 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
   const doc=root.ownerDocument,win=doc.defaultView,events=new win.AbortController(),listen={signal:events.signal},id=`room-shop-${++nextPanel}`;
   const label=typeof pointsLabel==='string'&&pointsLabel.trim()?pointsLabel:'学习积分';
   let disposed=false,opened=false,activeTab='furniture',state={},pending=false,sequence=0,returnFocus=null,lastRenderKey=null;
-  let feedback={text:'每一次学习，都让小屋多一点喜欢。',tone:'neutral'};
+  let feedback={text:'每一次学习，都让小屋多一点喜欢。',tone:'neutral'},lastPlaced=null;
   const cards=new Map(),claimed=new Set(),tabs=new Map(),panels=new Map();
   // v2.17/F4：每类一个筛选条（搜索/价格排序/只看未拥有）+ 每类心愿目标（本地持久化）。
   const views=new Map();const wish={targets:null,key:null,init:false};
@@ -139,7 +141,7 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
   el('p','room-shop__eyebrow','让学习，慢慢住进生活',heading);const title=el('h2','room-shop__title','小屋商店',heading);title.id=`${id}-title`;
   const closeButton=el('button','room-shop__close',undefined,header);closeButton.type='button';closeButton.setAttribute('aria-label','关闭商店');icon(closeButton,'close');
   const tablist=el('div','room-shop__tabs',undefined,dialog);tablist.setAttribute('role','tablist');tablist.setAttribute('aria-label','商店分类');
-  const body=el('div','room-shop__body',undefined,dialog);
+  const body=el('div','room-shop__body',undefined,dialog);body.tabIndex=0;body.setAttribute('role','region');body.setAttribute('aria-label','商店内容，可滚动');
   for(const [name,text] of [['pets','宠物'],['furniture','家具'],['flooring','地砖'],['wall','墙上挂件'],['room','屋内家具'],['storage','仓库'],['expansion','扩建'],['points','积分']]){
     const tab=el('button','room-shop__tab',text,tablist);tab.type='button';tab.id=`${id}-tab-${name}`;tab.dataset.shopTab=name;tab.setAttribute('role','tab');tab.setAttribute('aria-controls',`${id}-panel-${name}`);tabs.set(name,tab);
     const panel=el('div','room-shop__panel',undefined,body);panel.id=`${id}-panel-${name}`;panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',tab.id);panels.set(name,panel);
@@ -151,7 +153,8 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
   const flooringGrid=el('div','room-shop__grid',undefined,flooring);
   const wall=panels.get('wall');el('p','room-shop__intro','墙上挂件集中在这里管理。已收藏的挂件可收回仓库、免费摆回墙上。',wall);
   const wallGrid=el('div','room-shop__grid',undefined,wall),productGrids={furniture:grid,flooring:flooringGrid,wall:wallGrid};
-  const petsPanel=panels.get('pets');el('p','room-shop__intro','用学习积分结识新伙伴。每人同时只养一只宠物，积分兑换会请新的伙伴入住，原来的伙伴先去休息～',petsPanel);
+  const petsPanel=panels.get('pets');el('p','room-shop__intro','每个账号只有一位伙伴。这里展示正在陪伴你的宠物，装扮和成长都会一直保存。',petsPanel);
+  const petSettings=createPetSettings({container:petsPanel,api,perform:act,requestId});
   const petGrid=el('div','room-shop__grid',undefined,petsPanel),petCards=new Map();
   const collectionGoals=new Map();
   for(const [category,parent,items] of [['pets',petsPanel,petGrid],['furniture',furniture,grid],['flooring',flooring,flooringGrid],['wall',wall,wallGrid]]){
@@ -184,12 +187,12 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
     const record=collectionGoals.get(category),products=catalog.filter(product=>typeof product?.sku==='string');
     record.goal.hidden=!products.length;if(!products.length)return;
     if(category==='pets'){
-      // v2.24 · 单宠制：不收集多只，只展示"当前伙伴 + 积分兑换换新伙伴"。
+      // 每个账号只展示当前的一位伙伴，不提供额外宠物兑换。
       const current=products.find(product=>owned.has(product.sku));
       record.goal.dataset.wished='false';record.goal.dataset.complete='false';
       record.track.hidden=true;record.button.hidden=true;record.art.hidden=false;
       record.count.textContent='每人同时只养一只';
-      if(current){record.title.textContent=`当前伙伴 · ${current.name||current.sku}`;record.hint.textContent='想换新伙伴？用学习积分兑换，请新的伙伴入住，原来的伙伴先去休息～';}
+      if(current){record.title.textContent=`当前伙伴 · ${current.name||current.sku}`;record.hint.textContent='这就是陪伴你的唯一伙伴，装扮和成长都会一直保存。';}
       else{record.title.textContent='还没有自己的伙伴';record.hint.textContent='选一位喜欢的伙伴，用学习积分请它入住你的小屋吧～';}
       const target=current||products[0];
       if(record.sku!==target.sku){record.art.replaceChildren();illustration(record.art,target.sku,target);record.sku=target.sku;}
@@ -223,7 +226,7 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
     for(const color of (petStyle?petStyle[1]:item.colors||[]).slice(0,3)){const swatch=el('i','',undefined,palette);swatch.style.backgroundColor=`#${color.toString(16).padStart(6,'0')}`;}
   }
   function makePetCard(product){
-    const card=el('article','room-shop__card room-shop__pet-card',undefined,petGrid);card.dataset.petSku=product.sku;
+    const card=el('article','room-shop__card room-shop__pet-card',undefined,petGrid);card.dataset.petSku=product.sku;card.dataset.shopSku=product.sku;
     card.dataset.category='pet';card.dataset.rarity=product.price>=500?'premium':'fresh';
     const art=el('div','room-shop__product-art',undefined,card);illustration(art,product.sku,product);
     el('span','room-shop__collection-label',product.price>=500?'星光伙伴':'温柔陪伴',art);
@@ -322,6 +325,12 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
     const record={card,name,button};storageCards.set(key,record);return record;
   }
   const footer=el('footer','room-shop__footer',undefined,dialog),status=el('p','room-shop__status','',footer);status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.setAttribute('aria-atomic','true');
+  const adjustPlaced=el('button','room-shop__adjust-placed','调整刚摆好的家具',footer);adjustPlaced.hidden=true;
+  adjustPlaced.addEventListener('click',async()=>{
+    if(pending||!lastPlaced)return;const item=lastPlaced;close();
+    try{if(!await api.setDecorationMode(true)||!api.selectDecorationFurniture(item))throw Error('家具已经保存，可从装修的家具栏中选择它。');}
+    catch(error){if(!disposed){feedback={text:error.message||'暂时无法选中家具，请从装修中选择。',tone:'neutral'};open();}}
+  },listen);
 
   function shop(){return state.shop||{};}
   function blocked(){const current=shop();if(pending||current.busy)return '正在处理，请稍候';if(!state.ready||state.lifecycle!=='ready')return '房间尚未就绪';if(current.valid===false&&current.error?.code!=='STORAGE_WRITE_FAILED')return current.error?.message||'账户暂不可用';return '';}
@@ -345,10 +354,14 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
       return category==='flooring'&&current.owned?.includes(product.sku)?api.applyFlooring(product.sku):api.purchaseFurniture(product.sku,requestId('purchase',product.sku));
     // 心愿达成庆祝（清单29）：心愿目标被成功带回家时放小派对（此时心愿表尚未刷新）。
     },result=>{if(result?.ok&&!result.unchanged&&wish.targets&&Object.values(wish.targets).includes(product.sku)){try{api.celebrateParty?.();feedback={text:'心愿达成！你也太棒啦～',tone:'success'};}catch{}}});},listen);
-    const record={card,name,description,price,button,badge,wishButton};cards.set(product.sku,record);return record;
+    if(typeof api.beginFurnitureTrial==='function'){const trial=el('button','room-shop__trial','放进家里试试',card);trial.type='button';trial.dataset.trialSku=product.sku;trial.addEventListener('click',()=>{close();void api.beginFurnitureTrial(product.sku).then(result=>{if(!result?.ok){feedback={text:result?.message||'暂时无法试摆',tone:'error'};open();}});},listen);}
+    const quantity=el('small','room-shop__quantity','',card),copyButton=el('button','room-shop__copy','再兑换一件',card);copyButton.type='button';copyButton.dataset.copySku=product.sku;
+    copyButton.addEventListener('click',()=>{void act(()=>api.purchaseFurnitureCopy(product.sku,requestId('purchase-copy',product.sku)));},listen);
+    const record={card,name,description,price,button,badge,wishButton,quantity,copyButton};cards.set(product.sku,record);return record;
   }
   function render(){
     if(disposed)return;const current=shop(),reason=blocked(),balance=number(current.balance),owned=new Set(current.owned||[]),decorating=Boolean(state.decoration);
+    petSettings.update(current,{disabled:!!reason});
     const featureSku=(dailyFeature((current.catalog||[]).map(item=>({sku:item.sku||item.id,name:item.name,description:item.description})),localDate())||{}).sku||'';
     ensureWishTargets();
     // Room metrics and pet animation update independently of shop content.
@@ -361,18 +374,18 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
     walletLabel.textContent=label;balanceText.textContent=format(balance);balanceButton.setAttribute('aria-label',`${label} ${format(balance)}，查看积分说明`);
     trigger.disabled=state.lifecycle==='disposed';dialog.setAttribute('aria-busy',String(pending||!!current.busy));
     const catalog=Array.isArray(current.catalog)?current.catalog:[],present=new Set();
-    const pets=current.pets||{catalog:[],owned:[],active:null},petPresent=new Set();
+    const pets={...(current.pets||{catalog:[],owned:[],active:null})},petPresent=new Set();pets.catalog=(pets.catalog||[]).filter(x=>x.sku===pets.active).slice(0,1);
     for(const product of pets.catalog||[]){
       petPresent.add(product.sku);const item=petCards.get(product.sku)||makePetCard(product),has=pets.owned.includes(product.sku),active=pets.active===product.sku,short=!has&&balance<number(product.price);
       if(has&&wish.targets.pets===product.sku){wish.targets.pets='';const key=currentWishKey();if(key)writeWishTargets(key,wish.targets,healthyStorage());}
-      item.wishButton.hidden=has;item.wishButton.textContent=wish.targets.pets===product.sku?'★':'☆';
+      item.wishButton.hidden=true;item.wishButton.textContent=wish.targets.pets===product.sku?'★':'☆';
       item.wishButton.setAttribute('aria-pressed',String(wish.targets.pets===product.sku));
       // v2.24 单宠制措辞：心愿 = 想请来入住的伙伴（不再叫"收藏目标"）。
       item.wishButton.setAttribute('aria-label',wish.targets.pets===product.sku?`取消把${product.name}请来入住`:`把${product.name}设为想入住的伙伴`);
       // v2.23 单宠制：只有当前伙伴算“已拥有”，其余伙伴一律积分兑换（兑换即更换）。
       item.badge.hidden=!has;item.badge.textContent=active?'正在陪伴':'已拥有';item.card.dataset.active=String(active);
-      item.price.textContent=has?'当前伙伴 · 陪伴中':`${format(product.price)} 积分`;
-      item.button.disabled=active||!!reason||short;item.button.textContent=active?'当前伙伴':short?'去学习攒积分':'积分兑换';item.button.title=reason||(short?'学习或签到都能攒积分，去攒够再来带它回家吧～':active?'这是你正在陪伴的伙伴～':'用积分兑换，新的伙伴会入住，原来的伙伴先去休息～');
+      item.price.textContent='一人一宠 · 陪伴中';
+      item.button.disabled=true;item.button.textContent='我的唯一伙伴';item.button.title=reason||(short?'学习或签到都能攒积分，去攒够再来带它回家吧～':active?'这是你正在陪伴的伙伴～':'用积分兑换，新的伙伴会入住，原来的伙伴先去休息～');
       item.button.setAttribute('aria-label',`${active?'当前伙伴':has?'切换为':'兑换'}${product.name}${has?'':`，${product.price}积分`}`);
     }
     for(const [key,item] of petCards)if(!petPresent.has(key)){item.card.remove();petCards.delete(key);}
@@ -383,6 +396,9 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
     for(const product of catalog){
       if(typeof product?.sku!=='string')continue;present.add(product.sku);const item=cards.get(product.sku)||makeCard(product),isOwned=owned.has(product.sku),inStorage=storedOwned.has(product.sku),short=!isOwned&&balance<number(product.price);
       const category=categoryOf(product);
+      const pieces=[...owned].filter(key=>itemBaseSku(key)===product.sku),placed=pieces.filter(key=>!storedOwned.has(key)).length;
+      item.quantity.hidden=category==='flooring'||!pieces.length;item.quantity.textContent=`拥有 ${pieces.length} 件 · 本层摆放 ${placed} 件 · 可取用 ${pieces.length-placed} 件`;
+      item.copyButton.hidden=!pieces.length||category==='flooring'||typeof api.purchaseFurnitureCopy!=='function';item.copyButton.disabled=!!reason||balance<number(product.price)||pieces.length>=MAX_ITEM_COPIES;item.copyButton.textContent=pieces.length>=MAX_ITEM_COPIES?'同款已达20件':`再兑换一件 · ${format(product.price)}积分`;
       if(isOwned&&wish.targets[category]===product.sku){wish.targets[category]='';const key=currentWishKey();if(key)writeWishTargets(key,wish.targets,healthyStorage());}
       item.wishButton.hidden=isOwned;item.wishButton.textContent=wish.targets[category]===product.sku?'★':'☆';
       item.wishButton.setAttribute('aria-pressed',String(wish.targets[category]===product.sku));
@@ -476,6 +492,7 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
     for(const [sku,item] of storageCards)if(!presentStored.has(sku)){item.card.remove();storageCards.delete(sku);}
     storageEmpty.hidden=presentStored.size>0;
     status.textContent=current.valid===false?(current.error?.message||'账户暂不可用，积分与家具未发生变更'):reason||feedback.text;status.dataset.tone=current.valid===false?'error':reason?'neutral':feedback.tone;
+    adjustPlaced.hidden=!lastPlaced||typeof api.setDecorationMode!=='function'||typeof api.selectDecorationFurniture!=='function'||!api.getLayout?.()?.furniture?.[lastPlaced];adjustPlaced.disabled=!!reason;
     lastRenderKey=renderKey;
   }
   function update(nextState){if(disposed)return;state=nextState&&typeof nextState==='object'?nextState:{};if(opened&&state.ready&&!state.metrics?.presentationPaused)api.setPresentationPaused?.(true);render();}
@@ -493,8 +510,10 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
   }
   async function act(operation,after){
     if(disposed)return;const reason=blocked();if(reason){feedback={text:reason,tone:'neutral'};render();return;}
+    const beforeItems=new Set(Object.keys(api.getLayout?.()?.furniture||{}));lastPlaced=null;
     pending=true;feedback={text:'正在为小屋安排，请稍候…',tone:'neutral'};render();
     try{const result=await operation();if(disposed)return;if(!result||typeof result.ok!=='boolean')throw new Error('小屋暂时没有返回结果，请稍后再试一次。');after?.(result);
+    if(result.ok)lastPlaced=Object.keys(api.getLayout?.()?.furniture||{}).find(key=>!beforeItems.has(key))||null;
     feedback={text:result.message||(result.ok?'好啦！快来看看我们小屋的新变化～':'这次没能完成，积分和小家具都还好好地在原处。'),tone:result.ok?'success':'error'};}
     catch(error){if(!disposed)feedback={text:error?.message||'暂时未能完成操作，请稍后重试。',tone:'error'};}
     finally{if(!disposed){pending=false;refresh();}}
@@ -504,7 +523,7 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
     revealTab();
     queueMicrotask(()=>{if(opened&&!disposed)closeButton.focus({preventScroll:true});});
   }
-  function close(){if(disposed||!opened)return;opened=false;wrapper.dataset.open='false';shade.hidden=true;dialog.hidden=true;trigger.setAttribute('aria-expanded','false');storageTrigger.setAttribute('aria-expanded','false');api.setPresentationPaused?.(false);const target=returnFocus?.isConnected&&!returnFocus.closest?.('[hidden]')?returnFocus:trigger;returnFocus=null;target.focus?.({preventScroll:true});}
+  function close(){if(disposed||!opened)return;opened=false;petSettings.close();wrapper.dataset.open='false';shade.hidden=true;dialog.hidden=true;trigger.setAttribute('aria-expanded','false');storageTrigger.setAttribute('aria-expanded','false');api.setPresentationPaused?.(false);const target=returnFocus?.isConnected&&!returnFocus.closest?.('[hidden]')?returnFocus:trigger;returnFocus=null;target.focus?.({preventScroll:true});}
   trigger.addEventListener('click',()=>opened?close():open('pets'),listen);storageTrigger.addEventListener('click',()=>opened&&activeTab==='storage'?close():open('storage'),listen);balanceButton.addEventListener('click',()=>open('points'),listen);closeButton.addEventListener('click',close,listen);shade.addEventListener('click',close,listen);
   root.querySelector('[data-room-control="decoration-shop"]')?.addEventListener('click',()=>open('expansion'),listen);
   expandButton.addEventListener('click',()=>{void act(()=>api.expandRoom(requestId('expand')));},listen);
@@ -513,7 +532,7 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
     const focused=activeElementFor(root);
     if(!opened||disposed||!dialog.contains(focused))return;if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();return;}
     if(event.key!=='Tab')return;
-    const focusable=[...dialog.querySelectorAll('button:not([disabled]),[href],[tabindex]:not([tabindex="-1"])')].filter(node=>!node.closest('[hidden]'));
+    const focusable=[...dialog.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),[href],[tabindex]:not([tabindex="-1"])')].filter(node=>!node.closest('[hidden]'));
     const first=focusable[0],last=focusable.at(-1);if(!first){event.preventDefault();dialog.focus();return;}
     if(event.shiftKey&&(focused===first||focused===dialog)){event.preventDefault();last.focus();}
     else if(!event.shiftKey&&(focused===last||!dialog.contains(focused))){event.preventDefault();first.focus();}
@@ -522,5 +541,5 @@ export function createShopPanel({root,api,pointsLabel='学习积分',demo=false}
   return {update,open,close,dispose(){if(disposed)return;const focused=wrapper.contains(activeElementFor(root));disposed=true;events.abort();if(opened)api.setPresentationPaused?.(false);
     // 装修按钮属于 view，商店只借用其位置；卸载商店必须归还，便于宿主重复挂载。
     if(decorate&&decorateParent&&decorate.parentNode===topbar){decorate.className=decorateClass;decorateParent.insertBefore(decorate,decorateNext?.parentNode===decorateParent?decorateNext:null);}
-    wrapper.remove();cards.clear();petCards.clear();storageCards.clear();roomCards.clear();if(focused)root.querySelector('[data-room-control="room"]')?.focus({preventScroll:true});}};
+    petSettings.dispose();wrapper.remove();cards.clear();petCards.clear();storageCards.clear();roomCards.clear();if(focused)root.querySelector('[data-room-control="room"]')?.focus({preventScroll:true});}};
 }

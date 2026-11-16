@@ -1,0 +1,39 @@
+import {createFurniturePlayPanel} from './furniture-play-ui.js';
+import {ROOM_ART,STUDIO_STEPS} from './studio-art.mjs';
+
+export function createStudioPanel({root,api}){
+ const doc=root.ownerDocument,win=doc.defaultView,abort=new win.AbortController(),listen={signal:abort.signal};let disposed=false,showGuide=false,layoutAtStart=null,guideEvents=null;const furniturePlay=createFurniturePlayPanel({root,api});
+ const el=(tag,text,parent,cls)=>{const n=doc.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;if(tag==='button')n.type='button';parent?.append(n);return n;};
+ const more=root.querySelector('.room-mobile-more')||root;
+ const launch=el('button','主题工作室',more,'studio-theme-launch'),help=el('button','布置指南',more,'studio-guide-launch');
+ const panel=el('section',null,root,'studio-panel');panel.hidden=true;panel.setAttribute('aria-label','主题工作室');
+ const head=el('header',null,panel),copy=el('div',null,head);el('small','ROOM ATELIER',copy);el('h2','给小屋一种心情',copy);const close=el('button','收起',head);
+ el('p','主题只改变配色与装饰，家具的位置、大小和自己的涂鸦都会保留。',panel,'studio-note');
+ const themes=el('div',null,panel,'studio-theme-grid');
+ const output=el('output','选择一个主题，随时都能换回来。',panel,'studio-status');output.setAttribute('role','status');
+ function state(){return api.getCompanion?.().companion||{};}
+ function complete(step){if(!STUDIO_STEPS.includes(step)||disposed)return;const steps=state().studioSteps||[];if(!steps.includes(step)){const result=api.updateCompanion({studioSteps:[...steps,step]});if(!result?.ok)return;}renderGuide();}
+ function refreshThemes(){for(const b of themes.children)b.setAttribute('aria-pressed',String(b.dataset.art===(state().roomArt||'original')));}
+ for(const art of ROOM_ART){const b=el('button',null,themes,'studio-theme-card');b.dataset.art=art.id;b.style.setProperty('--art-paper',art.colors[0]);b.style.setProperty('--art-wood',art.colors[1]);b.style.setProperty('--art-accent',art.colors[2]);const mini=el('span',null,b,'studio-room-mini');mini.setAttribute('aria-hidden','true');el('i',art.icon,mini,'studio-mini-picture');el('i','',mini,'studio-mini-desk');el('i','',mini,'studio-mini-stool');el('strong',art.name,b);el('small',art.subtitle,b);b.addEventListener('click',()=>{const result=api.updateCompanion({roomArt:art.id});output.textContent=result.ok?'已应用 '+art.name+'，当前楼层会保存这个主题':result.message;if(result.ok)complete('theme');refreshThemes();},listen);}
+ const trial=el('section',null,root,'studio-trial');trial.hidden=true;trial.setAttribute('aria-label','购买前试摆');
+ const trialTitle=el('strong','试摆',trial),trialStatus=el('output','',trial);trialStatus.setAttribute('role','status');
+ const trialControls=el('div',null,trial,'studio-trial-controls');
+ const action=(text,fn,cls)=>{const b=el('button',text,trialControls,cls);b.addEventListener('click',fn,listen);return b;};
+ for(const [text,key,delta]of [['←','x',-.2],['→','x',.2],['↑','z',-.2],['↓','z',.2]]){const b=action(text,()=>{const t=api.getFurnitureTrial();api.moveFurnitureTrial({[key]:t.placement[key]+delta});});b.setAttribute('aria-label',({'←':'试摆向左','→':'试摆向右','↑':'试摆向后','↓':'试摆向前'})[text]);b.dataset.trialMove='true';}
+ const rotate=action('转90°',()=>{const t=api.getFurnitureTrial();api.moveFurnitureTrial(t.category==='wall'?{wallSide:t.placement.wallSide==='left'?'back':'left'}:{rotation:t.placement.rotation+Math.PI/2});});rotate.dataset.trialMove='true';
+ const cancel=action('取消试摆',()=>api.cancelFurnitureTrial());
+ const confirm=action('确认兑换并摆放',async()=>{await api.confirmFurnitureTrial();},'studio-primary');
+ function renderTrial(){const t=api.getFurnitureTrial();trial.hidden=!t;if(!t){root.removeAttribute('data-studio-trial-open');return;}root.dataset.studioTrialOpen='true';panel.hidden=true;trialTitle.textContent='试摆 · '+t.name;trialStatus.textContent=t.message+(t.mode==='craft'?'':' · 取消不扣积分');cancel.textContent=t.mode==='craft'?'结束预览':'取消试摆';trial.dataset.valid=String(t.valid);for(const b of trialControls.children)b.disabled=t.busy;for(const b of trialControls.querySelectorAll('[data-trial-move]'))b.hidden=t.category==='flooring';confirm.disabled=t.busy||t.mode!=='craft'&&!t.valid;confirm.textContent=t.mode==='craft'?'返回工坊制作':t.busy?'正在保存…':t.owned?'确认免费摆放':`确认兑换 · ${t.price} 积分`;}
+ const guide=el('section',null,root,'studio-guide');guide.hidden=true;guide.setAttribute('aria-label','我的布置指南');
+ const gh=el('header',null,guide);el('strong','一步一步，布置自己的家',gh);const hideGuide=el('button','先自己玩',gh);
+ const progress=el('small','',guide),steps=el('div',null,guide,'studio-guide-steps');
+ const tasks=[['theme','挑一个喜欢的主题','从原木、森林、星空和海洋中，选一种小屋的心情。',()=>{guide.hidden=true;showGuide=false;panel.hidden=false;refreshThemes();}],['trial','先试试，再决定','去商店点“放进家里试试”，预览不会扣除积分。',()=>root.querySelector('.room-shop__trigger:not(.room-shop__storage-trigger)')?.click()],['arrange','亲手摆好一件家具','进入装修，拖动家具或使用组合工具，然后完成装修。',()=>api.setDecorationMode(true)],['interact','发现家具的小秘密','选择已摆放的家具，让伙伴走过去阅读、喝茶或照顾盆栽。',()=>{guide.hidden=true;showGuide=false;root.querySelector('.studio-play-launch')?.click();}],['plant','种下第一颗种子','到种植园选择空地与种子，等它慢慢长大。',()=>api.openLife?.('garden')],['cook','做一份小点心','准备食材、放入碗中、搅拌，再确认制作。',()=>api.openLife?.('kitchen')]];
+ function renderGuide(){if(disposed)return;guideEvents?.abort();guideEvents=new win.AbortController();const done=state().studioSteps||[];progress.textContent=`已学会 ${done.length} / ${tasks.length} 件小事 · 可以按自己的节奏来`;steps.replaceChildren();const next=tasks.find(([id])=>!done.includes(id))?.[0];for(const [id,title,description,run]of tasks){const row=el('div',null,steps,'studio-guide-step');row.dataset.complete=String(done.includes(id));row.dataset.current=String(id===next);el('span',done.includes(id)?'✓':String(tasks.findIndex(x=>x[0]===id)+1),row);const text=el('div',null,row);el('strong',title,text);if(id===next||showGuide)el('p',description,text);if(!done.includes(id)){const go=el('button','去试试',row);go.addEventListener('click',()=>{guide.hidden=true;showGuide=false;run();},{signal:guideEvents.signal});}}}
+ launch.addEventListener('click',()=>{if(api.getFurnitureTrial())return;for(const n of root.querySelectorAll('.studio-play-panel'))n.hidden=true;panel.hidden=!panel.hidden;more.hidden=true;root.querySelector('[data-room-action="more"]')?.setAttribute('aria-expanded','false');guide.hidden=true;refreshThemes();},listen);
+ help.addEventListener('click',()=>{for(const n of root.querySelectorAll('.studio-play-panel'))n.hidden=true;showGuide=true;guide.hidden=false;panel.hidden=true;more.hidden=true;root.querySelector('[data-room-action="more"]')?.setAttribute('aria-expanded','false');renderGuide();},listen);
+ close.addEventListener('click',()=>{panel.hidden=true;launch.focus();},listen);hideGuide.addEventListener('click',()=>{guide.hidden=true;showGuide=false;},listen);
+ root.addEventListener('pet-room-interaction',e=>{const {type,detail}=e.detail||{};if(type==='furniture-trial')renderTrial();if(type==='studio-step')complete(detail.step);if(type==='decoration-mode'&&detail.active)layoutAtStart=JSON.stringify(api.getLayout?.());if(type==='decoration-mode'&&!detail.active){if(detail.saved&&layoutAtStart!==null&&layoutAtStart!==JSON.stringify(api.getLayout?.()))complete('arrange');layoutAtStart=null;}if(type==='water-done'&&api.getState().ready)complete('interact');if(type==='ready'){refreshThemes();renderGuide();}},listen);
+ win.addEventListener('room-life-success',e=>{if(['plant','cook'].includes(e.detail?.type))complete(e.detail.type);},listen);
+ root.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!trial.hidden)api.cancelFurnitureTrial();panel.hidden=true;guide.hidden=true;}},listen);
+ return {dispose(){disposed=true;guideEvents?.abort();furniturePlay.dispose();abort.abort();launch.remove();help.remove();panel.remove();trial.remove();guide.remove();root.removeAttribute('data-studio-trial-open');}};
+}

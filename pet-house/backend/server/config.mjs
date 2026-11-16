@@ -23,6 +23,12 @@ export async function loadConfig({env=process.env,admin=false,configFile,default
   if(typeof password!=='string'||!password.length)throw new Error('未提供数据库口令，请设置 '+prefix+'_PASSWORD 或 '+prefix+'_PASSWORD_FILE；口令无需写入分发配置');
   const publicOrigin=env.PET_ROOM_PUBLIC_ORIGIN||config.publicOrigin||'';
   if(publicOrigin){let parsed;try{parsed=new URL(publicOrigin);}catch{throw new Error('服务器公网地址无效');}if(parsed.origin!==publicOrigin||!['http:','https:'].includes(parsed.protocol))throw new Error('服务器公网地址需要完整的http/https源地址，不带路径');}
-  return {...config,password,publicOrigin,designCodesEnabled:config.designCodesEnabled!==false,socialEnabled:env.PET_ROOM_SOCIAL==='0'?false:config.socialEnabled===true||env.PET_ROOM_SOCIAL==='1'||config.socialEnabled!==false,trustProxy:env.PET_ROOM_TRUST_PROXY==='1'||config.trustProxy===true,httpHost:env.PET_ROOM_HTTP_HOST||config.httpHost||'127.0.0.1',sourceRoot:resolve(dirname(file),config.sourceRoot||'../source-connected'),configFile:file};
+  const loaded={...config,password,publicOrigin,lifeEnabled:config.lifeEnabled!==false,roomAccessEnabled:config.roomAccessEnabled!==false,learningApi:env.PET_ROOM_LEARNING_API||config.learningApi||'http://127.0.0.1:3010/api',designCodesEnabled:config.designCodesEnabled!==false,socialEnabled:env.PET_ROOM_SOCIAL==='0'?false:config.socialEnabled===true||env.PET_ROOM_SOCIAL==='1'||config.socialEnabled!==false,trustProxy:env.PET_ROOM_TRUST_PROXY==='1'||config.trustProxy===true,httpHost:env.PET_ROOM_HTTP_HOST||config.httpHost||'127.0.0.1',sourceRoot:resolve(dirname(file),config.sourceRoot||'../source-connected'),configFile:file};
+  if(!admin)assertSafeExposure(loaded);return loaded;
 }
-export function connectionOptions(config){return {host:config.host,port:config.port||3306,user:config.user,password:config.password,database:config.database,charset:'utf8mb4',timezone:'Z',decimalNumbers:true,connectionLimit:4,multipleStatements:false};}
+export function assertSafeExposure(config){
+ const local=new Set(['127.0.0.1','localhost','::1','[::1]']);
+ const exposed=!local.has(config.httpHost||'127.0.0.1')||(config.publicOrigin&&!local.has(new URL(config.publicOrigin).hostname));
+ if(exposed&&(config.socialEnabled!==true||config.roomAccessEnabled!==true))throw new Error('对外开放仓鼠屋必须启用账号鉴权与学习身份核验；无鉴权调试仅允许本机回环地址');
+}
+export function connectionOptions(config){return {host:config.host,port:config.port||3306,user:config.user,password:config.password,database:config.database,charset:'utf8mb4',timezone:'Z',decimalNumbers:true,connectionLimit:4,waitForConnections:true,queueLimit:32,connectTimeout:10000,multipleStatements:false};}

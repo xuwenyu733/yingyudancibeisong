@@ -7,6 +7,13 @@ const wallDistance = ([x, z]) => Math.min(
   x - bounds.minX, bounds.maxX - x, z - bounds.minZ, bounds.maxZ - z,
 );
 
+test('accessible placement tries the visible front-center before remote corners without losing fallback positions',()=>{
+  const ordinary=placementOrder(bounds,.65),order=placementOrder(bounds,{step:.65,accessible:true});
+  assert.deepEqual(new Set(order.map(JSON.stringify)),new Set(ordinary.map(JSON.stringify)));
+  assert(Math.abs(order[0][0])<.65);assert(order[0][1]>0&&order[0][1]<2);
+  assert(wallDistance(order[0])>1.5);
+});
+
 test('near-wall candidates rank first, center candidates rank last', () => {
   const order = placementOrder(bounds, .65);
   assert.ok(order.length > 50, 'a 8.8x8.2 room at 0.65 step yields a full grid');

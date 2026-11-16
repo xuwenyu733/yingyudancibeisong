@@ -2,6 +2,7 @@
  * The local copy is durable first. Only complete, stable namespace snapshots
  * are uploaded, so a rejected local transaction cannot leak intermediate state.
  */
+import {saveDatabaseRecovery} from './database-recovery.mjs';
 export async function openDatabaseStorage({storageKey,storage=globalThis.localStorage,fetcher=globalThis.fetch,onStatus=()=>{},win=globalThis}={}){
   if(typeof storageKey!=='string'||!storageKey.trim()||storageKey.length>160)throw new TypeError('数据库存档需要1至160字的独立名称');
   if(!storage||['getItem','setItem','removeItem','key'].some(k=>typeof storage[k]!=='function'))throw new TypeError('数据库同步需要可读写的本地Storage');
@@ -15,7 +16,7 @@ export async function openDatabaseStorage({storageKey,storage=globalThis.localSt
   // Change detection only, not an authentication or security hash.
   function fingerprint(value){const text=canonical(value);let a=2166136261,b=5381;for(let i=0;i<text.length;i++){const n=text.charCodeAt(i);a=Math.imul(a^n,16777619);b=Math.imul(b,33)^n;}return text.length+':'+(a>>>0).toString(16)+':'+(b>>>0).toString(16);}
   const same=(a,b)=>canonical(a)===canonical(b);
-  let disposed=false,timer=0,retryTimer=0,retryDelay=2000,inflight=null,generation=0,revision=0,pending=false,blocked=false,remoteKnown=false,state='pending';
+  let disposed=false,timer=0,retryTimer=0,retryDelay=2000,inflight=null,generation=0,revision=0,pending=false,blocked=false,remoteKnown=false,state='pending',lastRemote=null;
   function status(next,message){state=next;if(!disposed)try{onStatus({state:next,message,revision});}catch{/* Observers cannot undo an accepted save. */}}
   function error(code,message){const result=new Error(message);result.code=code;return result;}
   function collect(){const out=Object.create(null);for(let i=0;i<storage.length;i++){const key=storage.key(i);if(owns(key)){const raw=storage.getItem(key);if(raw!==null){if(typeof raw!=='string')throw new TypeError('本地存档内容必须为文字');out[key]=raw;}}}return out;}
@@ -23,8 +24,15 @@ export async function openDatabaseStorage({storageKey,storage=globalThis.localSt
   function putMeta(value){const raw=JSON.stringify(value),result=storage.setItem(metaKey,raw);if(result?.then)throw new TypeError('同步标记需要同步存储');if(storage.getItem(metaKey)!==raw)throw error('SYNC_LOCAL_WRITE_FAILED','本机未能保留同步标记，数据尚未上传');}
   function metadata({pending:dirty=pending,revision:rev=revision,fingerprint:hash=readMeta()?.fingerprint||'',upload=readMeta()?.upload}={}){return {version:1,revision:rev,pending:dirty,fingerprint:hash,...(upload?{upload}:{})};}
   function validateEntries(value){if(!plain(value)||Object.keys(value).length>1000)throw error('SYNC_RESPONSE_INVALID','数据库返回的存档格式有误');const result=Object.create(null);let size=0;for(const [key,raw]of Object.entries(value)){if(!owns(key)||typeof raw!=='string'||(size+=key.length+raw.length)>16*1024*1024)throw error('SYNC_RESPONSE_INVALID','数据库存档超出当前小屋范围或过大');result[key]=raw;}return result;}
-  async function getRemote(){const response=await fetcher(endpoint,{method:'GET',credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});if(!response.ok)throw error('SYNC_NETWORK_FAILED','数据库暂时连不上，本机存档仍然保留');const value=await response.json();if(!plain(value)||value.ok!==true||!integer(value.revision)||value.entries!==null&&!plain(value.entries))throw error('SYNC_RESPONSE_INVALID','数据库返回了无法读取的存档');return {revision:value.revision,entries:value.entries===null?null:validateEntries(value.entries)};}
-  function conflict(message='数据库存档已被其他窗口更新，本机修改已保留，请先导出备份再重新打开'){blocked=true;status('conflict',message);return error('SYNC_CONFLICT',message);}
+  async function getRemote(){const response=await fetcher(endpoint,{method:'GET',credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});if(!response.ok)throw error('SYNC_NETWORK_FAILED','数据库暂时连不上，本机存档仍然保留');const value=await response.json();if(!plain(value)||value.ok!==true||!integer(value.revision)||value.entries!==null&&!plain(value.entries))throw error('SYNC_RESPONSE_INVALID','数据库返回了无法读取的存档');return lastRemote={revision:value.revision,entries:value.entries===null?null:validateEntries(value.entries)};}
+  function exportBackup(){return {format:'pet-room-database-recovery',version:1,storageKey,createdAt:new Date().toISOString(),local:{entries:collect(),metadata:storage.getItem(metaKey)},remote:lastRemote};}
+  async function backupAndLoadRemote(){
+    const remote=await getRemote(),meta=readMeta();if(remote.entries===null)throw error('SYNC_RECOVERY_UNAVAILABLE','数据库中还没有完整存档，原存档未覆盖，请先下载备份。');
+    if(meta&&remote.revision<meta.revision)throw error('SYNC_RECOVERY_UNAVAILABLE','数据库版本比本机更旧，已停止切换；请先下载备份并检查数据库恢复情况。');
+    const backup=saveDatabaseRecovery({storageKey,storage,local:collect(),remote,metadata:storage.getItem(metaKey)});
+    hydrate(remote.entries,remote.revision);blocked=false;remoteKnown=true;status('synced','两份原存档已单独备份，已载入数据库版本');return backup;
+  }
+  function conflict(message='数据库存档已被其他窗口更新，本机修改已保留，请使用存档恢复入口'){blocked=true;clearTimers();status('conflict',message);const cause=error('SYNC_CONFLICT',message);cause.recovery={exportBackup,backupAndLoadRemote};return cause;}
   function hydrate(entries,rev){
     const before=collect(),beforeMeta=storage.getItem(metaKey),touched=[];
     try{
@@ -33,12 +41,12 @@ export async function openDatabaseStorage({storageKey,storage=globalThis.localSt
     }catch(cause){let failed=false;for(const key of touched.reverse())try{if(Object.hasOwn(before,key))storage.setItem(key,before[key]);else storage.removeItem(key);}catch{failed=true;}try{if(beforeMeta===null)storage.removeItem(metaKey);else storage.setItem(metaKey,beforeMeta);}catch{failed=true;}throw error('SYNC_LOCAL_WRITE_FAILED',failed?'读取数据库失败，且本机副本未能完整还原，请保留备份':'本机空间不足或存储不可用，原存档已保留');}
     revision=rev;pending=false;
   }
-  function markPending(){const latest=readMeta();if(latest&&latest.revision>revision)revision=latest.revision;putMeta(metadata({pending:true}));pending=true;generation++;}
+  function markPending(){const latest=readMeta();if(blocked||latest&&latest.revision>revision)throw conflict('另一窗口已经更新小屋，请重新进入并检查存档；旧页面不会覆盖新装修。');putMeta(metadata({pending:true}));pending=true;generation++;}
   function clearTimers(){if(timer){win.clearTimeout?.(timer);timer=0;}if(retryTimer){win.clearTimeout?.(retryTimer);retryTimer=0;}}
   function schedule(){if(disposed||blocked)return;if(timer)win.clearTimeout?.(timer);timer=win.setTimeout?.(()=>{timer=0;void flush();},500)||0;}
   function retry(){if(disposed||blocked||retryTimer)return;retryTimer=win.setTimeout?.(()=>{retryTimer=0;void flush();},retryDelay)||0;retryDelay=Math.min(30000,retryDelay*2);}
   async function reconcile(remote,before){
-    const current=collect(),meta=readMeta(),changedDuringFetch=before&&!same(before,current),localDirty=!!meta?.pending||!!meta?.fingerprint&&meta.fingerprint!==fingerprint(current)||changedDuringFetch;
+    const current=collect(),meta=readMeta(),changedDuringFetch=before&&!same(before,current),localDirty=(meta?.fingerprint?meta.fingerprint!==fingerprint(current):!!meta?.pending)||changedDuringFetch;
     remoteKnown=true;
     if(remote.entries!==null&&meta&&remote.revision<meta.revision)throw conflict('数据库返回了较旧版本，已保留本机存档；请检查服务端备份或浏览器缓存后再恢复');
     if(remote.entries===null){revision=remote.revision;pending=Object.keys(current).length>0;putMeta(metadata({pending,fingerprint:pending?'':fingerprint(current)}));status(pending?'pending':'synced',pending?'正在把本机存档保存到数据库':'数据库已连接');return;}
@@ -62,7 +70,7 @@ export async function openDatabaseStorage({storageKey,storage=globalThis.localSt
   };
   async function worker(options){
     while(!disposed&&!blocked){
-      const latest=readMeta();if(latest&&latest.revision>revision)revision=latest.revision;pending=!!latest?.pending||pending;
+      const latest=readMeta();if(latest&&latest.revision>revision){const cause=conflict('另一窗口已经保存，请重新进入小屋，旧页面已停止上传。');return {ok:false,code:cause.code,message:cause.message};}pending=!!latest?.pending||pending;
       if(!pending)return {ok:true,revision};
       if(!remoteKnown){const local=collect();try{await reconcile(await getRemote(),local);}catch(cause){if(cause.code==='SYNC_CONFLICT')return {ok:false,code:'SYNC_CONFLICT',message:cause.message};status('offline','数据库暂时连不上，本机存档仍保留，稍后重试');retry();return {ok:false,code:'SYNC_OFFLINE',message:cause.message};}if(!pending)return {ok:true,revision};}
       const entries=collect(),sentGeneration=generation,baseRevision=revision,body=JSON.stringify({baseRevision,entries});
@@ -73,7 +81,7 @@ export async function openDatabaseStorage({storageKey,storage=globalThis.localSt
         if(!response.ok)throw error('SYNC_NETWORK_FAILED','数据库暂时没能保存');
         const result=await response.json();if(!plain(result)||result.ok!==true||!integer(result.revision)||result.revision<baseRevision||result.revision===baseRevision&&result.unchanged!==true)throw error('SYNC_RESPONSE_INVALID','数据库没有确认本次保存');
         const current=collect(),afterMeta=readMeta();
-        if(afterMeta&&afterMeta.revision>result.revision){revision=afterMeta.revision;pending=afterMeta.pending;}
+        if(afterMeta&&afterMeta.revision>result.revision){const cause=conflict('另一窗口已经保存更新版本，旧页面已停止上传。');return {ok:false,code:cause.code,message:cause.message};}
         else{revision=result.revision;pending=sentGeneration!==generation||!same(entries,current);putMeta(metadata({pending,fingerprint:fingerprint(entries),upload:null}));}
         retryDelay=2000;status(pending?'pending':'synced',pending?'数据库已保存，正在继续上传后续修改':'所有修改已保存到本机MySQL数据库');
       }catch(cause){pending=true;remoteKnown=false;status('offline','数据库暂时没能保存，本机修改已保留，连接恢复后重试');retry();return {ok:false,code:'SYNC_OFFLINE',message:cause.message};}
@@ -82,9 +90,22 @@ export async function openDatabaseStorage({storageKey,storage=globalThis.localSt
   }
   function flush(options={}){if(inflight)return inflight;clearTimers();if(disposed)return Promise.resolve({ok:false,code:'SYNC_DISPOSED'});if(blocked)return Promise.resolve({ok:false,code:'SYNC_CONFLICT'});inflight=worker(options).catch(cause=>{pending=true;status('offline','本机同步记录暂时无法读取，原存档仍保留，请先导出备份');return {ok:false,code:cause.code||'SYNC_LOCAL_WRITE_FAILED',message:cause.message};}).finally(()=>{inflight=null;});return inflight;}
   const online=()=>{if(pending)void flush();};
-  const changed=event=>{if(disposed||!owns(event?.key)&&event?.key!==metaKey)return;try{const meta=readMeta();if(meta&&meta.revision>revision)revision=meta.revision;pending=!!meta?.pending;if(pending)schedule();}catch{status('offline','其他窗口的同步记录无法读取，本机数据未覆盖');}};
+  const changed=event=>{if(disposed||!owns(event?.key)&&event?.key!==metaKey)return;conflict('另一窗口已修改小屋。请重新进入，避免旧页面覆盖新装修。');};
   const leaving=()=>{if(disposed||blocked||inflight||!pending)return;try{const size=JSON.stringify({baseRevision:revision,entries:collect()}).length;if(size<48000)void flush({keepalive:true});}catch{/* Durable pending marker guarantees retry on the next visit. */}};
   win.addEventListener?.('online',online);win.addEventListener?.('storage',changed);win.addEventListener?.('pagehide',leaving);
   if(pending)schedule();
-  return {adapter,flush,get revision(){return revision;},get state(){return state;},get pending(){return pending;},get metadataKey(){return metaKey;},dispose(){if(disposed)return;disposed=true;clearTimers();win.removeEventListener?.('online',online);win.removeEventListener?.('storage',changed);win.removeEventListener?.('pagehide',leaving);}};
+  return {adapter,flush,
+    async verifyCurrent(){
+      const saved=await flush();if(!saved.ok)return saved;
+      try{const remote=await getRemote();if(disposed||blocked||pending||remote.revision!==revision||!same(remote.entries||{},collect()))throw conflict('数据库已有更新，或本机刚发生修改；请先重新进入并比对存档，再恢复这一层。');return {ok:true,revision};}
+      catch(cause){return {ok:false,code:cause.code||'SYNC_OFFLINE',message:cause.message};}
+    },
+    acceptRemote(remote,expectedRevision){
+      if(disposed||blocked||inflight||pending||revision!==expectedRevision)throw conflict('奖励已在服务器保存，本机还有修改；请保留本机备份后重新打开小屋');
+      const meta=readMeta();if(!meta||meta.revision!==revision||meta.pending||meta.fingerprint!==fingerprint(collect()))throw conflict('房间在领取时有新的修改，已保留，请先备份并重新打开');
+      if(!plain(remote)||!integer(remote.revision)||remote.revision<revision)throw error('SYNC_RESPONSE_INVALID','奖励存档版本无效');
+      const entries=validateEntries(remote.entries);if(remote.revision===revision&&!same(entries,collect()))throw error('SYNC_RESPONSE_INVALID','相同版本的奖励存档内容不一致，原存档已保留，请重新连接');
+      hydrate(entries,remote.revision);remoteKnown=true;status('synced','装修和生活奖励已同步');return {ok:true};
+    },
+    get revision(){return revision;},get state(){return state;},get pending(){return pending;},get metadataKey(){return metaKey;},dispose(){if(disposed)return;disposed=true;clearTimers();win.removeEventListener?.('online',online);win.removeEventListener?.('storage',changed);win.removeEventListener?.('pagehide',leaving);}};
 }

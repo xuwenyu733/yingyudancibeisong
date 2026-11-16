@@ -32,12 +32,13 @@ export function mountPetEstate(options={}){
   let initialSound={muted:true,volume:'quiet'};
   try{const saved=JSON.parse(estate.storageForRoom(initial.activeRoomId).getItem(storageKey+COMPANION_SUFFIX));if(saved?.sound)initialSound=saved.sound;}catch{/* Remain silent until the room can validate preferences. */}
   const music=createRoomMusic({eventTarget:doc,configuration:musicConfiguration,sound:initialSound});
+  const accessPause=event=>music.setAccessPaused(!!event.detail?.paused);win.addEventListener('room-access-pause',accessPause);
   let current=null,panel=null,disposed=false,busy=false,generation=0,autoBackupTimer=0,controller=null,activeCurtain=null,suppressDesignShare=false;
   const backupsKey=storageKey+'-estate-backups-v1';
   const safe=(fn,...args)=>{try{fn?.(...args);}catch{/* Host observers cannot reverse an accepted operation. */}};
   const hasDrawingDraft=()=>current?.view.root.dataset.roomDrawingDirty==='true'||current?.view.root.dataset.roomWallDrawingDirty==='true';
-  const unavailable=()=>hasDrawingDraft()?{ok:false,code:'UNSAVED_DRAWING',message:'画纸上还有没保存的小作品，先保存手绘或点「放弃未保存手绘」，再去新楼层吧～'}:{ok:false,code:'NOT_READY',message:'小屋正在整理，等伙伴站稳小脚丫再试试～'};
-  function canTravel(){if(disposed||busy||!current?.api.getState().ready||hasDrawingDraft())return false;const state=current.api.getState();return !state.decoration&&!current.api.getShop().busy;}
+  const unavailable=()=>current?.api.getFurnitureTrial?.()?{ok:false,code:'TRIAL_ACTIVE',message:'请先确认或取消试摆，再切换楼层'}:hasDrawingDraft()?{ok:false,code:'UNSAVED_DRAWING',message:'画纸上还有没保存的小作品，先保存手绘或点「放弃未保存手绘」，再去新楼层吧～'}:{ok:false,code:'NOT_READY',message:'小屋正在整理，等伙伴站稳小脚丫再试试～'};
+  function canTravel(){if(disposed||busy||roomOptions.economyService?.busy||!current?.api.getState().ready||hasDrawingDraft())return false;const state=current.api.getState();return !state.decoration&&!current.api.getFurnitureTrial?.()&&!current.api.getShop().busy;}
   function getEstate(){const state=estate.getState();return {ok:state.valid!==false,estate:{...state,balance:current?.api.getShop().balance??roomOptions.initialPoints??0,music:music.getState(),busy},message:state.error?.message};}
   function refresh(){if(disposed)return;const state=current?.api.getState()||{ready:false,lifecycle:'loading'};panel?.update(state);safe(onState,state);}
   function emit(type,detail={}){safe(onEstateEvent,type,detail);safe(onEvent,type,detail);const room=estate.getState().rooms?.find(item=>item.id===estate.getState().activeRoomId);safe(onInteraction,planInteraction(type,detail,{ownerName:current?.api.getCompanion?.().companion?.ownerName,roomName:room?.name,reducedMotion:!!win.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches}));}
@@ -51,7 +52,7 @@ export function mountPetEstate(options={}){
     return result.ok?{...result,message:'所有房间、共享积分和伙伴记忆都备份好啦～'}:result;
   }
   function removeBackupEntry(id){if(disposed||busy)return unavailable();return backupStorageApply(storage,backupsKey,()=>removeBackup(storage,backupsKey,id));}
-  async function importSave(json){
+  async function importSave(json){if(roomOptions.economyService){let archive;try{archive=typeof json==='string'?JSON.parse(json):json;}catch{return {ok:false,message:'存档格式无法读取'};}return roomOptions.economyService.execute({type:'restore-decoration',archive});}
     if(!canTravel())return unavailable();busy=true;refresh();
     try{const result=estate.importArchive(json);if(!result.ok)return result;await loadRoom(estate.getState().activeRoomId);emit('archive-imported',{allRooms:true});return {...result,relaunchRequired:false,message:'所有房间都找回来啦，欢迎回家～'};}
     catch(error){return {ok:false,code:error.code||'RELOAD_FAILED',message:`存档已写入，但房间暂未打开：${error.message}。请刷新页面。`};}
@@ -96,7 +97,7 @@ export function mountPetEstate(options={}){
       emit('estate-room-entered',{roomId:id,roomName:estate.getState().rooms.find(item=>item.id===id)?.name});scheduleBackup();return {ok:true,message:'推开新门啦！每间房的布置都好好记着～'};
     }finally{busy=false;refresh();}
   }
-  async function createEstateRoom(input){
+  async function createEstateRoom(input){if(roomOptions.economyService)return roomOptions.economyService.execute({type:'create-room',...(input||{})});
     if(!canTravel())return unavailable();busy=true;refresh();const previous=estate.getState().activeRoomId;
     try{
       const requestId=`room-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
@@ -113,7 +114,7 @@ export function mountPetEstate(options={}){
   async function publishDesign(){if(!canTravel())return unavailable();const offline=connected();if(offline)return offline;busy=true;refresh();try{return await designService.publish(estate.getState().activeRoomId);}finally{busy=false;refresh();}}
   async function findDesign(code){const offline=connected();return offline||designService.get(code);}
   function previewDesign(design){if(!canTravel())return unavailable();return estate.previewRoomDesign(estate.getState().activeRoomId,design.snapshot);}
-  async function applyDesign(design,input){
+  async function applyDesign(design,input){if(roomOptions.economyService)return roomOptions.economyService.execute({type:'apply-design',code:design.code,buyMissing:input.buyMissing,expectedFingerprint:design.quote.fingerprint});
     if(!canTravel())return unavailable();const offline=connected();if(offline)return offline;busy=true;refresh();
     try{const latest=await designService.get(design.code);if(!latest.ok)return latest;if(latest.revision!==design.revision)return {ok:false,code:'DESIGN_CHANGED',message:'主人已更新装修，请重新查询再确认购买'};
       const id=estate.getState().activeRoomId,result=estate.applyRoomDesign(id,{snapshot:latest.snapshot,buyMissing:input.buyMissing,requestId:input.requestId,expectedFingerprint:design.quote.fingerprint});if(!result.ok)return result;
@@ -131,6 +132,8 @@ export function mountPetEstate(options={}){
     listRoomWorldSaves,exportRoomWorld,saveRoomWorld,removeRoomWorldSave,restoreRoomWorld,importRoomWorld,createRoomWorld,
     collectAllFurniture:requestId=>canTravel()?current.api.collectAllFurniture(requestId):Promise.resolve(unavailable()),
     resetRoomLayout:()=>canTravel()?current.api.resetRoomLayout():Promise.resolve(unavailable()),
+    hasUnsavedDrawing:hasDrawingDraft,
+    async reloadFromStorage(){if(disposed||busy||hasDrawingDraft())return unavailable();busy=true;try{await loadRoom(estate.getState().activeRoomId);return {ok:true};}finally{busy=false;refresh();}},
     dispose:()=>dispose(),
   };
   const api=new Proxy({}, {get(target,name){if(Object.hasOwn(target,name))return target[name];if(Object.hasOwn(methods,name))return methods[name];if(name==='then')return undefined;const value=current?.api[name];return typeof value==='function'?(...args)=>{if(disposed)return unavailable();const fn=current?.api[name];return typeof fn==='function'?fn(...args):unavailable();}:value;},has(target,name){return Object.hasOwn(target,name)||Object.hasOwn(methods,name)||!!current&&name in current.api;}});
@@ -146,7 +149,7 @@ export function mountPetEstate(options={}){
       extendApi:core=>{const extended={...core,getEstate,createEstateRoom,selectEstateRoom,setEstateMode,getMusic:methods.getMusic,exportArchive,importArchive:importSave,exportSave,importSave,createBackup,listBackups,removeBackup:removeBackupEntry,restoreBackup,...Object.fromEntries(Object.entries(methods).filter(([name])=>name.includes('RoomWorld')))};return typeof roomOptions.extendApi==='function'?roomOptions.extendApi(extended):extended;},
       onInteraction:plan=>safe(onInteraction,plan),
       onState(state){if(disposed||serial!==generation)return;music.configureSound(next?.api.getCompanion?.().companion?.sound||{});panel?.update(state);safe(onState,state);},
-      onEvent(type,detail){if(disposed||serial!==generation)return;safe(onEvent,type,detail);if(designService&&type==='decoration-mode'&&detail?.active===false&&detail.saved&&!suppressDesignShare){win.setTimeout(()=>{if(!disposed&&serial===generation&&canTravel())designPanel.open('share',{autoPublish:!!designService});},0);}if(['layout-change','room-expanded','companion-change','profile-change','gift-unlocked','checkin-done','makeup-done','level-up','learning-reward'].includes(type))scheduleBackup();},
+      onEvent(type,detail){if(disposed||serial!==generation)return;safe(onEvent,type,detail);if(designService&&type==='decoration-mode'&&detail?.active===false&&detail.saved&&detail.changed===true&&!suppressDesignShare){win.setTimeout(()=>{if(!disposed&&serial===generation&&canTravel())designPanel.open('share',{autoPublish:!!designService});},0);}if(['layout-change','room-expanded','companion-change','profile-change','gift-unlocked','checkin-done','makeup-done','level-up','learning-reward'].includes(type))scheduleBackup();},
     });
     current=next;
     const actions=next.view.root.querySelector('[data-room-control="decoration-panel"] .edit-actions');
@@ -162,7 +165,7 @@ export function mountPetEstate(options={}){
     }finally{curtain?.dispose();if(activeCurtain===curtain)activeCurtain=null;}
   }
   const onAbort=()=>dispose();
-  function dispose(){if(disposed)return;disposed=true;++generation;win.clearTimeout(autoBackupTimer);activeCurtain?.dispose();activeCurtain=null;options.signal?.removeEventListener('abort',onAbort);panel?.dispose();designPanel.dispose();current?.dispose();music.dispose();stage.remove();if(mounted.get(container)===controller)mounted.delete(container);}
+  function dispose(){if(disposed)return;disposed=true;++generation;win.clearTimeout(autoBackupTimer);activeCurtain?.dispose();activeCurtain=null;options.signal?.removeEventListener('abort',onAbort);panel?.dispose();designPanel.dispose();current?.dispose();win.removeEventListener?.('room-access-pause',accessPause);music.dispose();stage.remove();if(mounted.get(container)===controller)mounted.delete(container);}
   controller={api,ready:null,dispose,get version(){return current?.version||'unmounted';},protocolVersion:1};mounted.set(container,controller);
   if(options.signal?.aborted){dispose();controller.ready=Promise.reject(roomError('ABORTED','庄园加载已取消'));}
   else {options.signal?.addEventListener('abort',onAbort,{once:true});controller.ready=loadRoom(initial.activeRoomId);}

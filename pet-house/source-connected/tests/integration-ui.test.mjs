@@ -76,15 +76,17 @@ test('embedded UI lifecycle and container behavior in Chromium', { skip: !playwr
         makeRoom({ withProfile: false }); const room=rooms[0],root=room.view.root;
         room.state.shop.catalog=Array.from({length:18},(_,index)=>({sku:`fixture-${index}`,name:`家具 ${index}`,description:'用来检查滚动位置和焦点是否稳定的商品。',price:100+index,kind:'furniture'}));
         room.shop.update(room.state);room.shop.open('furniture');
+        // Keep overflow intentional even when the new paged catalog fits the screen.
+        root.querySelector('.room-shop__body').style.maxHeight='120px';
         await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-        const body=root.querySelector('.room-shop__body'),cards=[...root.querySelectorAll('[data-shop-sku]')],focused=cards[4].querySelector('button'),firstButton=cards[0].querySelector('button'),art=cards[4].querySelector('svg');
+        const body=root.querySelector('.room-shop__body'),cards=[...root.querySelectorAll('.room-shop__card[data-category="furniture"][data-shop-sku]')],focused=cards[1].querySelector('.room-shop__buy'),firstButton=cards[0].querySelector('.room-shop__buy'),art=cards[1].querySelector('svg');
         focused.focus({preventScroll:true});body.scrollTop=110;const scrollBefore=body.scrollTop;
         const mutations=[],observer=new MutationObserver(records=>mutations.push(...records));observer.observe(root.querySelector('.room-shop'),{subtree:true,attributes:true,childList:true,characterData:true});
         for(let index=0;index<20;index++)room.shop.update({...structuredClone(room.state),petPosition:[index*.1,.09,2],petYaw:index,metrics:{fps:30+index,triangles:1000+index,drawCalls:30,quality:'balanced'}});
         await new Promise(resolve=>setTimeout(resolve,0));mutations.push(...observer.takeRecords());observer.disconnect();
-        const unchanged={mutations:mutations.length,focus:document.activeElement===focused,scroll:body.scrollTop===scrollBefore,art:art.isConnected&&cards[4].querySelector('svg')===art};
+        const unchanged={mutations:mutations.length,focus:document.activeElement===focused,scroll:body.scrollTop===scrollBefore,art:art.isConnected&&cards[1].querySelector('svg')===art};
         room.state.shop.balance=1250;room.state.shop.owned=['fixture-0'];room.shop.update(structuredClone(room.state));
-        return {unchanged,scrollBefore,scrollAfter:body.scrollTop,focusAfter:document.activeElement===focused,artAfter:art.isConnected&&cards[4].querySelector('svg')===art,balance:root.querySelector('.room-shop__balance').textContent,ownedDisabled:firstButton.disabled,ownedLabel:firstButton.textContent,active:root.querySelector('[data-shop-tab="furniture"]').getAttribute('aria-selected')};
+        return {unchanged,scrollBefore,scrollAfter:body.scrollTop,focusAfter:document.activeElement===focused,artAfter:art.isConnected&&cards[1].querySelector('svg')===art,balance:root.querySelector('.room-shop__balance').textContent,ownedDisabled:firstButton.disabled,ownedLabel:firstButton.textContent,active:root.querySelector('[data-shop-tab="furniture"]').getAttribute('aria-selected')};
       });
       assert.ok(result.scrollBefore>0,'fixture must exercise a scrolled shop');
       assert.deepEqual(result.unchanged,{mutations:0,focus:true,scroll:true,art:true},'animation-only state updates must not repaint the shop DOM');
@@ -106,8 +108,8 @@ test('embedded UI lifecycle and container behavior in Chromium', { skip: !playwr
       assert.equal(first.flooring.count,'已收藏 1 / 2');assert.match(first.flooring.title,/拼花砖/);assert.match(first.flooring.hint,/还差 225 学习积分/);
       assert.equal(first.wall.count,'已收藏 0 / 1');assert.match(first.wall.hint,/还差 125 学习积分/);
       // v2.24 · 单宠制：伙伴页不再显示"已收藏 0/1"收集进度，改为当前伙伴/暂无伙伴的单宠状态。
-      assert.equal(first.pets.count,'每人同时只养一只');assert.equal(first.pets.title,'还没有自己的伙伴');assert.match(first.pets.hint,/选一位喜欢的伙伴/);
-      await page.evaluate(()=>{const room=rooms[0];room.state.shop.pets.owned.push('cloud-bunny');room.shop.update(room.state);});
+      assert.equal(await page.locator('[data-collection-goal="pets"]').isVisible(),false);
+      await page.evaluate(()=>{const room=rooms[0];room.state.shop.pets.owned.push('cloud-bunny');room.state.shop.pets.active='cloud-bunny';room.shop.update(room.state);});
       assert.equal(await page.locator('[data-collection-goal="pets"] .room-shop__goal-title').textContent(),'当前伙伴 · 云朵兔');
       await page.locator('[data-collection-goal="furniture"] .room-shop__goal-action').click();
       assert.deepEqual(await page.evaluate(()=>[document.activeElement.dataset.shopSku,rooms[0].calls.purchase,submits]),['fixture-f0',0,0],'preview focuses the real product card without spending or submitting a host form');

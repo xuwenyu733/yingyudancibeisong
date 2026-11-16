@@ -76,11 +76,21 @@ test('shop uses a static room presentation instead of continuously compositing W
    assert.equal(await page.locator('[data-shop-tab="storage"]').getAttribute('aria-selected'),'true');
   },{width:390,height:844}));
 
-  await t.test('pet cards load one actual-model preview for each species instead of a shared illustration',()=>pageFor(async page=>{
-   await openShop(page);await page.waitForFunction(()=>{const images=[...document.querySelectorAll('.room-shop__pet-card .room-shop__pet-model-preview')];return images.length===5&&images.every(img=>img.complete&&img.naturalWidth===512&&img.naturalHeight===512);});
+  await t.test('only the current pet is owned and displayed until replacement is explicitly opened',()=>pageFor(async page=>{
+   await openShop(page);await page.waitForFunction(()=>{const images=[...document.querySelectorAll('.room-shop__pet-card .room-shop__pet-model-preview')];return images.length===1&&images.every(img=>img.complete&&img.naturalWidth===512&&img.naturalHeight===512);});
    const cards=await page.locator('.room-shop__pet-card').evaluateAll(nodes=>nodes.map(node=>({sku:node.dataset.petSku,source:node.querySelector('img').src,alt:node.querySelector('img').alt,templates:node.querySelectorAll('.room-shop__product-art>svg').length})));
-   assert.equal(new Set(cards.map(card=>card.source)).size,5);for(const card of cards){assert.ok(new URL(card.source).pathname.endsWith(`/assets/pets/previews/${card.sku}.png`));assert.match(card.alt,/实际模型/);assert.equal(card.templates,0);}
+   assert.equal(cards.length,1);assert.equal(cards[0].sku,await page.evaluate(()=>room.api.getState().shop.pets.active));for(const card of cards){assert.ok(new URL(card.source).pathname.endsWith(`/assets/pets/previews/${card.sku}.png`));assert.match(card.alt,/实际模型/);assert.equal(card.templates,0);}assert.equal(await page.locator('.room-shop__pet-card .room-shop__buy').isDisabled(),true);
   }));
+
+  await t.test('pet settings rename for free, cancel safely and replace exactly one pet once',()=>pageFor(async page=>{
+   await openShop(page);const before=await page.evaluate(()=>({balance:room.api.getShop().balance,layout:room.api.getLayout(),pet:room.api.getShop().pets.active}));
+   await page.getByRole('button',{name:'修改名字',exact:true}).click();await page.getByLabel('宠物新名字',{exact:true}).fill('奶糖');await page.getByRole('button',{name:'保存名字',exact:true}).click();await page.locator('.pet-rename').waitFor({state:'hidden'});
+   assert.equal(await page.evaluate(()=>room.api.getCompanion().companion.petName),'奶糖');assert.equal(await page.evaluate(()=>room.api.getShop().balance),before.balance);
+   await page.getByRole('button',{name:'更换宠物',exact:true}).click();await page.locator('[data-pet-choice="cloud-bunny"]').click();await page.getByRole('button',{name:'暂不更换',exact:true}).click();assert.equal(await page.evaluate(()=>room.api.getShop().pets.active),before.pet);assert.equal(await page.evaluate(()=>room.api.getShop().balance),before.balance);
+   await page.getByRole('button',{name:'更换宠物',exact:true}).click();await page.locator('[data-pet-choice="cloud-bunny"]').click();await page.locator('.pet-switch-confirmation button').evaluate(b=>{b.click();b.click();});await page.locator('.pet-switcher').waitFor({state:'hidden'});
+   const after=await page.evaluate(()=>({pets:room.api.getShop().pets,balance:room.api.getShop().balance,name:room.api.getCompanion().companion.petName,layout:room.api.getLayout()}));assert.equal(after.pets.active,'cloud-bunny');assert.deepEqual(after.pets.owned,['cloud-bunny']);assert.equal(after.balance,before.balance-300);assert.equal(after.name,'奶糖');assert.deepEqual(after.layout,before.layout);
+   await page.getByRole('button',{name:'更换宠物',exact:true}).click();await page.locator('[data-pet-choice="mint-cat"]').click();await page.locator('.room-shop__close').click();await openShop(page);assert(!(await page.locator('.pet-switcher').isVisible()));assert.equal(await page.evaluate(()=>room.api.getShop().balance),after.balance);
+  },{width:390,height:844}));
 
   await t.test('purchases and room resizing refresh the poster finitely without resuming the render loop',()=>pageFor(async page=>{
    await openShop(page);const before=await state(page);await page.locator('[data-shop-tab="furniture"]').click();

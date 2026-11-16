@@ -1,6 +1,7 @@
 /** 家具栏真实缩略图（v2.17/F1）：优先使用 assets/products/previews/<sku>.png，
  * 找不到预览图时回退为按名称分类的 Emoji。纯函数，Node 可测。
  */
+import {itemBaseSku} from './inventory-key.mjs';
 import { PRODUCT_PREVIEW_INFO } from './product-previews.mjs';
 import {giftProduct} from './gift-catalog.mjs';
 
@@ -22,8 +23,8 @@ function emojiFallback(name = '') {
 export function stripPreviewSource(item) {
   const key = item && typeof item === 'object' ? (item.sku || item.id) : null;
   const gift=giftProduct(key);if(gift)return {kind:'image',src:gift.image,alt:item?.name||gift.name};
-  const info = typeof key === 'string' ? PRODUCT_PREVIEW_INFO.get(key) : null;
-  if (info) return { kind: 'image', src: `./assets/products/previews/${key}.png`, alt: (item?.name || info.name || key) };
+  const info = typeof key === 'string' ? PRODUCT_PREVIEW_INFO.get(itemBaseSku(key)) : null;
+  if (info) return { kind: 'image', src: `./assets/products/previews/${itemBaseSku(key)}.png`, alt: (item?.name || info.name || key) };
   return { kind: 'emoji', text: emojiFallback(item?.name || '') };
 }
 

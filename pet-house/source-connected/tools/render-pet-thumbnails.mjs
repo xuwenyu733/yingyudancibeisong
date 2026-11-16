@@ -58,7 +58,7 @@ try{
   entries.push({...model,file:`${sku}.png`,width:size,height:size,bytes:png.length,sha256:createHash('sha256').update(png).digest('hex')});
  }
  if(errors.length)throw new Error(errors.join('\n'));
- const sourceSha256=createHash('sha256').update(await readFile(resolve(root,'characters','pet-models.js'))).digest('hex');
+ const sourceSha256=createHash('sha256').update((await readFile(resolve(root,'characters','pet-models.js'),'utf8')).replace(/\r\n/g,'\n')).digest('hex');
  await writeFile(resolve(output,'metadata.json'),JSON.stringify({version:2,source:'characters/pet-models.js',sourceSha256,kind:'runtime-model-studio-render',transparent:true,entries},null,2)+'\n');
  console.log(JSON.stringify(entries.map(({sku,bytes,triangles})=>({sku,bytes,triangles})),null,2));
 }finally{await browser?.close();await new Promise(accept=>server.close(accept));}

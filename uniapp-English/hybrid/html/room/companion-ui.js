@@ -4,11 +4,11 @@ import {furnitureMemoryAge} from './furniture-memory.mjs';
 import {acquisitionCaption} from './acquisition-time.mjs';
 import {createFurnitureDrawingEditor} from './drawing-editor.js';
 import {createCompanionTutorial} from './companion-tutorial.js';
-import {seasonalWish,weeklyChallenge,hiddenAchievements,spinWheelResult,feedMood,hiddenCritter,addFriend,removeFriend} from './companion-extra.mjs';
+import {addFriend,removeFriend} from './companion-extra.mjs';
 
 const VOLUMES=[['quiet','轻声 · 课堂'],['standard','标准'],['loud','响亮']];
 const THEMES=[['light','奶油亮色'],['eye-care','温柔护眼'],['candy','糖果乐园']];
-const HATS=[['none','不戴帽子'],['star','星星帽'],['unicorn','独角兽帽'],['ears','猫耳帽']];
+const HATS=[['none','不戴帽子'],['star','星星帽'],['unicorn','独角兽帽'],['ears','猫耳帽'],['designer','职业·设计师贝雷帽'],['gardener','职业·园艺草帽'],['chef','职业·厨师帽']];
 const SCARVES=[['none','不戴围巾'],['mint','薄荷围巾'],['rose','莓果围巾']];
 const BAGS=[['none','轻装出门'],['school','小书包']];
 const STICKERS=[['none','不贴贴纸'],['star','小星星'],['heart','爱心'],['flower','小花']];
@@ -34,7 +34,6 @@ export function createCompanionPanel({root,api}={}){
   const dock=create('div','companion-dock',null,root);
   const trigger=create('button','companion-handbook-trigger','📖 伙伴手册',dock);trigger.setAttribute('aria-expanded','false');
   trigger.disabled=true;
-  const mute=create('button','companion-mute','🔔',dock);mute.setAttribute('aria-label','关闭所有音效');mute.title='关闭所有音效';
   const panel=create('section','companion-panel',null,root);panel.id=`companion-handbook-${++panelSequence}`;trigger.setAttribute('aria-controls',panel.id);panel.hidden=true;panel.tabIndex=-1;panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','false');panel.setAttribute('aria-label','伙伴手册');
   const header=create('header','companion-header',null,panel);
   const heading=create('div','',null,header);create('small','','把小小喜欢，装进我们的小屋',heading);create('h2','','伙伴手册',heading);
@@ -145,58 +144,11 @@ export function createCompanionPanel({root,api}={}){
   }
   for(const [face,emoji,label] of DIARY_FACES){const b=create('button','companion-mood-face',emoji,diaryRow);b.type='button';b.dataset.face=face;b.setAttribute('aria-label',label);b.addEventListener('click',()=>{const map=readDiary();map[diaryDate()]=face;writeDiary(map);renderDiaryCurve();},listen);}
   renderDiaryCurve();
-  // 季节限定心愿 + 周挑战 + 隐藏成就（清单100/101/104）：纯信息卡，鼓励回访与探索。
-  const wishCard=card(garden);create('strong','','本季限定心愿',wishCard);const wishText=create('p','companion-seasonal-wish','',wishCard);
-  const weeklyCard=card(garden);create('strong','','本周小挑战',weeklyCard);const weeklyText=create('p','companion-weekly-challenge','',weeklyCard);
-  const hiddenCard=card(garden);create('strong','','悄悄藏的成就',hiddenCard);const hiddenList=create('div','companion-hidden-list',null,hiddenCard);
-  // 内容预告日历 + 本月童话（清单102/75）：吊胃口式内容运营，纯信息卡。
-  const fableCard=card(garden);create('strong','','本月童话',fableCard);const fableText=create('p','companion-monthly-fable','',fableCard);
-  const previewCard=card(garden);create('strong','','接下来几天',previewCard);const previewList=create('div','companion-preview-list',null,previewCard);
-  // 依恋值/季节窗景/成长绘本/里程碑/成就叙事（清单47/40/65/96/74）：纯信息卡，强化情感联结与回访。
-  const attachCard=card(garden);create('strong','','我们多熟啦',attachCard);const attachText=create('p','companion-attach','',attachCard);
-  const windowCard=card(garden);create('strong','','窗外现在',windowCard);const windowText=create('p','companion-window','',windowCard);
-  const pageCard=card(garden);create('strong','','我的成长绘本',pageCard);const pageText=create('p','companion-growth-page','',pageCard);
-  const storyCard=card(garden);create('strong','','陪你走过的路',storyCard);const storyText=create('p','companion-ach-story','',storyCard);
-  const milestoneCard=card(garden);create('strong','','重要瞬间墙',milestoneCard);const milestoneList=create('div','companion-milestone-list',null,milestoneCard);
-  const critterCard=card(garden);create('strong','','角落里的小访客',critterCard);const critterText=create('p','companion-critter','',critterCard);const critterSeed=Math.floor(Math.random()*977);
-  const critterButton=create('button','companion-primary','看看角落',critterCard);
-  critterButton.addEventListener('click',()=>{const c=hiddenCritter(critterSeed);critterText.textContent=`${c.emoji} ${c.name}：${c.line}`;try{api.celebrateParty?.();}catch{}say(c.line);},listen);
-  // 每日免费转盘（清单103）：每天转一次，转出一点小惊喜；本地记日期，不重复发放、不改存档。
-  const spinCard=card(garden);create('strong','','每日幸运转盘',spinCard);const spinText=create('p','companion-spin','转一下，看看今天的小幸运。',spinCard);const spinSlot=create('div','companion-spin-slot',null,spinCard);
-  const spinButton=create('button','companion-primary','转一转！',spinCard);const spinKey='pet-room-spin-last',spinToday='pet-room-spin-today';
-  function spinDate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-  function spinSpun(){try{return win.localStorage?.getItem(spinToday)===spinDate();}catch{return false;}}
-  function renderSpin(){const spun=spinSpun();spinButton.disabled=spun;spinButton.textContent=spun?'明天再来转': '转一转！';spinSlot.textContent=spun?'今天的幸运已经转过啦':((win.localStorage?.getItem(spinKey)||''));}
-  spinButton.addEventListener('click',()=>{
-    if(spinSpun()){say('今天的转盘已经转过啦，明天还有一次机会～');return;}
-    try{win.localStorage?.setItem(spinToday,spinDate());}catch{}
-    const result=spinWheelResult(new Date(),Math.floor(Math.random()*977));
-    win.localStorage?.setItem(spinKey,result.text);
-    spinSlot.textContent=`${result.text}`;spinButton.disabled=true;spinButton.textContent='明天再来转';
-    try{api.celebrateParty?.();}catch{}
-    say('转出了小幸运，开心一下！');
-  },listen);
-  renderSpin();
-  // 宠物喂养 buff（清单86）：喂不同食物获得不同心情加成，吃什么长什么样（本机记录、不改存档）。
-  const feedCard=card(garden);create('strong','','喂喂小伙伴',feedCard);const feedHint=create('p','companion-help','选择一份小零食，看看伙伴的心情变化～',feedCard);
-  const feedRow=create('div','companion-feed-row',null,feedCard);const feedStatus=create('p','companion-feed-status','',feedCard);feedStatus.setAttribute('role','status');
-  const feedKey='pet-room-last-feed';
-  const FEED_KINDS=[['bread','🍞','面包'],['fish','🐟','小鱼'],['carrot','🥕','萝卜']];
-  function renderFeed(){const last=win.localStorage?.getItem(feedKey);if(last&&FEED_KINDS.some(k=>k[0]===last)){const m=feedMood(last);feedStatus.textContent=`最近喂了${m.emoji}${m.name}：伙伴现在${m.mood}。`;}else feedStatus.textContent='还没喂过呢，来选一份吧。';}
-  for(const [food,emoji,label] of FEED_KINDS){const b=create('button','companion-feed-face',emoji,feedRow);b.type='button';b.dataset.food=food;b.setAttribute('aria-label',`喂${label}`);b.addEventListener('click',()=>{const m=feedMood(food);try{win.localStorage?.setItem(feedKey,food);}catch{}renderFeed();say(`伙伴吃了${m.emoji}${m.name}，${m.mood}！`);try{api.celebrateParty?.();}catch{}},listen);}
-  renderFeed();
-  // 番茄学习钟（清单92）：专注 10 分钟 → 休息 1 分钟（眼保健操拥抱版），纯本地计时，不改存档。
-  const pomodoroCard=card(garden);create('strong','','番茄学习钟',pomodoroCard);const pomodoroText=create('p','companion-pomodoro','学 10 分钟，休息 1 分钟，眼睛也要照顾好。',pomodoroCard);
-  const pomodoroButton=create('button','companion-primary','开始专注 10 分钟',pomodoroCard);let pomodoroTimer=0,pomodoroUntil=0,pomodoroPhase='idle';
-  function pomodoroTick(){
-    if(disposed)return;const left=Math.max(0,Math.ceil((pomodoroUntil-Date.now())/1000));
-    if(pomodoroPhase==='focus'){pomodoroText.textContent=left>0?`专注中…还有 ${Math.floor(left/60)} 分 ${left%60} 秒。学完别忘了休息哦。`:'时间到！揉揉眼睛，休息 1 分钟～';
-      if(left<=0){pomodoroPhase='break';pomodoroUntil=Date.now()+60000;api.celebrateParty?.();pomodoroText.textContent='休息 1 分钟，看看远处，眨眨眼睛～';}
-    } else if(pomodoroPhase==='break'){pomodoroText.textContent=left>0?`休息中…还有 ${left} 秒。`:'休息好啦，继续加油！';if(left<=0){pomodoroPhase='idle';pomodoroButton.textContent='开始专注 10 分钟';pomodoroButton.disabled=false;say('休息好啦，眼睛亮亮的，继续加油～');return;}}
-    pomodoroTimer=win.setTimeout(pomodoroTick,1000);
-  }
-  pomodoroButton.addEventListener('click',()=>{if(pomodoroPhase!=='idle'){win.clearTimeout(pomodoroTimer);pomodoroPhase='idle';pomodoroButton.textContent='开始专注 10 分钟';pomodoroText.textContent='学 10 分钟，休息 1 分钟，眼睛也要照顾好。';return;}
-    pomodoroPhase='focus';pomodoroUntil=Date.now()+600000;pomodoroButton.textContent='暂停番茄钟';pomodoroTick();},listen);
+  const activityCard=card(garden);title(activityCard,'一起做点真正的小事','收获作物、制作点心，分享给唯一的伙伴；成长纪念会自动保存。');
+  for(const [tab,label]of [['pet','陪伙伴玩一会儿'],['garden','去我的小花园'],['memories','翻开成长纪念册']]){const b=create('button','companion-primary',label,activityCard);b.addEventListener('click',()=>{close();api.openLife?.(tab);},listen);}
+  const diaryDetails=create('details','companion-quiet-details',null,garden);create('summary','','心情和小故事 · 想看时再翻开',diaryDetails);diaryDetails.append(diaryCard);
+  const fableCard=card(diaryDetails);create('strong','','本月童话',fableCard);const fableText=create('p','companion-monthly-fable','',fableCard);
+  const windowCard=card(diaryDetails);create('strong','','窗外现在',windowCard);const windowText=create('p','companion-window','',windowCard);
   // 派对模式（清单97）：一键小热闹，不花积分、不改存档。
   const partyCard=card(garden);title(partyCard,'开个小派对','学累了就来放松一小会儿，彩带和伙伴都准备好了。');
   const partyButton=create('button','companion-primary','🎉 开个小派对',partyCard);partyButton.addEventListener('click',()=>{if(busy)return;const ok=api.celebrateParty?.();if(ok===false)say('房间还没准备好开派对，再等一下下～',true);else say('派对开始啦，今天也要开心！');},listen);
@@ -212,9 +164,9 @@ export function createCompanionPanel({root,api}={}){
   // v2.23：回房间欢迎语不再朗读语音，保留文字小气泡；原语音设置改为文字说明。
   create('p','companion-help','欢迎语以文字小气泡显示，安静又温柔，不再播放语音朗读。',soundCard);
   const welcomePreview=create('button','','看看欢迎语',soundCard);welcomePreview.addEventListener('click',()=>void perform('speakPetGreeting',[],'欢迎语已换成文字气泡啦～'),listen);
-  const friendLimit=selectField(soundCard,'好朋友进家上限',[['1','1 位'],['2','2 位'],['3','3 位']]);
-  friendLimit.addEventListener('change',()=>void perform('updateCompanion',[{homeFriendLimit:Number(friendLimit.value)}],'好朋友进家上限记好啦～'),listen);
-  create('p','companion-help','名单里登记的好朋友才能进小屋玩；家里最多同时进来几位好朋友（绒绒伙伴算 1 位）。没登记的小朋友会在门口等一等，明天再来～',soundCard);
+  const friendLimit=selectField(soundCard,'好友每日留言上限',[['1','1 条'],['2','2 条'],['3','3 条']]);
+  friendLimit.addEventListener('change',()=>void perform('updateCompanion',[{homeFriendLimit:Number(friendLimit.value)}],'好友每日留言上限记好啦～'),listen);
+  create('p','companion-help','小屋里的好友留言来自下面登记的名单。每天收到的留言条数可以在这里设置。',soundCard);
   // v2.24 · 好友白名单：只有登记的好朋友能进，陌生人被拦在门口。
   const friendRow=create('div','companion-friend-row',null,soundCard);
   const friendInput=labelField(friendRow,'好朋友名字','text',8);friendInput.placeholder='写个名字，比如：小桃子';
@@ -224,7 +176,8 @@ export function createCompanionPanel({root,api}={}){
   const friendChips=create('div','companion-friend-chips',null,soundCard);
   create('p','companion-help','名单最多 8 位；全部移出后就先不接待客人啦。',soundCard);
   const ageCard=card(settings);title(ageCard,'适龄显示','幼儿园模式使用更大的按钮，减少花园信息卡；小学模式显示完整内容。');
-  const ageMode=selectField(ageCard,'适龄模式',[['kindergarten','幼儿园 · 轻松大按钮'],['primary','小学 · 完整探索']]);
+  const availableAgeModes=api.getAvailableAgeModes?.()||['kindergarten','primary','junior'];
+  const ageMode=selectField(ageCard,'适龄模式',[['kindergarten','幼儿园 · 轻松大按钮'],['primary','小学 · 完整探索'],['junior','初中 · 简洁创作']].filter(([id])=>availableAgeModes.includes(id)));
   ageMode.addEventListener('change',()=>void perform('updateCompanion',[{ageMode:ageMode.value}],'适龄模式切换好啦～'),listen);
   const themeCard=card(settings);title(themeCard,'给界面换件外衣');const theme=selectField(themeCard,'界面主题',THEMES);theme.addEventListener('change',()=>void perform('updateCompanion',[{theme:theme.value}],'配色换好啦，眼睛也要舒服哦～'),listen);
   const night=toggleField(themeCard,'开启夜间彩蛋','22点后伙伴会放轻动作，准备休息。'),surprises=toggleField(themeCard,'开启回访小礼物','偶尔收到伙伴带回的小物，不需要花积分。');
@@ -238,7 +191,6 @@ export function createCompanionPanel({root,api}={}){
   function open(){if(disposed||opened)return;returnFocus=activeElementFor(root);opened=true;panel.hidden=false;trigger.setAttribute('aria-expanded','true');tutorial.pause();refresh(true);closeButton.focus({preventScroll:true});}
   function close(){if(disposed)return;opened=false;panel.hidden=true;trigger.setAttribute('aria-expanded','false');tutorial.resume();if(returnFocus?.isConnected)returnFocus.focus?.({preventScroll:true});else trigger.focus({preventScroll:true});returnFocus=null;}
   trigger.addEventListener('click',()=>opened?close():open(),listen);closeButton.addEventListener('click',close,listen);
-  mute.addEventListener('click',()=>void perform('updateCompanion',[{sound:{muted:!companion?.sound?.muted,volume:companion?.sound?.volume||'quiet'}}],companion?.sound?.muted?'声音回来啦～':'嘘，我们轻轻地玩～'),listen);
   doc.addEventListener('keydown',event=>{if(event.key==='Escape'&&opened&&panel.contains(activeElementFor(root))){event.preventDefault();close();}},listen);
   root.addEventListener('room-ui-theme-change',()=>refresh(true),listen);
   function refresh(force=false){
@@ -248,7 +200,8 @@ export function createCompanionPanel({root,api}={}){
     const friends=Array.isArray(next.friendNames)?next.friendNames:[];
     const friendSignature=JSON.stringify(friends);
     if(friendSignature!==friendChips.dataset.signature){friendChips.dataset.signature=friendSignature;friendChips.replaceChildren();if(!friends.length){const empty=create('span','companion-friend-chip','名单是空的 · 先不接待客人',friendChips);empty.dataset.empty='true';}for(const name of friends){const chip=create('span','companion-friend-chip',name,friendChips);const remove=create('button','companion-friend-remove','✕',chip);remove.type='button';remove.setAttribute('aria-label',`把${name}移出名单`);remove.addEventListener('click',()=>{const next=removeFriend(friends,name);void perform('updateCompanion',[{friendNames:next.friendNames}],next.message);},listen);}}
-    const muted=!!next.sound?.muted;mute.textContent=muted?'🔕':'🔔';mute.setAttribute('aria-label',muted?'开启所有音效':'关闭所有音效');mute.setAttribute('aria-pressed',String(muted));mute.title=muted?'开启所有音效':'关闭所有音效';
+    const muted=!!next.sound?.muted;
+    for(const option of hat.children)if(['designer','gardener','chef'].includes(option.value))option.disabled=!(api.getLifeState?.()?.state?.outfits||[]).includes(option.value)&&next.outfit?.hat!==option.value;
     fill(ownerName,next.ownerName);fill(petName,next.petName);fill(roomName,next.roomName);hat.value=next.outfit?.hat||'none';scarf.value=next.outfit?.scarf||'none';backpack.value=next.outfit?.backpack||'none';soundMuted.checked=muted;volume.value=next.sound?.volume||'quiet';theme.value=next.theme==='eye'?'eye-care':next.theme||'light';night.checked=next.nightMode!==false;surprises.checked=next.surprises!==false;
     const nextSkins=JSON.stringify(next.skins||[]);if(nextSkins!==skinSignature){skinSignature=nextSkins;skin.replaceChildren();const original=create('option','','保留原本的花纹',skin);original.value='';for(const item of next.skins||[]){const option=create('option','',`${item.name}${item.unlocked?'':' · 尚未解锁'}`,skin);option.value=item.id;option.disabled=!item.unlocked;}}
     const available=Array.isArray(next.furniture)?next.furniture:[];const furnitureSignature=JSON.stringify(available);if(furniture.dataset.signature!==furnitureSignature){furniture.dataset.signature=furnitureSignature;furniture.replaceChildren();for(const item of available){const option=create('option','',item.name,furniture);option.value=item.id;}furniture.value=available.some(item=>item.id===selectedFurniture)?selectedFurniture:available[0]?.id||'';selectedFurniture=furniture.value;renderFurnitureStyle();}
@@ -259,20 +212,12 @@ export function createCompanionPanel({root,api}={}){
     const holiday=next.daily?.holiday,mood=next.daily?.mood;
     if(holiday)holidayText.textContent=holiday.leftDays===0?`今天就是${holiday.name}！欢迎回家看看～`:`还有 ${holiday.leftDays} 天就是${holiday.name}啦，到时候小屋会有小惊喜。`;
     if(mood)moodText.textContent=mood.text;
-    if(next.daily?.seasonal)wishText.textContent=`${next.daily.seasonal.season==='spring'?'春':next.daily.seasonal.season==='summer'?'夏':next.daily.seasonal.season==='autumn'?'秋':'冬'}季心愿：${next.daily.seasonal.wish}`;
-    if(next.daily?.weekly)weeklyText.textContent=next.daily.weekly.challenge;
-    hiddenList.replaceChildren();for(const item of next.daily?.hidden||[]){const row=create('p','companion-hidden-item',`${item.unlocked?'✦ 已点亮':'？'} ${item.name}${item.unlocked?'':' · '+item.hint}`,hiddenList);row.dataset.unlocked=String(!!item.unlocked);}
     if(next.daily?.fable)fableText.textContent=next.daily.fable;
-    previewList.replaceChildren();for(const item of next.daily?.preview||[]){create('p','companion-preview-item',`${item.date} · ${item.hint}`,previewList);}
-    if(next.daily?.attachment){attachText.textContent=`${next.daily.attachment.name}（已陪你 ${next.daily.attachment.days} 天）：${next.daily.attachment.welcome}`;}
     if(next.daily?.seasonWindow)windowText.textContent=`${next.daily.seasonWindow.emoji} ${next.daily.seasonWindow.scene}`;
-    if(next.daily?.growthPage)pageText.textContent=next.daily.growthPage;
-    if(next.daily?.achievementStory)storyText.textContent=next.daily.achievementStory;
-    milestoneList.replaceChildren();for(const m of next.daily?.milestones?.moments||[]){create('p','companion-milestone',`${m.emoji} ${m.title}：${m.text}`,milestoneList);}
     growthTasks.replaceChildren();for(const task of next.growth?.tasks||[]){const row=create('p','companion-growth-task',`${task.done?'✓':'○'} ${task.label} · ${task.current} / ${task.target}`,growthTasks);row.dataset.done=String(!!task.done);}
     rewardsList.replaceChildren();if(next.rewards?.length){title(rewardsList,'收到的小礼物');for(const reward of next.rewards){const rewardCard=card(rewardsList);create('strong','',reward.name,rewardCard);create('p','companion-acquired-time',acquisitionCaption({acquiredAt:next.memories?.[reward.id]?.at||reward.at}),rewardCard);const end=typeof reward.expiresAt==='string'&&reward.expiresAt?new Date(reward.expiresAt):null;create('p','companion-help',!end||Number.isNaN(end.getTime())?'已经放进我们的小收藏，会一直陪着你～':`陪伴到 ${end.toLocaleDateString('zh-CN')}，到期后还会留下收藏回忆。`,rewardCard);}}else create('p','companion-help','小礼物的小抽屉还空着，签到或试试小口令吧～',rewardsList);
     if(opened&&activeTab==='collection')renderCollection();
   }
   selectTab('home');refresh(true);
-  return {open,close,update(state){if(disposed)return;const ready=state?.ready||state?.lifecycle==='ready';trigger.disabled=!ready;if(ready)refresh();tutorial.update(state);},dispose(){if(disposed)return;disposed=true;events.abort();drawingEditor.dispose();delete root.dataset.roomDrawingDirty;delete root.dataset.ageMode;tutorial.dispose();win.clearTimeout(pomodoroTimer);panel.remove();dock.remove();dirty.clear();}};
+  return {open,close,update(state){if(disposed)return;const ready=state?.ready||state?.lifecycle==='ready';trigger.disabled=!ready;if(ready)refresh();tutorial.update(state);},dispose(){if(disposed)return;disposed=true;events.abort();drawingEditor.dispose();delete root.dataset.roomDrawingDirty;delete root.dataset.ageMode;tutorial.dispose();panel.remove();dock.remove();dirty.clear();}};
 }

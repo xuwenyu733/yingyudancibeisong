@@ -2,6 +2,7 @@ import {startDemo} from './demo-app.js';
 import {openDatabaseStorage} from './database-sync.mjs';
 import {createSocialClient} from './social-client.mjs';
 import {createFriendsPanel} from './social-ui.js';
+import {createVisitorPanel} from './visitor-ui.js';
 import {resolveDirectHome,rememberDirectHome,carryLocalHouse} from './direct-home.mjs';
 
 const client=createSocialClient(),storage=(()=>{try{return localStorage;}catch{return null;}})(),localKey=resolveDirectHome(storage);
@@ -20,7 +21,9 @@ function onlineHouse(identity){
  try{carryLocalHouse(storage,localKey,identity.accountKey);}catch{localHouse();return;}
  rememberDirectHome(storage,identity.accountKey);
  const params=new URLSearchParams(location.search);for(const key of ['account','preview','legacy'])params.delete(key);history.replaceState(null,'',location.pathname+'?'+params);
- const panel=createFriendsPanel({client,beforeInvite:async()=>{const result=await transport?.flush();if(result?.ok===false)throw new Error('小屋尚未同步，请连接恢复后再邀请参观');},onVisiting:visiting=>window.HamsterRoom?.setPresentationPaused?.(visiting)});
+ const visitors=createVisitorPanel({client,getApi:()=>window.HamsterRoom});
+ const panel=createFriendsPanel({client,beforeInvite:async()=>{const result=await transport?.flush();if(result?.ok===false)throw new Error('小屋尚未同步，请连接恢复后再邀请参观');},onVisiting:visiting=>{visitors.setAway(visiting);window.HamsterRoom?.setPresentationPaused?.(visiting);}});
+ window.addEventListener('pagehide',event=>{if(!event.persisted){visitors.dispose();panel.dispose();}},{once:true});
  startDemo({onlineAccount:identity.accountKey,designService,extraApi:{getSocialIdentity:()=>client.identity,openFriends:()=>panel.open()},
   openStorage:async({storageKey,storage})=>{if(storageKey!==identity.accountKey)throw new Error('小屋存档编号不一致');transport=await openDatabaseStorage({storageKey,storage,onStatus:showStatus,fetcher:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(options.method==='PUT'?20000:4000)})});return transport;},
   onGameEvent:async(type,api)=>{if(type==='profile-change'){const name=api?.getProfile?.().profile?.name?.slice(0,20);if(name&&name!==client.identity.name)try{await client.post('name',{name});}catch{}}},

@@ -4,7 +4,7 @@ import {createCompanionPanel,memoryCaption} from '../companion-ui.js';
 
 // Minimal browser DOM for form/event behavior. Rendering is verified separately
 // in the actual browser; this fixture exercises the public UI with its API.
-function fixture(){
+function fixture(availableAgeModes){
   let document;const timers=new Map();let timerId=0;
   class Element{
     constructor(tag){this.tagName=tag.toUpperCase();this.ownerDocument=document;this.children=[];this.dataset={};this.attrs=new Map();this.listeners=new Map();this.hidden=false;this.value='';this.textContent='';this.className='';this.classList={add:name=>{this.className=[...new Set([...this.className.split(' ').filter(Boolean),name])].join(' ');},remove:name=>{this.className=this.className.split(' ').filter(x=>x!==name).join(' ');}};}
@@ -29,17 +29,24 @@ function fixture(){
   document.body=new Element('body');const root=new Element('div');document.body.append(root);root.className='pet-room-view';
   let state={petName:'团团',roomName:'甜甜的小屋',ownerName:'甜甜',sound:{muted:false,volume:'quiet'},outfit:{hat:'none',scarf:'none',backpack:'none'},furnitureStyles:{},memories:{sofa:{at:'2026-10-28T00:00:00Z',by:'甜甜',source:'gift'}},garden:{flowers:2,stage:'小花园'},growth:{days:3,stage:'幼年'},theme:'light',nightMode:true,surprises:true,tourDone:true,rewards:[],collection:{pets:[{sku:'apricot-fox',name:'杏橘狐',owned:true,image:'./assets/pets/previews/apricot-fox.png'}],furniture:[{sku:'sofa',name:'大沙发',owned:true,image:'./assets/products/previews/sofa.png'},{sku:'star-lamp',name:'星灯',owned:false,image:'./assets/products/previews/star-lamp.png'}]},furniture:[{id:'sofa',name:'大沙发'}]};
   const calls=[];const api={getCompanion:()=>({ok:true,companion:structuredClone(state)}),updateCompanion(patch){calls.push(['update',patch]);for(const[key,value]of Object.entries(patch))state[key]=['sound','outfit'].includes(key)?{...state[key],...value}:value;return{ok:true};},setProfileName(name){calls.push(['name',name]);state.ownerName=name;return{ok:true};},customizeFurniture(id,patch){calls.push(['furniture',id,patch]);state.furnitureStyles[id]={...state.furnitureStyles[id],...patch};return{ok:true};},speakPetGreeting(){calls.push(['speak']);return {ok:true,message:'甜甜，你回来啦！'};},redeemSecret(code){calls.push(['secret',code]);return{ok:code==='星光回家',message:code==='星光回家'?'找到星星啦':'口令还没对上呀～'};}};
+  if(availableAgeModes)api.getAvailableAgeModes=()=>availableAgeModes;
   const ui=createCompanionPanel({root,api}),all=()=>{const result=[];function walk(el){result.push(el);for(const child of el.children)walk(child);}walk(root);return result;};
   const byLabel=label=>all().find(el=>el.getAttribute('aria-label')===label),byText=text=>all().find(el=>el.textContent===text),byClass=name=>all().filter(el=>el.className.split(' ').includes(name));
   ui.update({ready:true});return {root,document,ui,calls,byLabel,byText,byClass,timers,get state(){return state;},set state(next){state=next;}};
 }
+
+test('age picker hides unsupported junior mode on an older database and accepts it after upgrade',async()=>{
+ const old=fixture(['kindergarten','primary']);assert.deepEqual(old.byLabel('适龄模式').children.map(n=>n.value),['kindergarten','primary']);old.ui.dispose();
+ const upgraded=fixture(['kindergarten','primary','junior']),picker=upgraded.byLabel('适龄模式');assert.equal(picker.children.length,3);picker.value='junior';await picker.fire('change');assert.equal(upgraded.state.ageMode,'junior');assert.equal(upgraded.root.dataset.ageMode,'junior');upgraded.ui.dispose();
+});
 
 test('handbook persists names and nested sound choices through the public API',async()=>{
   const f=fixture();await f.byText('📖 伙伴手册').fire('click');
   for(const[label,value]of[['主人昵称','小雨'],['宠物名字','毛球'],['房间名字','云朵城堡']]){const field=f.byLabel(label);field.value=value;await field.fire('input');}
   await f.byText('把名字记下来').fire('click');
   assert.deepEqual(f.calls.slice(0,2),[['name','小雨'],['update',{petName:'毛球',roomName:'云朵城堡'}]]);
-  await f.byClass('companion-mute')[0].fire('click');assert.equal(f.state.sound.muted,true);assert.equal(f.state.sound.volume,'quiet');
+  assert.equal(f.byClass('companion-mute').length,0,'主界面不再生成静音按钮');
+  const muted=f.byLabel('关闭所有音效');muted.checked=true;await muted.fire('change');assert.equal(f.state.sound.muted,true);assert.equal(f.state.sound.volume,'quiet');
   const volume=f.byLabel('音量档位');volume.value='standard';await volume.fire('change');assert.equal(f.state.sound.volume,'standard');assert.equal(f.state.sound.muted,true);
   f.ui.dispose();assert.equal(f.root.children.length,0);
 });
@@ -74,7 +81,7 @@ test('removed learning playground has no tab, question UI or recording controls'
   assert.equal(f.byLabel('朗读声线'),undefined);
   assert.equal(f.byText('听听伙伴叫我'),undefined);
   assert.ok(f.byText('看看欢迎语'));
-  assert.ok(f.byLabel('好朋友进家上限'));
+  assert.ok(f.byLabel('好友每日留言上限'));
   f.ui.dispose();
 });
 
@@ -102,10 +109,10 @@ test('v2.23: 欢迎语只用文字气泡——不再朗读语音，预览走公�
   const f=fixture();await f.byText('📖 伙伴手册').fire('click');
   assert.ok(f.byText('欢迎语以文字小气泡显示，安静又温柔，不再播放语音朗读。'));
   const preview=f.byText('看看欢迎语');await preview.fire('click');assert.deepEqual(f.calls.at(-1),['speak']);
-  const limit=f.byLabel('好朋友进家上限');assert.equal(limit.value,'2','默认好友上限2位');
+  const limit=f.byLabel('好友每日留言上限');assert.equal(limit.value,'2','默认每天最多两条好友留言');
   limit.value='3';await limit.fire('change');assert.deepEqual(f.calls.at(-1),['update',{homeFriendLimit:3}]);
-  f.state={...f.state,homeFriendLimit:1};f.ui.update({ready:true});assert.equal(f.byLabel('好朋友进家上限').value,'1','状态刷新后上限跟随存档');
-  await f.byClass('companion-mute')[0].fire('click');assert.equal(f.state.sound.muted,true);
+  f.state={...f.state,homeFriendLimit:1};f.ui.update({ready:true});assert.equal(f.byLabel('好友每日留言上限').value,'1','状态刷新后上限跟随存档');
+  assert.equal(f.byClass('companion-mute').length,0);
   f.ui.dispose();
 });
 

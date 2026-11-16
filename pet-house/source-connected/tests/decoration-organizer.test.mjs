@@ -6,9 +6,12 @@ import * as THREE from '../vendor/three/three.module.js';
 async function fixture({operationResult={ok:true},pending=false}={}){
   const nodes=new Map(),calls=[],timers=new Set();let editing=false,allowSave=true,resolveOperation;
   class Element{
-    constructor(){this.dataset={};this.style={};this.attrs=new Map();this.handlers=new Map();this.hidden=false;this.disabled=false;this.value='';this.checked=false;}
+    constructor(){this.children=[];this.queries=new Map();this.dataset={};this.style={};this.attrs=new Map();this.handlers=new Map();this.hidden=false;this.disabled=false;this.value='';this.checked=false;}
     getAttribute(key){return this.attrs.get(key)??null;}setAttribute(key,value){this.attrs.set(key,String(value));}removeAttribute(key){this.attrs.delete(key);}
     addEventListener(type,handler,options={}){this.handlers.set(type,{handler,options});}
+    after(){}
+    append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this.children=nodes;}remove(){}
+    querySelector(selector){if(!this.queries.has(selector))this.queries.set(selector,new Element());return this.queries.get(selector);}
     querySelectorAll(){return [];}focus(){}contains(){return false;}
     async fire(type){const binding=this.handlers.get(type);if(!binding?.options.signal?.aborted)return await binding?.handler({preventDefault(){},target:this});}
   }

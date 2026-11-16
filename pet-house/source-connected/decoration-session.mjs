@@ -20,7 +20,8 @@ export function createDecorationSession({manager,prepare,onEvent=()=>{},persistL
       if(manager.finishEdit){if(!manager.finishEdit({save,persist:persistLayout}))return false;}
       else if(save){if(!manager.validate().valid||(persistLayout&&!manager.persist()))return false;}
       else manager.restore(session);
-      active=false;session=null;onEvent('decoration-mode',{active:false,saved:save});return true;
+      const changed=!!save&&JSON.stringify(session)!==JSON.stringify(manager.snapshot());
+      active=false;session=null;onEvent('decoration-mode',{active:false,saved:save,changed});return true;
     },
     refresh(){},dispose(){cancel();if(active&&manager.finishEdit)manager.finishEdit({save:false,persist:false});disposed=true;active=false;session=null;},
   };

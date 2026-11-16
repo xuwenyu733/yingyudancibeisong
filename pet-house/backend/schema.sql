@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS usr_accounts (
 CREATE TABLE IF NOT EXISTS usr_settings (
   account_key VARCHAR(160) NOT NULL COMMENT '所属账户键',
   pet_nickname VARCHAR(12) NOT NULL COMMENT '主宠昵称，不是品种名称',
-  age_mode VARCHAR(20) NOT NULL COMMENT 'UI密度：kindergarten幼儿园/primary小学',
+  age_mode VARCHAR(20) NOT NULL COMMENT 'UI密度：kindergarten幼儿园/primary小学/junior初中',
   sound_muted BOOLEAN NOT NULL COMMENT '是否全局静音',
   sound_volume VARCHAR(12) NOT NULL COMMENT '音量档位：quiet/standard/loud',
   voice_enabled BOOLEAN NOT NULL COMMENT '是否启用本地昵称TTS',
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS usr_settings (
   last_gift_day DATE NULL COMMENT '最近回访礼物业务日期',
   PRIMARY KEY (account_key),
   CONSTRAINT fk_settings_user FOREIGN KEY (account_key) REFERENCES usr_accounts(account_key) ON DELETE CASCADE,
-  CONSTRAINT ck_settings_age CHECK (age_mode IN ('kindergarten','primary'))
+  CONSTRAINT ck_settings_age CHECK (age_mode IN ('kindergarten','primary','junior'))
 ) ENGINE=InnoDB COMMENT='账户：跨楼层共享的伙伴、适龄、语音和声音设置';
 
 CREATE TABLE IF NOT EXISTS wallet_accounts (
@@ -639,3 +639,136 @@ UNION ALL SELECT 10,'新手_10_参观邀请','主人、受邀好友和到期时�
 UNION ALL SELECT 11,'新手_11_联网账号','每个人的专属账号ID','分享ID，不分享密码'
 UNION ALL SELECT 12,'新手_12_装修分享','四位装修码、主人和楼层','在装修界面输入号码复制摆设';
 INSERT INTO sys_schema_migrations(version,description) VALUES('1.4.0','四位装修码：按楼层发布公开装修，复制前确认缺失物品及积分并自动备份') ON DUPLICATE KEY UPDATE description=VALUES(description);
+
+USE pet_room;
+SET NAMES utf8mb4;
+CREATE TABLE IF NOT EXISTS room_usage_days (
+ account_key VARCHAR(160) NOT NULL COMMENT '小屋用户键；登录孩子使用稳定的独立键',
+ usage_day DATE NOT NULL COMMENT '北京时间当天08点开始的额度日期',
+ used_ms BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '当天已使用毫秒，多窗口合并计时',
+ continuous_ms BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '连续使用毫秒，休息满5分钟后重置',
+ settled_ms BIGINT UNSIGNED NOT NULL COMMENT '服务器上次结算UTC毫秒',
+ last_active_ms BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '服务器最近有效在线UTC毫秒',
+ rest_until_ms BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '强制休息结束UTC毫秒',
+ PRIMARY KEY(account_key,usage_day),
+ FOREIGN KEY(account_key) REFERENCES social_accounts(account_key) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='仓鼠屋每日在线时长；30分钟上限，15分钟休息5分钟';
+CREATE TABLE IF NOT EXISTS room_usage_sessions (
+ account_key VARCHAR(160) NOT NULL COMMENT '只属于当前孩子的小屋身份',
+ session_id VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '每个窗口独立的随机会话号',
+ starts_ms BIGINT UNSIGNED NOT NULL COMMENT '本次有效在线租约开始UTC毫秒',
+ until_ms BIGINT UNSIGNED NOT NULL COMMENT '心跳失联时最多计到这里',
+ sequence_no BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '忽略乱序及重放心跳',
+ PRIMARY KEY(account_key,session_id),
+ FOREIGN KEY(account_key) REFERENCES social_accounts(account_key) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='仓鼠屋前台在线心跳租约；同用户多窗口不叠加';
+CREATE TABLE IF NOT EXISTS room_entry_tickets (
+ ticket_hash CHAR(64) CHARACTER SET ascii NOT NULL COMMENT '一次性入屋凭据SHA256，不存学习系统登录凭据',
+ account_key VARCHAR(160) NOT NULL COMMENT '经学习接口验证后的孩子身份',
+ expires_at DATETIME(3) NOT NULL COMMENT '凭据两分钟到期，兑换后立即删除',
+ PRIMARY KEY(ticket_hash),KEY ticket_expiry(expires_at),
+ FOREIGN KEY(account_key) REFERENCES social_accounts(account_key) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='手机仓鼠屋与学习账号的短期一次性桥接';
+CREATE OR REPLACE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `新手_13_仓鼠屋在线时长` AS
+ SELECT a.public_id AS `用户ID`,a.display_name AS `孩子昵称`,u.usage_day AS `额度日期_早8点起`,
+ ROUND(u.used_ms/60000,2) AS `已用分钟`,GREATEST(0,ROUND((1800000-u.used_ms)/60000,2)) AS `剩余分钟`,
+ CASE WHEN u.usage_day<DATE(UTC_TIMESTAMP()) THEN '历史记录' WHEN u.used_ms>=1800000 THEN '当天额度已用完' WHEN u.rest_until_ms>UNIX_TIMESTAMP(UTC_TIMESTAMP(3))*1000 THEN '休息5分钟' ELSE '可以进入' END AS `进入状态`,
+ DATE_FORMAT(TIMESTAMPADD(HOUR,32,CAST(u.usage_day AS DATETIME)),'%Y-%m-%d %H:%i') AS `额度恢复_北京时间`,
+ u.account_key AS `账号编号`
+ FROM room_usage_days u JOIN social_accounts a USING(account_key);
+INSERT INTO sys_schema_migrations(version,description) VALUES('1.5.0','仅仓鼠屋：按孩子每日30分钟，连续15分钟休息5分钟，北京时间早8点重置，多设备合并计时') ON DUPLICATE KEY UPDATE description=VALUES(description);
+
+-- Current statistics-only policy
+USE pet_room;
+SET NAMES utf8mb4;
+ALTER TABLE room_usage_days COMMENT='仓鼠屋在线时长统计；不限时，保留历史记录';
+CREATE OR REPLACE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `新手_13_仓鼠屋在线时长` AS
+ SELECT a.public_id AS `用户ID`,a.display_name AS `孩子昵称`,u.usage_day AS `统计日期_早8点起`,
+ ROUND(u.used_ms/60000,2) AS `累计在线分钟`,'可进入（不限时）' AS `进入状态`,u.account_key AS `账号编号`
+ FROM room_usage_days u JOIN social_accounts a USING(account_key);
+INSERT INTO sys_schema_migrations(version,description) VALUES('1.5.1','取消仓鼠屋时长限制、强制休息和定时解封；保留在线记录和原有存档') ON DUPLICATE KEY UPDATE description=VALUES(description);
+
+-- 1.6.0 room life
+USE pet_room;
+SET NAMES utf8mb4;
+CREATE TABLE IF NOT EXISTS room_life_accounts (
+ account_key VARCHAR(160) NOT NULL PRIMARY KEY COMMENT '账号内部编号，与小屋账号对应',revision BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '生活存档版本，防止重复覆盖',state JSON NOT NULL COMMENT '材料、种植、故事和职业等生活进度JSON',
+ updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '最后更新时间UTC',
+ FOREIGN KEY(account_key) REFERENCES social_accounts(account_key) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='小屋生活：共享材料、委托、制作、种植、厨房、故事、职业';
+CREATE TABLE IF NOT EXISTS room_life_requests (
+ account_key VARCHAR(160) NOT NULL COMMENT '账号内部编号，与小屋账号对应',request_id VARCHAR(80) CHARACTER SET ascii NOT NULL COMMENT '操作唯一编号，重试时复用',body_hash CHAR(64) CHARACTER SET ascii NOT NULL COMMENT '操作内容校验值',response JSON NOT NULL COMMENT '已提交结果，用于防止重复扣费领奖',created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间UTC',
+ PRIMARY KEY(account_key,request_id),FOREIGN KEY(account_key) REFERENCES social_accounts(account_key) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='生活操作幂等回执；重试不会重复扣材料或发奖';
+CREATE TABLE IF NOT EXISTS room_life_photos (
+ photo_id CHAR(32) CHARACTER SET ascii NOT NULL PRIMARY KEY COMMENT '摄影作品唯一编号',owner_key VARCHAR(160) NOT NULL COMMENT '作品所属账号内部编号',room_id VARCHAR(64) NOT NULL COMMENT '拍摄时所在楼层编号',title VARCHAR(40) NOT NULL COMMENT '作品标题',image MEDIUMTEXT NOT NULL COMMENT '大小受限的JPEG图片数据',created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间UTC',
+ KEY photo_owner(owner_key),FOREIGN KEY(owner_key) REFERENCES social_accounts(account_key) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='摄影室作品；只保存受限大小JPEG，不接受外链或SVG';
+CREATE TABLE IF NOT EXISTS room_life_posts (
+ post_id CHAR(32) CHARACTER SET ascii NOT NULL PRIMARY KEY COMMENT '展厅作品唯一编号',owner_key VARCHAR(160) NOT NULL COMMENT '作品所属账号内部编号',photo_id CHAR(32) CHARACTER SET ascii NOT NULL COMMENT '摄影作品唯一编号',room_id VARCHAR(64) NOT NULL COMMENT '拍摄时所在楼层编号',title VARCHAR(40) NOT NULL COMMENT '作品标题',theme VARCHAR(32) NOT NULL COMMENT '作品主题编号',image MEDIUMTEXT NOT NULL COMMENT '大小受限的JPEG图片数据',design_code CHAR(4) CHARACTER SET ascii NULL COMMENT '四位装修码，保留开头的零',created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间UTC',
+ UNIQUE KEY post_photo(owner_key,photo_id),KEY post_owner(owner_key),FOREIGN KEY(owner_key) REFERENCES social_accounts(account_key) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='好友作品展厅；照片和装修码快照，非公共小镇';
+CREATE TABLE IF NOT EXISTS room_life_reactions (
+ post_id CHAR(32) CHARACTER SET ascii NOT NULL COMMENT '展厅作品唯一编号',account_key VARCHAR(160) NOT NULL COMMENT '账号内部编号，与小屋账号对应',reaction VARCHAR(16) CHARACTER SET ascii NOT NULL COMMENT '好友选择的表情编号',PRIMARY KEY(post_id,account_key),
+ FOREIGN KEY(post_id) REFERENCES room_life_posts(post_id) ON DELETE CASCADE,FOREIGN KEY(account_key) REFERENCES social_accounts(account_key) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='每位好友对一件作品只保留一个表情，支持取消';
+CREATE TABLE IF NOT EXISTS room_life_favorites (
+ post_id CHAR(32) CHARACTER SET ascii NOT NULL COMMENT '展厅作品唯一编号',account_key VARCHAR(160) NOT NULL COMMENT '账号内部编号，与小屋账号对应',PRIMARY KEY(post_id,account_key),
+ FOREIGN KEY(post_id) REFERENCES room_life_posts(post_id) ON DELETE CASCADE,FOREIGN KEY(account_key) REFERENCES social_accounts(account_key) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin COMMENT='作品收藏；账号隔离，支持取消';
+-- Metadata upgrades also apply when these tables already exist.
+ALTER TABLE room_life_accounts MODIFY COLUMN account_key VARCHAR(160) NOT NULL COMMENT '账号内部编号，与小屋账号对应';
+ALTER TABLE room_life_accounts MODIFY COLUMN revision BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '生活存档版本，防止重复覆盖';
+ALTER TABLE room_life_accounts MODIFY COLUMN state JSON NOT NULL COMMENT '材料、种植、故事和职业等生活进度JSON';
+ALTER TABLE room_life_accounts MODIFY COLUMN updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '最后更新时间UTC';
+ALTER TABLE room_life_requests MODIFY COLUMN account_key VARCHAR(160) NOT NULL COMMENT '账号内部编号，与小屋账号对应';
+ALTER TABLE room_life_requests MODIFY COLUMN request_id VARCHAR(80) CHARACTER SET ascii NOT NULL COMMENT '操作唯一编号，重试时复用';
+ALTER TABLE room_life_requests MODIFY COLUMN body_hash CHAR(64) CHARACTER SET ascii NOT NULL COMMENT '操作内容校验值';
+ALTER TABLE room_life_requests MODIFY COLUMN response JSON NOT NULL COMMENT '已提交结果，用于防止重复扣费领奖';
+ALTER TABLE room_life_requests MODIFY COLUMN created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间UTC';
+ALTER TABLE room_life_photos MODIFY COLUMN photo_id CHAR(32) CHARACTER SET ascii NOT NULL COMMENT '摄影作品唯一编号';
+ALTER TABLE room_life_photos MODIFY COLUMN owner_key VARCHAR(160) NOT NULL COMMENT '作品所属账号内部编号';
+ALTER TABLE room_life_photos MODIFY COLUMN room_id VARCHAR(64) NOT NULL COMMENT '拍摄时所在楼层编号';
+ALTER TABLE room_life_photos MODIFY COLUMN title VARCHAR(40) NOT NULL COMMENT '作品标题';
+ALTER TABLE room_life_photos MODIFY COLUMN image MEDIUMTEXT NOT NULL COMMENT '大小受限的JPEG图片数据';
+ALTER TABLE room_life_photos MODIFY COLUMN created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间UTC';
+ALTER TABLE room_life_posts MODIFY COLUMN post_id CHAR(32) CHARACTER SET ascii NOT NULL COMMENT '展厅作品唯一编号';
+ALTER TABLE room_life_posts MODIFY COLUMN owner_key VARCHAR(160) NOT NULL COMMENT '作品所属账号内部编号';
+ALTER TABLE room_life_posts MODIFY COLUMN photo_id CHAR(32) CHARACTER SET ascii NOT NULL COMMENT '摄影作品唯一编号';
+ALTER TABLE room_life_posts MODIFY COLUMN room_id VARCHAR(64) NOT NULL COMMENT '拍摄时所在楼层编号';
+ALTER TABLE room_life_posts MODIFY COLUMN title VARCHAR(40) NOT NULL COMMENT '作品标题';
+ALTER TABLE room_life_posts MODIFY COLUMN theme VARCHAR(32) NOT NULL COMMENT '作品主题编号';
+ALTER TABLE room_life_posts MODIFY COLUMN image MEDIUMTEXT NOT NULL COMMENT '大小受限的JPEG图片数据';
+ALTER TABLE room_life_posts MODIFY COLUMN design_code CHAR(4) CHARACTER SET ascii NULL COMMENT '四位装修码，保留开头的零';
+ALTER TABLE room_life_posts MODIFY COLUMN created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间UTC';
+ALTER TABLE room_life_reactions MODIFY COLUMN post_id CHAR(32) CHARACTER SET ascii NOT NULL COMMENT '展厅作品唯一编号';
+ALTER TABLE room_life_reactions MODIFY COLUMN account_key VARCHAR(160) NOT NULL COMMENT '账号内部编号，与小屋账号对应';
+ALTER TABLE room_life_reactions MODIFY COLUMN reaction VARCHAR(16) CHARACTER SET ascii NOT NULL COMMENT '好友选择的表情编号';
+ALTER TABLE room_life_favorites MODIFY COLUMN post_id CHAR(32) CHARACTER SET ascii NOT NULL COMMENT '展厅作品唯一编号';
+ALTER TABLE room_life_favorites MODIFY COLUMN account_key VARCHAR(160) NOT NULL COMMENT '账号内部编号，与小屋账号对应';
+CREATE OR REPLACE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `新手_14_小屋生活进度` AS
+ SELECT a.public_id AS `用户ID`,a.display_name AS `孩子昵称`,l.revision AS `生活存档版本`,JSON_UNQUOTE(JSON_EXTRACT(l.state,'$.stars')) AS `小屋星星`,CASE JSON_UNQUOTE(JSON_EXTRACT(l.state,'$.job')) WHEN 'designer' THEN '小小设计师' WHEN 'gardener' THEN '花园园艺师' WHEN 'chef' THEN '邻里小厨师' ELSE '尚未选择' END AS `当前职业`,JSON_EXTRACT(l.state,'$.inventory') AS `材料包JSON`,JSON_EXTRACT(l.state,'$.plots') AS `种植格JSON`,JSON_UNQUOTE(JSON_EXTRACT(l.state,'$.stats.quests')) AS `完成装修委托`,JSON_UNQUOTE(JSON_EXTRACT(l.state,'$.stats.crafted')) AS `制作家具数`,JSON_UNQUOTE(JSON_EXTRACT(l.state,'$.stats.harvested')) AS `收获作物数`,JSON_UNQUOTE(JSON_EXTRACT(l.state,'$.stats.cooked')) AS `制作料理数`,JSON_UNQUOTE(JSON_EXTRACT(l.state,'$.stats.delivered')) AS `完成订单数`,JSON_LENGTH(JSON_EXTRACT(l.state,'$.story.completed')) AS `完成故事章节`,l.account_key AS `账号编号`
+ FROM room_life_accounts l JOIN social_accounts a USING(account_key);
+CREATE OR REPLACE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `新手_15_好友作品展厅` AS
+ SELECT p.post_id AS `作品编号`,a.public_id AS `作者ID`,a.display_name AS `作者昵称`,p.title AS `作品标题`,p.theme AS `主题`,p.room_id AS `楼层编号`,p.design_code AS `装修码`,(SELECT COUNT(*) FROM room_life_reactions r WHERE r.post_id=p.post_id) AS `表情数`,(SELECT COUNT(*) FROM room_life_favorites f WHERE f.post_id=p.post_id) AS `收藏数`,p.owner_key AS `账号编号`,p.created_at AS `发布于UTC`
+ FROM room_life_posts p JOIN social_accounts a ON a.account_key=p.owner_key;
+INSERT INTO sys_schema_migrations(version,description) VALUES('1.6.0','小屋生活九项玩法：委托、套装、蓝图、摄影、种植、好友展厅、厨房、故事、职业；无公共小镇和使用时长限制') ON DUPLICATE KEY UPDATE description=VALUES(description);
+
+-- Add a human-readable inspection entry. Existing life JSON is upgraded lazily by the service.
+-- No table rebuild, archive rewriting, account reset or learning-module changes.
+CREATE OR REPLACE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `新手_16_创作与伙伴纪念` AS
+ SELECT a.public_id AS `用户ID`,a.display_name AS `孩子昵称`,
+ CASE JSON_UNQUOTE(JSON_EXTRACT(l.state,'$.adventures.focus'))
+  WHEN 'forest' THEN '森林阅读角' WHEN 'space' THEN '我的星空基地'
+  WHEN 'ocean' THEN '海边小画室' WHEN 'tea' THEN '从花园到餐桌' ELSE '第一间温暖小屋' END AS `正在创作`,
+ COALESCE(JSON_LENGTH(JSON_EXTRACT(l.state,'$.adventures.completed')),0) AS `已完成创作数`,
+ COALESCE(JSON_LENGTH(JSON_EXTRACT(l.state,'$.adventures.stamps')),0) AS `已收藏印章数`,
+ COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(l.state,'$.adventures.pet.meals')) AS UNSIGNED),0) AS `分享料理次数`,
+ COALESCE(JSON_LENGTH(JSON_EXTRACT(l.state,'$.adventures.pet.recipes')),0) AS `伙伴尝过几种料理`,
+ COALESCE(JSON_LENGTH(JSON_EXTRACT(l.state,'$.cookedRecipes')),0) AS `做过几种料理`,
+ COALESCE(JSON_EXTRACT(l.state,'$.adventures.completed'),JSON_OBJECT()) AS `创作完成楼层与时间`,
+ l.updated_at AS `最后更新UTC`,l.account_key AS `账号编号`
+ FROM room_life_accounts l JOIN social_accounts a USING(account_key);
+INSERT INTO sys_schema_migrations(version,description) VALUES('1.6.1','创作目标、真实料理分享与成长印章的中文查询入口；不重置旧存档') ON DUPLICATE KEY UPDATE description=VALUES(description);
+
+INSERT INTO sys_schema_migrations(version,description) VALUES('1.6.2','初中简洁创作模式；仅扩展适龄模式约束，保留已有存档') ON DUPLICATE KEY UPDATE description=VALUES(description);

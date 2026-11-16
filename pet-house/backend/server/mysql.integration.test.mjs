@@ -5,7 +5,7 @@ import {resolve} from 'node:path';
 import {loadConfig} from './config.mjs';
 import {createAppServer} from './server.mjs';
 test('real MySQL transactional saves, indexes, precise IDs, conflicts and restore',{skip:process.env.PET_ROOM_MYSQL_INTEGRATION!=='1'?'设置 PET_ROOM_MYSQL_INTEGRATION=1 才会对真实数据库执行写入测试':false},async()=>{
-  const config={...await loadConfig(),socialEnabled:false}; // Storage-only regression; social authorization has its own real API checks.
+  const config={...await loadConfig(),socialEnabled:false,roomAccessEnabled:false}; // Storage-only regression; social authorization has its own real API checks.
   const {createEstateStore}=await import(pathToFileURL(resolve(config.sourceRoot,'estate-state.mjs')).href);
   const {createEconomy}=await import(pathToFileURL(resolve(config.sourceRoot,'economy.mjs')).href);
   const {createCompanionStore}=await import(pathToFileURL(resolve(config.sourceRoot,'companion-state.mjs')).href);
@@ -16,9 +16,11 @@ test('real MySQL transactional saves, indexes, precise IDs, conflicts and restor
     assert.equal(f.economy().purchase('cloud-table',{requestId:'buy-table',layout:{version:3,furniture:{table:{position:[1,0,2],rotation:[0,0,0],scale:[1,1,1]}},definitions:{table:{boxes:[{center:[0,0,0],size:[1,1,1]}]}},lampSupport:null}}).ok,true);
     assert.equal(f.economy().creditLearning({eventId:'lesson',learned:1}).ok,true);assert.equal(f.economy().creditLearning({eventId:'lesson ',learned:1}).ok,true);
     f.companion().learning('lesson',1200);f.companion().saveWallDrawing({version:1,strokes:[{tool:'brush',color:'#abcdef',size:.02,points:[[.1,.2]]}]});f.estate.createRoom({name:'二楼书房',template:'mint'});
+    assert.equal(f.companion().update({ageMode:'junior'}).ok,true);
     f.storage.setItem(namespace+'-'+ 'x'.repeat(500),'保留长键');f.map.set(namespace+'-estate-backups-v1','{"backups":[]}');
     let response=await fetch(base+'/api/v1/save?namespace='+namespace,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({baseRevision:0,entries:f.entries()})});let result=await response.json();assert.equal(response.status,200,JSON.stringify(result));assert.equal(result.revision,1);
     const [wallet]=await app.pool.execute('SELECT balance_points FROM wallet_accounts WHERE account_key=?',[namespace]);assert.equal(wallet[0].balance_points,2240);
+    const [settings]=await app.pool.execute('SELECT age_mode FROM usr_settings WHERE account_key=?',[namespace]);assert.equal(settings[0].age_mode,'junior');
     const [counts]=await app.pool.execute('SELECT COUNT(*) n FROM learn_events WHERE account_key=?',[namespace]);assert.equal(counts[0].n,2,'trailing-space IDs remain distinct');
     const [floors]=await app.pool.execute('SELECT floor_no,room_name FROM room_floors WHERE account_key=? ORDER BY floor_no',[namespace]);assert.equal(floors.length,2);assert.equal(floors[1].room_name,'二楼书房');
     const [extras]=await app.pool.execute('SELECT storage_key FROM room_extras WHERE account_key=?',[namespace]);assert.equal(extras[0].storage_key.length,namespace.length+501);
@@ -37,6 +39,6 @@ test('real MySQL transactional saves, indexes, precise IDs, conflicts and restor
     assert.equal(f.estate.restoreRoomWorld('room-1',fresh.save.id).ok,true);assert.equal((await app.repository.save(namespace,current.revision,f.entries())).ok,true);
     response=await fetch(base+'/api/v1/save?namespace='+namespace,{method:'PUT',headers:{'Content-Type':'application/json',Origin:'http://untrusted.example'},body:'{}'});assert.equal(response.status,403);
     response=await fetch(base+'/api/v1/rows?table='+encodeURIComponent('usr_accounts;DROP TABLE usr_accounts'));assert.equal(response.status,400);
-    response=await fetch(base+'/api/v1/schema');result=await response.json();assert.equal(result.tables.length,53);assert.equal(result.columns.filter(c=>!c.column_comment&& !c.table_name.startsWith('v_')&&!c.table_name.startsWith('新手_')).length,0);
+    response=await fetch(base+'/api/v1/schema');result=await response.json();assert.equal(result.tables.length,66);assert.equal(result.columns.filter(c=>!c.column_comment&& !c.table_name.startsWith('v_')&&!c.table_name.startsWith('新手_')).length,0);
   }finally{await app.pool.execute('DELETE FROM usr_accounts WHERE account_key=?',[namespace]);await app.pool.execute('DELETE FROM sys_save_slots WHERE namespace=?',[namespace]);await app.close();}
 });

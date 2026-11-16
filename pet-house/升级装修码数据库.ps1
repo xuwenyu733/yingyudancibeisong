@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 $backendDir = Join-Path $PSScriptRoot 'backend'
 $temporaryConfig = Join-Path $backendDir ('.admin-init-' + [Guid]::NewGuid().ToString('N') + '.json')
 $savedConfig = [Environment]::GetEnvironmentVariable('PET_ROOM_MYSQL_ADMIN_CONFIG','Process')

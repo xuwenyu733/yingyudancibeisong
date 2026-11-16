@@ -1,3 +1,4 @@
+import {itemBaseSku,itemCopyNumber} from './inventory-key.mjs';
 import {acquireStorageLock} from './storage.mjs';
 import {SURFACE_CATALOG,WALL_PAINTS} from './surface-catalog.mjs';
 import {giftProduct} from './gift-catalog.mjs';
@@ -55,7 +56,9 @@ const PETS=new Map(PET_CATALOG.map(item=>[item.sku,item]));
 const DEFAULT_PET='apricot-fox';
 const BUILTIN=new Map(BUILTIN_STORAGE.map(item=>[item.id,item]));
 const STORAGE=new Map(STORAGE_CATALOG.map(item=>[item.sku??item.id,item]));
-const storageProduct=sku=>STORAGE.get(sku)||giftProduct(sku);
+export function furnitureProduct(sku){const base=itemBaseSku(sku),item=CATALOG.get(base);if(!item||base!==sku&&item.category==='flooring')return null;return base===sku?item:{...item,sku,baseSku:base,copyNumber:itemCopyNumber(sku),name:item.name+' · 第'+itemCopyNumber(sku)+'件'};}
+export function inventoryCatalog(owned=[]){return [...STORAGE_CATALOG,...owned.filter(sku=>itemBaseSku(sku)!==sku).map(furnitureProduct).filter(Boolean)];}
+const storageProduct=sku=>STORAGE.get(sku)||(furnitureProduct(sku)?.category!=='flooring'?furnitureProduct(sku):null)||giftProduct(sku);
 const own=(value,key)=>Object.prototype.hasOwnProperty.call(value,key);
 const plain=value=>value!==null&&typeof value==='object'&&[Object.prototype,null].includes(Object.getPrototypeOf(value));
 const natural=value=>Number.isSafeInteger(value)&&value>=0;
@@ -132,7 +135,7 @@ function parseAccount(raw){
   if(!natural(account.maxRoomLevel)||!ROOM_TIERS[account.maxRoomLevel]||account.maxRoomLevel<account.roomLevel)fail('INVALID_STATE','账户房屋档位记录无效');
   // 旧存档没有 totalSpent：累计消费统计（购买/扩建）为 0，向后兼容。
   if(!natural(account.totalSpent))account.totalSpent=0;
-  if(!Array.isArray(account.owned)||new Set(account.owned).size!==account.owned.length||account.owned.some(sku=>!CATALOG.has(sku)&&!giftProduct(sku)))fail('INVALID_STATE','家具产权存档无效');
+  if(!Array.isArray(account.owned)||new Set(account.owned).size!==account.owned.length||account.owned.some(sku=>!furnitureProduct(sku)&&!giftProduct(sku)))fail('INVALID_STATE','家具产权存档无效');
   if(!own(account,'appearance'))account.appearance={wallColor:'cream',flooring:null};
   onlyKeys(account.appearance,['wallColor','flooring'],'INVALID_STATE');
   if(!validWallColor(account.appearance.wallColor)||!(account.appearance.flooring===null||(CATALOG.get(account.appearance.flooring)?.category==='flooring'&&account.owned.includes(account.appearance.flooring))))fail('INVALID_STATE','墙面或地砖存档无效');
@@ -181,8 +184,11 @@ function parseAccount(raw){
     ids.add(request.id);
     if(request.operation==='purchase'){
       onlyKeys(request,['id','operation','sku','points'],'INVALID_STATE');
-      if(request.points!==undefined&&request.points!==CATALOG.get(request.sku)?.price)fail('INVALID_STATE','购买积分记录无效');
+      if(request.points!==undefined&&request.points!==furnitureProduct(request.sku)?.price)fail('INVALID_STATE','购买积分记录无效');
       if(!account.owned.includes(request.sku))fail('INVALID_STATE','交易与家具产权不一致');
+    }else if(request.operation==='grant-furniture'){
+      onlyKeys(request,['id','operation','sku'],'INVALID_STATE');
+      if(!CATALOG.has(request.sku)||!account.owned.includes(request.sku)||!request.id.startsWith('life:'))fail('INVALID_STATE','生活制作奖励记录无效');
     }else if(request.operation==='grant-gift'){
       onlyKeys(request,['id','operation','sku'],'INVALID_STATE');
       if(!giftProduct(request.sku)||!account.owned.includes(request.sku))fail('INVALID_STATE','礼物领取记录无效');
@@ -295,7 +301,7 @@ export function createEconomy({storageAdapter,storageKey='original-pet-room-acco
     if(requestId===undefined)return false;
     const previous=candidate.claims.requests.find(request=>request.id===requestId);
     if(!previous)return false;
-    if(previous.operation!==operation||((operation==='purchase'||operation==='grant-gift'||operation==='purchase-pet'||operation==='store'||operation==='unstore')&&previous.sku!==sku))fail('REQUEST_ID_REUSED','交易编号已用于其他操作');
+    if(previous.operation!==operation||((operation==='purchase'||operation==='grant-gift'||operation==='grant-furniture'||operation==='purchase-pet'||operation==='store'||operation==='unstore')&&previous.sku!==sku))fail('REQUEST_ID_REUSED','交易编号已用于其他操作');
     return true;
   }
   // v2.17：布局别名与房型槽位同步写入，保证 account.layout === layouts[当前房级]。
@@ -305,16 +311,23 @@ export function createEconomy({storageAdapter,storageKey='original-pet-room-acco
   }
   function purchase(sku,options){
     return transaction('purchase',candidate=>{
-      if(typeof sku!=='string'||!CATALOG.has(sku))fail('UNKNOWN_SKU','没有这件商店家具');
+      if(typeof sku!=='string'||!furnitureProduct(sku))fail('UNKNOWN_SKU','没有这件商店家具');
       const input=optionsCopy(options);
       if(replay(candidate,input.requestId,'purchase',sku))return {unchanged:true};
       if(candidate.owned.includes(sku))fail('ALREADY_OWNED','你已经拥有这件家具');
-      const item=CATALOG.get(sku);if(candidate.balance<item.price)fail('INSUFFICIENT_POINTS','学习积分不足');
+      const item=furnitureProduct(sku);if(candidate.balance<item.price)fail('INSUFFICIENT_POINTS','学习积分不足');
       candidate.balance-=item.price;candidate.owned.push(sku);candidate.totalSpent+=item.price;
       if(item.category==='flooring')candidate.appearance.flooring=sku;
       if(own(input,'layout'))applyLayoutInput(candidate,input);
       if(input.requestId!==undefined)candidate.claims.requests.push({id:input.requestId,operation:'purchase',sku});
       return {message:`已购买${item.name}`};
+    });
+  }
+  function grantFurniture(sku,requestId){
+    return transaction('grant-furniture',candidate=>{
+      if(!CATALOG.has(sku)||!validId(requestId)||!requestId.startsWith('life:'))fail('INVALID_ARGUMENT','生活制作奖励参数无效');
+      if(replay(candidate,requestId,'grant-furniture',sku)||candidate.owned.includes(sku))return {unchanged:true};
+      candidate.owned.push(sku);candidate.stored.push(sku);candidate.claims.requests.push({id:requestId,operation:'grant-furniture',sku});return {message:'制作的家具已放入仓库'};
     });
   }
   function grantGift(sku,requestId){
@@ -486,6 +499,6 @@ export function createEconomy({storageAdapter,storageKey='original-pet-room-acco
     const value=account.layouts&&own(account.layouts,key)?account.layouts[key]:null;
     return value===null||value===undefined?null:layoutCopy(value);
   }
-  return {getState,getLayout:()=>layoutCopy(account.layout),getRoomLayout,purchase,grantGift,expand,setRoomLevel,purchasePet,selectPet,creditLearning,reward,spend,setLayout,setAppearance,storeFurniture,unstoreFurniture,storeAllFurniture};
+  return {getState,getLayout:()=>layoutCopy(account.layout),getRoomLayout,purchase,grantGift,grantFurniture,expand,setRoomLevel,purchasePet,selectPet,creditLearning,reward,spend,setLayout,setAppearance,storeFurniture,unstoreFurniture,storeAllFurniture};
 }
 function validWallColor(value){return typeof value==='string'&&(/^#[0-9a-fA-F]{6}$/.test(value)||WALL_PAINTS.some(paint=>paint.id===value));}

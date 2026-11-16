@@ -182,6 +182,11 @@ export function createPetCharacter(sku='apricot-fox',options={}){
       for(const ear of ears){ear.pivot.rotation.z=ear.angle+ear.side*(Math.sin(elapsed*1.7)*.012+Math.sin(phase)*.030*w+Math.sin(celebrateTime*20)*.045*celebrate);ear.pivot.rotation.x=.035*a;}
       if(tail){tail.rotation.y=Math.sin(elapsed*1.7)*.11+Math.sin(phase)*.14*w;tail.rotation.x=-.15*a+(sku==='cocoa-bear'?.12:-.10)*w;}
     }
+    const rest=(1-w)*(1-a)*(1-water)*(1-celebrate),cycle=elapsed%13,gesture=Math.sin(Math.PI*Math.min(1,Math.max(0,(cycle-8)/2)))*rest;
+    if(sku==='cloud-bunny'){for(const ear of ears)ear.pivot.rotation.x+=gesture*(ear.side<0?.28:-.12);head.rotation.z=gesture*.10;}
+    else if(sku==='mint-cat'){torso.rotation.x-=gesture*.16;for(const arm of arms)arm.pivot.rotation.x-=gesture*.45;head.rotation.z=-gesture*.08;if(tail)tail.rotation.z=gesture*.30;}
+    else if(sku==='cocoa-bear'){head.rotation.z=gesture*.12;for(const arm of arms)arm.pivot.rotation.x-=gesture*.35;}
+    else if(sku==='starlight-penguin'){head.rotation.z=gesture*.14;for(const arm of arms)arm.pivot.rotation.z+=arm.side*gesture*.30;}
     model.updateMatrixWorld(true);
   }
   function start(seated){if(disposed)return;const next=Number(seated);if(next===target&&(transition||Math.abs(amount-next)<1e-8))return;target=next;transition={from:amount,to:target,time:0,duration:(seated?DURATION.sit:DURATION.stand)*Math.max(.25,Math.abs(target-amount))};stage=seated?'屈身落座':'挺身起立';}

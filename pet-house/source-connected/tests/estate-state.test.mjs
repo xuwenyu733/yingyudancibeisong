@@ -33,7 +33,7 @@ test('estate rooms share points, ownership, pets and event claims while layouts 
   assert.equal(freshFirst.creditLearning({eventId:'shared-lesson',learned:1}).code,'ALREADY_CLAIMED');
   assert.deepEqual(freshFirst.getLayout(),layout(1));
   assert.deepEqual(economy(store,made.room.id).getLayout(),layout(2));
-  assert.deepEqual(economy(store).getState().stored,['sofa']);
+  assert.deepEqual(economy(store).getState().stored,['sofa','cloud-table'],'同一件家具移到另一层后，原楼层也一并收纳');
   assert.deepEqual(economy(store,made.room.id).getState().stored,[]);
 });
 

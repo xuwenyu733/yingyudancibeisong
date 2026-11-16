@@ -1,3 +1,4 @@
+export type MaybeAsync<T>=T|Promise<T>;
 export type Vector3Data=[number,number,number];
 export type JSONValue=null|boolean|number|string|JSONValue[]|{[key:string]:JSONValue};
 export interface StorageAdapter {getItem(key:string):string|null;setItem(key:string,value:string):void;removeItem?(key:string):void;}
@@ -11,15 +12,15 @@ export interface InteractionPlan {
 export interface FurnitureDrawing {version:1;strokes:{tool:'brush'|'eraser';color:string;size:number;points:[number,number][]}[];}
 export interface GrowthState {id:'baby'|'young'|'adult';stage:string;days:number;learningSeconds:number;next:{stage:string;daysRequired:number;learningSecondsRequired:number}|null;tasks:{id:string;label:string;current:number;target:number;done:boolean}[];progress:number;}
 export interface FurnitureStyle {drawing?:FurnitureDrawing|null;skinId?:string;color?:string;sticker?:'none'|'star'|'heart'|'flower';doodle?:'none'|'rainbow'|'smile';achievementSkin?:boolean;}
-export interface CompanionPatch {petName?:string;roomName?:string;sound?:{muted?:boolean;volume?:'quiet'|'standard'|'loud'};outfit?:{hat?:'none'|'star'|'unicorn'|'ears';scarf?:'none'|'mint'|'rose';backpack?:'none'|'school'};theme?:'light'|'eye-care'|'candy';nightMode?:boolean;surprises?:boolean;tourDone?:boolean;voiceEnabled?:boolean;}
-export interface CompanionState {version:1;petName:string;roomName:string;ownerName:string;sound:{muted:boolean;volume:'quiet'|'standard'|'loud'};outfit:{hat:'none'|'star'|'unicorn'|'ears';scarf:'none'|'mint'|'rose';backpack:'none'|'school'};theme:'light'|'eye-care'|'candy';nightMode:boolean;surprises:boolean;tourDone:boolean;voiceEnabled:boolean;skins:{id:string;name:string;badgeId:string;colors:string[];unlocked:boolean}[];furnitureStyles:Record<string,FurnitureStyle>;memories:Record<string,{at:string|null;by:string;source:string}>;rewards:{id:string;name:string;kind:string;at:string|null;expiresAt:string|null;sku?:string}[];garden:{flowers:number;stage:string};growth:GrowthState;collection:{pets:{sku:string;name:string;owned:boolean;image:string}[];furniture:{sku:string;name:string;owned:boolean;image:string}[]};furniture:{id:string;name:string}[];}
+export interface CompanionPatch {roomArt?:'original'|'forest'|'space'|'ocean';studioSteps?:Array<'theme'|'trial'|'arrange'|'interact'|'plant'|'cook'>;petName?:string;roomName?:string;sound?:{muted?:boolean;volume?:'quiet'|'standard'|'loud'};outfit?:{hat?:'none'|'star'|'unicorn'|'ears'|'designer'|'gardener'|'chef';scarf?:'none'|'mint'|'rose';backpack?:'none'|'school'};theme?:'light'|'eye-care'|'candy';nightMode?:boolean;surprises?:boolean;tourDone?:boolean;voiceEnabled?:boolean;}
+export interface CompanionState {roomArt:'original'|'forest'|'space'|'ocean';studioSteps:Array<'theme'|'trial'|'arrange'|'interact'|'plant'|'cook'>;version:1;petName:string;roomName:string;ownerName:string;sound:{muted:boolean;volume:'quiet'|'standard'|'loud'};outfit:{hat:'none'|'star'|'unicorn'|'ears'|'designer'|'gardener'|'chef';scarf:'none'|'mint'|'rose';backpack:'none'|'school'};theme:'light'|'eye-care'|'candy';nightMode:boolean;surprises:boolean;tourDone:boolean;voiceEnabled:boolean;skins:{id:string;name:string;badgeId:string;colors:string[];unlocked:boolean}[];furnitureStyles:Record<string,FurnitureStyle>;memories:Record<string,{at:string|null;by:string;source:string}>;rewards:{id:string;name:string;kind:string;at:string|null;expiresAt:string|null;sku?:string}[];garden:{flowers:number;stage:string};growth:GrowthState;collection:{pets:{sku:string;name:string;owned:boolean;image:string}[];furniture:{sku:string;name:string;owned:boolean;image:string}[]};furniture:{id:string;name:string}[];}
 export interface CompanionResult {ok:boolean;code?:string;message?:string;companion?:CompanionState;unchanged?:boolean;}
 export interface WeatherSettings {enabled:boolean;latitude:number|null;longitude:number|null;locationName:string;}
 export interface RoomPhoto {id:string;at:string;title:string;dataUrl:string;}
 export interface LearningQuestionProgress {attempts:number;correct:number;wrong:number;correctStreak:number;mastered:boolean;lastAt:string;}
 export interface LearningProgress {level:number;streak:number;answers:number;correct:number;questions:Record<string,LearningQuestionProgress>;attemptIds:string[];}
-export interface CompanionPatch {ageMode?:'kindergarten'|'primary';voiceLanguage?:'zh-CN'|'en-US'|'ja-JP';voiceStyle?:'gentle'|'bright';weather?:Partial<WeatherSettings>;}
-export interface CompanionState {ageMode:'kindergarten'|'primary';voiceLanguage:'zh-CN'|'en-US'|'ja-JP';voiceStyle:'gentle'|'bright';weather:WeatherSettings;photos:RoomPhoto[];wallDrawing:FurnitureDrawing|null;learningProgress:LearningProgress;}
+export interface CompanionPatch {ageMode?:'kindergarten'|'primary'|'junior';voiceLanguage?:'zh-CN'|'en-US'|'ja-JP';voiceStyle?:'gentle'|'bright';weather?:Partial<WeatherSettings>;}
+export interface CompanionState {ageMode:'kindergarten'|'primary'|'junior';voiceLanguage:'zh-CN'|'en-US'|'ja-JP';voiceStyle:'gentle'|'bright';weather:WeatherSettings;photos:RoomPhoto[];wallDrawing:FurnitureDrawing|null;learningProgress:LearningProgress;}
 export interface LayoutData {version:3;furniture:Record<string,{position:Vector3Data;rotation:Vector3Data;scale:Vector3Data}>;definitions:Record<string,unknown>;lampSupport:string|null;}
 export interface RoomState {shop:ShopState;protocolVersion:1;version:string;lifecycle:string;ready:boolean;character:Record<string,unknown>|null;lampOn:boolean;petState:string;petPosition:Vector3Data|null;petYaw:number;desiredSeated:boolean;seatId:string|null;sitting:number;poseStage:string;watering:boolean;waterTarget:string|null;decoration:boolean;selected:string|null;error:{code:string;message:string}|null;metrics:{fps:number;triangles:number;drawCalls:number;quality:string;maxPixelRatio:number;autoDowngraded?:boolean;presentationPaused:boolean;renderCount:number};}
 export interface ProfileBadge {id:string;name:string;description:string;category:'checkin'|'study'|'level'|'growth';unlocked:boolean;/** 旧档日期精度，不能据此推造具体时分秒。 */unlockedAt?:string|null;/** 首次获得的ISO时刻，旧档未知为null。 */acquiredAt?:string|null;}
@@ -41,6 +42,31 @@ export interface ProfileState {
   makeups:MakeupsState;makeupCost:number;
 }
 export interface RoomAPI {
+  playWithPet(kind:'nuzzle'|'cheer'|'ball'|'snack',options?:{recipe?:'cookies'|'juice'|'tea'}):{ok:boolean;message?:string};
+  beginFurnitureTrial(sku:string,options?:{mode?:'shop'|'craft'}):Promise<{ok:boolean;message?:string}>;
+  moveFurnitureTrial(patch:{x?:number;z?:number;y?:number;rotation?:number;wallSide?:'left'|'back'}):boolean;
+  confirmFurnitureTrial():Promise<{ok:boolean;message?:string}>;
+  cancelFurnitureTrial():boolean;
+  getFurnitureTrial():{active:true;mode:'shop'|'craft';sku:string;name:string;price:number;owned:boolean;category:string;valid:boolean;message:string;busy:boolean;placement:{x:number;y:number;z:number;rotation:number;wallSide:'left'|'back'}}|null;
+  interactFurniture(id:string,options?:{variant?:string}):boolean|Promise<boolean>;
+  applyRoomVisitState(snapshot:Record<string,unknown>):boolean;
+  setVisitInteractionTransport(handler:((intent:Record<string,unknown>)=>Promise<Record<string,unknown>>)|null,settings?:{role?:'host'|'guest';selfPublicId?:string}):boolean;
+  getVisitActorState():{position:{x:number;z:number};yaw:number;busy:boolean;seatId:string|null};
+  getVisitSceneState():{visitors:Record<string,unknown>[];owner:ReturnType<RoomAPI['getVisitActorState']>};
+  greetOwnerPet():Promise<boolean>;
+  releaseVisitSeat():boolean;
+  getFurnitureHintTargets():Array<{id:string;x:number;y:number}>;
+  getFurnitureActivity():{id:string;kind:'read'|'tea'|'light'|'rocket';phase:'approach'|'playing';label:string;variant:string|null;elapsed:number;seatId:string|null}|null;
+  cancelFurnitureActivity():boolean;
+  resetView():boolean;
+  findPet():boolean;
+  purchaseFurnitureCopy(sku:string,requestId?:string):Promise<ShopResult>;
+  getDecorationSelection():string[];
+  selectDecorationFurniture(id:string,add?:boolean):boolean;
+  transformFurnitureGroup(action:{dx?:number;dz?:number;angle?:number;align?:'x'|'z'|null}):{ok:boolean;message:string}|undefined;
+
+  captureRoomPhoto(options?:{pose?:'front'|'tilt'|'hop'}):{ok:boolean;image?:string;message?:string};
+
   /** 按住画面中的动物拖动时，沿碰撞导航路径跟随地面目标。 */
   saveWallDrawing(drawing:FurnitureDrawing|null):CompanionResult;
   /** 界面配色同步到场景背景与光照，不改变保存的墙色/地砖。 */
@@ -48,10 +74,12 @@ export interface RoomAPI {
   getCompanion():CompanionResult;
   updateCompanion(patch:CompanionPatch):CompanionResult;
   customizeFurniture(id:string,patch:FurnitureStyle):CompanionResult;
-  redeemSecret(code:string):CompanionResult;
+  redeemSecret(code:string):MaybeAsync<CompanionResult>;
   speakPetGreeting():{ok:boolean;code?:string;message?:string;unchanged?:boolean};
   playMoveInCeremony():boolean;
   setPresentationPaused(enabled:boolean):boolean;
+  setRoomVisitors(guests:Array<{publicId:string;name:string}>):boolean;
+  getRoomVisitors():Array<{publicId:string;name:string}>;
   setWallColor(color:string):Promise<ShopResult>;applyFlooring(sku:string|null):Promise<ShopResult>;
   purchasePet(sku:string,requestId?:string):Promise<ShopResult>;selectPet(sku:string):Promise<ShopResult>;
   storeFurniture(sku:string,requestId?:string):Promise<ShopResult>;unstoreFurniture(sku:string,requestId?:string):Promise<ShopResult>;
@@ -63,20 +91,20 @@ export interface RoomAPI {
   getShop():ShopState;purchaseFurniture(sku:string,requestId?:string):Promise<ShopResult>;expandRoom(requestId?:string):Promise<ShopResult>;
   /** v2.10：在已解锁档位内切换小屋大小（可换回原来的小房子）。换小放不下会返回 NO_SPACE。 */
   setRoomLevel(level:number,requestId?:string):Promise<ShopResult>;
-  creditLearning(event:{eventId:string;learned?:number;reviewed?:number;checkIn?:boolean}):ShopResult;
-  getState():RoomState;getLayout():LayoutData|null;setLamp(on:boolean):boolean;toggleSofa():boolean;walkTo(x:number,z:number):boolean;
+  creditLearning(event:{eventId:string;learned?:number;reviewed?:number;checkIn?:boolean}):MaybeAsync<ShopResult>;
+  getState():RoomState;getLayout():LayoutData|null;setLamp(on:boolean):boolean;toggleSofa():MaybeAsync<boolean>;walkTo(x:number,z:number):boolean;
   setDecorationMode(enabled:boolean):boolean|Promise<boolean>;
   setFurnitureTransform(id:string,transform:{position?:Vector3Data;rotation?:Vector3Data;scale?:number|Vector3Data}):boolean;
   setFurnitureCollider(id:string,patch:{center?:Vector3Data;size?:Vector3Data;blocksNavigation?:boolean;blocksPlacement?:boolean},boxIndex?:number):boolean;
   importLayout(layout:LayoutData|string,options?:{persist?:boolean}):{ok:boolean;reason?:string};getFurniture(id:string):unknown;dispose():void;
   getProfile():{ok:boolean;code?:string;message?:string;profile?:ProfileState};
   /** 补签昨天（花 makeupCost 积分，每月限 3 次），v2.7/batch1 */
-  makeUpCheckIn():{ok:boolean;code?:string;message?:string;makeup?:string;streak?:number;totalCheckIns?:number;pointsApplied?:boolean;cost?:number;balance?:number;stretched?:boolean;unchanged?:boolean};
+  makeUpCheckIn():MaybeAsync<{ok:boolean;code?:string;message?:string;makeup?:string;streak?:number;totalCheckIns?:number;pointsApplied?:boolean;cost?:number;balance?:number;stretched?:boolean;unchanged?:boolean}>;
   /** 导出存档快照 JSON（格式见 archive.mjs），v2.7/batch1 */
   exportArchive():{ok:boolean;code?:string;message?:string;archive?:{format:number;version:string;exportedAt:string;meta:Record<string,unknown>;profile:Record<string,unknown>;economy:Record<string,unknown>}};
   /** 校验并写入存档（重新挂载后生效），v2.7/batch1 */
-  importArchive(json:string|object):{ok:boolean;code?:string;message?:string;relaunchRequired?:boolean;meta?:Record<string,unknown>};
-  checkIn():{ok:boolean;code?:string;message?:string;streak?:number;exp?:number;points?:number;levelUps?:number[];pendingPoints?:number;pointsSettled?:boolean;newBadges?:number;capped?:boolean;state?:Record<string,unknown>};
+  importArchive(json:string|object):MaybeAsync<{ok:boolean;code?:string;message?:string;relaunchRequired?:boolean;meta?:Record<string,unknown>}>;
+  checkIn():MaybeAsync<{ok:boolean;code?:string;message?:string;streak?:number;exp?:number;points?:number;levelUps?:number[];pendingPoints?:number;pointsSettled?:boolean;newBadges?:number;capped?:boolean;state?:Record<string,unknown>}>;
   setProfileGender(gender:'male'|'female'):{ok:boolean;code?:string;message?:string};
   setProfileName(name:string):{ok:boolean;code?:string;message?:string};
   addStudyTime(seconds:number):{ok:boolean;code?:string;message?:string};
@@ -91,6 +119,10 @@ export interface CharacterDefinition {
   metadata?:Record<string,unknown>&{design?:CharacterDesignInfo;animations?:{name:string;duration:number;loop:boolean}[]};dispose?():void;
 }
 export interface MountOptions {
+  /** 参观端的主角色是主人，输入转发为当前客人的服务器核验动作。 */
+  visitMode?:{role:'guest';selfPublicId:string;ownerPublicId?:string;roomId?:string};
+  /** 在线资产操作由服务端核算，普通装修存档不得修改余额或拥有物品。 */
+  economyService?:{readonly busy:boolean;execute(action:Record<string,unknown>,options?:{placement?:Record<string,unknown>|null;requestId?:string|null;requestScope?:string|null}):Promise<ShopResult>};
   /** 核心默认0；独立演示页面显式使用1000体验积分。实际积分须由宿主校验。 */
   initialPoints?:number;
   /** 签到“今天”所用的 IANA 时区（如 'Asia/Shanghai'、'UTC'）；缺省用设备本地时区。 */

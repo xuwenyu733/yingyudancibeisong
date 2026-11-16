@@ -5,9 +5,11 @@ import {loadConfig} from './config.mjs';
 import {createAppServer} from './server.mjs';
 import {createEstateStore} from '../../source-connected/estate-state.mjs';
 import {createProfile} from '../../source-connected/profile.mjs';
+import {createEconomy} from '../../source-connected/economy.mjs';
+import {createCompanionStore} from '../../source-connected/companion-state.mjs';
 test('real MySQL automatic identities without login, consent, private chat, read-only visits and sessions',
  {skip:process.env.PET_ROOM_SOCIAL_INTEGRATION!=='1'?'需要显式设置 PET_ROOM_SOCIAL_INTEGRATION=1':false},async()=>{
-const config={...await loadConfig(),socialEnabled:true};
+const config={...await loadConfig(),socialEnabled:true,roomAccessEnabled:false};
 let app=await createAppServer(config),base;const actors=[];
 async function listen(){await new Promise(resolve=>app.server.listen(0,'127.0.0.1',resolve));base='http://127.0.0.1:'+app.server.address().port;}
 async function call(actor,path,data,method=data===undefined?'GET':'POST',extra={}){const response=await fetch(base+path,{method,headers:{...(actor?.cookie?{Cookie:actor.cookie}:{}),...(data!==undefined?{'Content-Type':'application/json'}:{}),...extra},...(data!==undefined?{body:JSON.stringify(data)}:{})});let body;try{body=await response.json();}catch{body={};}return{status:response.status,body,cookie:response.headers.get('set-cookie')};}
@@ -32,19 +34,55 @@ try{
  assert.equal((await social(c,'messages?peerId='+aid)).status,403);
  const map=new Map(),adapter={getItem:key=>map.get(key)??null,setItem:(key,value)=>map.set(key,value),removeItem:key=>map.delete(key)},key=a.identity.accountKey;
  const estate=createEstateStore({storageAdapter:adapter,storageKey:key,initialPoints:7777});assert.equal(estate.createRoom({name:'主人二楼'}).ok,true);
+ const hostRoomEconomy=createEconomy({storageAdapter:estate.storageForRoom('room-1'),storageKey:key+'-account-v1'});
+ for(const sku of ['reading-shelf','star-lamp','rocket-toy','moon-ornament'])assert.equal(hostRoomEconomy.purchase(sku).ok,true);
+ assert.equal(hostRoomEconomy.storeFurniture('moon-ornament').ok,true);
  createProfile({storageAdapter:adapter,storageKey:key+'-profile-v1'}).setName('不应泄露的私人资料');
  estate.storageForRoom('room-1').setItem(key+'-private-extra','不应泄露的备份内容');estate.saveRoomWorld('room-1',{name:'不应泄露的历史方案'});
- good(await call(a,'/api/v1/save?namespace='+key,{baseRevision:0,entries:Object.fromEntries(map)},'PUT'));
+ assert.equal((await call(a,'/api/v1/save?namespace='+key,{baseRevision:0,entries:Object.fromEntries(map)},'PUT')).status,409,'browser cannot create its own funded bank');
+ // Trusted fixture setup only: the HTTP client cannot mint these test assets.
+ assert.equal((await app.repository.save(key,0,Object.fromEntries(map),{trustedAuthority:true})).ok,true);
+ good(await call(a,'/api/v1/save?namespace='+key,{baseRevision:1,entries:Object.fromEntries(map)},'PUT'));
  assert.equal((await call(b,'/api/v1/save?namespace='+key)).status,403);
  assert.equal((await call(b,'/api/v1/save?namespace='+key,{baseRevision:1,entries:{}},'PUT')).status,403);
  const before=good(await call(a,'/api/v1/save?namespace='+key));
  const invitation=good(await social(a,'invite',{peerId:bid})).id;
+ const heartbeat={id:invitation,sessionId:'real-test-guest-session',sequence:1,active:true,roomId:'room-1'};
+ assert.equal((await social(b,'visit-presence',heartbeat)).status,403);assert.equal(good(await social(a,'visitors')).visitors.length,0);
  assert.equal((await social(b,'visit?id='+invitation)).status,403);assert.equal((await social(c,'invitation',{id:invitation,action:'accept'})).status,403);
  good(await social(b,'invitation',{id:invitation,action:'accept'}));const visit=good(await social(b,'visit?id='+invitation));assert.equal(visit.floors.length,2);
+ assert.equal(visit.floors[0].scene.layout,null,'legacy automatic placement is retained');assert.deepEqual(visit.floors[0].scene.displayedItems,['reading-shelf','star-lamp','rocket-toy']);
+ assert(!visit.floors[0].scene.displayedItems.includes('moon-ornament'),'hidden warehouse item is not shared');assert.equal(visit.floors[0].scene.owned,undefined);assert.equal(visit.bank,undefined);
  const publicHome=JSON.stringify(visit);for(const secret of ['7777','不应泄露','password','claims','checkpoints','accountKey'])assert.equal(publicHome.includes(secret),false,secret+' leaked into visit');
  assert.equal((await social(a,'visit?id='+invitation)).status,403);
+ assert.equal((await social(c,'visit-presence',heartbeat)).status,403);assert.equal((await social(a,'visit-presence',heartbeat)).status,403);
+ assert.equal((await social(b,'visit-presence',{...heartbeat,roomId:'room-99'})).status,400);
+ good(await social(b,'visit-presence',heartbeat));let present=good(await social(a,'visitors')).visitors;assert.equal(present.length,1);assert.equal(present[0].publicId,bid);assert.equal(present[0].roomId,'room-1');assert.equal(JSON.stringify(present).includes('accountKey'),false);assert.equal(good(await social(c,'visitors')).visitors.length,0);
+ // Trusted isolated guest fixture: the public animal must come from the guest save.
+ const guestKey=b.identity.accountKey,guestMap=new Map(),guestAdapter={getItem:key=>guestMap.get(key)??null,setItem:(key,value)=>guestMap.set(key,value),removeItem:key=>guestMap.delete(key)},guestEstate=createEstateStore({storageAdapter:guestAdapter,storageKey:guestKey,initialPoints:1000}),guestStorage=guestEstate.storageForRoom('room-1');
+ assert.equal(createEconomy({storageAdapter:guestStorage,storageKey:guestKey+'-account-v1'}).purchasePet('cloud-bunny').ok,true);
+ assert.equal(createCompanionStore({adapter:guestStorage,key:guestKey+'-companion-v1'}).update({petName:'来访兔兔',outfit:{hat:'star',scarf:'mint',backpack:'school'}}).ok,true);
+ assert.equal((await app.repository.save(guestKey,0,Object.fromEntries(guestMap),{trustedAuthority:true})).ok,true);
+ const joined=good(await social(b,'visit-presence',heartbeat));assert.deepEqual(joined.visitors[0].pet,{sku:'cloud-bunny',petName:'来访兔兔',outfit:{hat:'star',scarf:'mint',backpack:'school'},growthStage:'baby'});
+ const hostBeat={sessionId:'real-test-owner-session',sequence:1,active:true,roomId:'room-1',busy:false,position:{x:0,z:2}};good(await social(a,'host-presence',hostBeat));
+ const act=(action,requestId)=>social(b,'visit-action',{id:invitation,sessionId:heartbeat.sessionId,generation:joined.generation,requestId,roomId:'room-1',action});
+ const sitting=good(await act({type:'furniture',targetId:'sofa'},'real-seat-1'));assert.equal(sitting.visitors[0].action.kind,'seat');assert.equal(sitting.visitors[0].action.slotId,'main');
+ assert.equal(good(await act({type:'furniture',targetId:'sofa'},'real-seat-1')).visitors[0].action.id,sitting.visitors[0].action.id);
+ assert.equal((await social(a,'host-presence',{...hostBeat,sequence:2,action:{type:'furniture',targetId:'sofa'}})).status,409);
+ good(await act({type:'cancel',actionId:sitting.visitors[0].action.id},'real-cancel-1'));
+ const hostSeated=good(await social(a,'host-presence',{...hostBeat,sequence:3,action:{type:'furniture',targetId:'sofa'}}));assert.equal(hostSeated.owner.seatId,'sofa');
+ assert.equal((await act({type:'furniture',targetId:'sofa'},'real-seat-2')).status,409);
+ good(await social(a,'host-presence',{...hostBeat,sequence:4,action:{type:'cancel',actionId:hostSeated.owner.action.id}}));
+ const greeting=good(await act({type:'greet'},'real-greet-1'));assert.equal(greeting.owner.action.id,greeting.visitors[0].action.id);assert.equal(greeting.owner.action.actorPublicId,bid);
+ const ended=good(await social(a,'host-presence',{...hostBeat,sequence:5,busy:true}));assert.equal(ended.owner.action,null);assert.equal(ended.visitors[0].action,null);
+ good(await social(a,'host-presence',{...hostBeat,sequence:6,active:false}));
+ const guestPublic=JSON.stringify(good(await social(a,'visitors')));for(const secret of ['learningSeconds','learningEvents','balance','claims','accountKey','sessionId'])assert.equal(guestPublic.includes('"'+secret+'"'),false);
+ good(await social(b,'visit-presence',{...heartbeat,sequence:2,roomId:'room-2'}));assert.equal(good(await social(a,'visitors')).visitors[0].roomId,'room-2');
+ good(await social(b,'visit-presence',{...heartbeat,sequence:4,active:false}));good(await social(b,'visit-presence',{...heartbeat,sequence:3}));assert.equal(good(await social(a,'visitors')).visitors.length,0,'stale heartbeat cannot revive a departed guest');
+ good(await social(b,'visit-presence',{...heartbeat,sequence:5}));
  assert.deepEqual(good(await call(a,'/api/v1/save?namespace='+key)),before);
  good(await social(a,'invitation',{id:invitation,action:'revoke'}));assert.equal((await social(b,'invitation',{id:invitation,action:'accept'})).status,409);assert.equal((await social(b,'visit?id='+invitation)).status,403);
+ assert.equal(good(await social(a,'visitors')).visitors.length,0);assert.equal((await social(b,'visit-presence',{...heartbeat,sequence:6})).status,403);
  const removedInvite=good(await social(a,'invite',{peerId:bid})).id;good(await social(b,'invitation',{id:removedInvite,action:'accept'}));good(await social(a,'remove',{peerId:bid}));
  good(await social(a,'request',{peerId:bid}));good(await social(b,'respond',{peerId:aid,accept:true}));assert.equal((await social(b,'visit?id='+removedInvite)).status,403);assert.equal((await social(b,'invitation',{id:removedInvite,action:'accept'})).status,403);
  const second=good(await social(a,'invite',{peerId:bid})).id;good(await social(b,'invitation',{id:second,action:'accept'}));good(await social(b,'block',{peerId:aid,block:true}));

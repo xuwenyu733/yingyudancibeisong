@@ -9,6 +9,7 @@ import {createPath} from '../navigation.mjs';
 import {SEATS,fitSeat,resolveSeatApproach,WATER_TARGETS,fitWater,resolveWaterApproach} from '../seats.mjs';
 import {createFurnitureCollider,toPathObstacles} from '../colliders.mjs';
 import {createOriginalFox} from '../characters/original-fox.js';
+import {createFurnitureActivities,planFurnitureActivity} from '../furniture-activity.mjs';
 
 // 直接提取正在交付的内部 Actor 与连续碰撞函数，避免测试另写一份相似的状态机。
 // 使用真实 movement/path/seat/角色动作；只替代 DOM 画布软影，不创建 WebGL。
@@ -50,7 +51,7 @@ function fixture(t,{angle=0,scale=1}={}) {
     assert.fail(`Actor stalled: ${JSON.stringify({state:actor.state,seatId:actor.seatId,pendingSeatId:actor.pendingSeatId,pendingPoint:actor.pendingPoint,position:actor.root.position.toArray()})}`);
   };
   const advance=seconds=>{for(let i=0;i<seconds/STEP;i++)tick();};
-  return {actor,history,until,advance,obstacles,furniture};
+  return {actor,history,until,advance,obstacles,furniture,scene,bounds};
 }
 
 test('after its first real sit, a ground request reaches the goal and clears seat/queue state',t=>{
@@ -164,4 +165,39 @@ test('clicking the floor while watering cancels watering and walks straight ther
   for(let i=0;i<300;i++)actor.update(STEP,{x:0,z:0});
   assert.equal(actor.state,'idle');assert.equal(actor.pendingWater,false);
   assert.ok(close(actor.root.position,{x:-2,z:3}),'must arrive at the clicked point, not linger at the pot');
+});
+
+test('a newer walk or seat cancels watering while still on the way to the pot',t=>{
+ const {actor,until,history}=fixture(t);assert(actor.requestWater('floor-pot'));assert(actor.pendingWater);assert(actor.walkTo({x:-2,z:3}));until(()=>actor.state==='idle');assert(!actor.pendingWater);assert.equal(actor.waterTarget,null);assert(!history.some(x=>x.type==='water-start'));
+ assert(actor.requestWater('floor-pot'));actor.toggleSeat('ottoman-a');until(()=>actor.state==='seated');assert(!actor.pendingWater);actor.walkTo({x:-2,z:3});until(()=>actor.state==='idle');assert(!history.some(x=>x.type==='water-start'));
+});
+
+function activityFixture(t){
+ const f=fixture(t),events=[];let blocked=false;const material=new THREE.MeshLambertMaterial(),geometry=new THREE.BoxGeometry(1,1.2,.5);const book=new THREE.Mesh(geometry,material);book.name='shop-reading-shelf';book.position.set(-3.3,.6,-1.8);book.rotation.y=.3;f.scene.add(book);f.furniture.set(book.name,book);
+ const table=new THREE.Mesh(new THREE.BoxGeometry(.9,.6,.8),material);table.name='table';table.position.set(-1,.3,1.65);f.scene.add(table);f.furniture.set('table',table);
+ for(const root of [book,table]){const box=new THREE.Box3().setFromObject(root);f.obstacles.push({id:root.name,minX:box.min.x-.48,maxX:box.max.x+.48,minZ:box.min.z-.48,maxZ:box.max.z+.48});}
+ const activity=createFurnitureActivities({getActor:()=>f.actor,getFurniture:()=>f.furniture,getNavigation:()=>({bounds:f.bounds,obstacles:f.obstacles}),isBlocked:()=>blocked,onStart:a=>events.push(['start',a.id]),onEnd:(a,reason)=>events.push(['end',a.id,reason])});
+ t.after(()=>{activity.dispose();geometry.dispose();table.geometry.dispose();material.dispose();});const step=()=>{f.actor.update(STEP,zeroAxis);activity.frame(STEP);};const untilActivity=(fn,max=35)=>{for(let i=0;i<max/STEP;i++){if(fn())return;step();}assert.fail(JSON.stringify({actor:f.actor.state,activity:activity.getState(),events}));};return {...f,activity,book,table,events,step,untilActivity,setBlocked:value=>blocked=value};
+}
+
+test('furniture reading follows the real navigation path, starts on arrival and finishes without changing furniture',t=>{
+ const f=activityFixture(t),before=f.actor.root.position.clone();f.book.updateMatrixWorld(true);const transform=f.book.matrixWorld.clone();assert(f.activity.start(f.book.name));assert(f.actor.root.position.equals(before));assert.equal(f.events.length,0);f.untilActivity(()=>f.activity.getState()?.phase==='playing');assert(f.actor.root.position.distanceTo(before)>1);assert.equal(f.events.length,1);f.untilActivity(()=>!f.activity.active);assert.deepEqual(f.events.at(-1),['end',f.book.name,'complete']);assert(f.book.matrixWorld.equals(transform));assert.equal(f.actor.state,'idle');
+});
+test('table activity reaches a real seat before tea; replacing it with reading stands up and walks away',t=>{
+ const f=activityFixture(t);assert(f.activity.start('table'));assert(f.activity.getState().seatId);f.untilActivity(()=>f.activity.getState()?.phase==='playing');assert.equal(f.actor.state,'seated');assert(f.actor.pose.amount>.95);assert(f.activity.start(f.book.name));f.untilActivity(()=>f.activity.getState()?.phase==='playing');assert.equal(f.actor.state,'idle');assert.equal(f.actor.seatId,null);assert.equal(f.scene.children.filter(n=>n.name==='pet').length,1);f.untilActivity(()=>!f.activity.active);
+});
+test('activity cancellation clears travel; changed furniture and blocked screens stop in-flight actions',t=>{
+ const f=activityFixture(t);assert(f.activity.start(f.book.name));f.step();assert(f.activity.cancel());assert.equal(f.actor.state,'idle');assert.equal(f.actor.pendingPoint,null);assert.equal(f.actor.path.length,0);assert(f.activity.start(f.book.name));f.book.position.x+=.2;f.step();assert(!f.activity.active);assert.equal(f.events.at(-1)[2],'changed');assert(f.activity.start('table'));f.setBlocked(true);f.step();assert(!f.activity.active);assert(!f.activity.start('table'));f.setBlocked(false);
+ const plan=planFurnitureActivity({target:f.book,from:{x:0,z:0},bounds:f.bounds,obstacles:[{minX:-5,maxX:5,minZ:-5,maxZ:5}],kind:'read'});assert.equal(plan,null);
+});
+
+
+test('automatic bedtime seating does not award a user interaction; a real seat request does',t=>{
+ const f=fixture(t);f.actor.toggleSeat('sofa',{guided:false});f.until(()=>f.actor.state==='seated');assert(!f.history.some(e=>e.type==='studio-step'));
+ f.actor.walkTo({x:3.6,z:2.6});f.until(()=>f.actor.state==='idle');f.actor.toggleSeat('sofa');f.until(()=>f.actor.state==='seated');assert.equal(f.history.filter(e=>e.type==='studio-step'&&e.step==='interact').length,1);
+});
+
+test('canceling a requested seat before arrival never completes the guide',t=>{
+ const f=fixture(t);f.actor.toggleSeat('sofa');f.actor.walkTo({x:3.6,z:2.6});f.until(()=>f.actor.state==='idle');assert(!f.history.some(e=>e.type==='studio-step'));
+ f.actor.toggleSeat('sofa',{guided:false});f.until(()=>f.actor.state==='seated');assert(!f.history.some(e=>e.type==='studio-step'));
 });

@@ -1,3 +1,5 @@
+import {createStudioPanel} from './studio-ui.js';
+import {createRoomNavigation} from './room-navigation.js';
 import {mountRoom} from './room.js';
 import {createRoomView} from './view.js';
 import {createShopPanel} from './shop-panel.js';
@@ -51,9 +53,10 @@ export function mountPetHouse(options={}){
   if(mounted.has(container))throw roomError('ALREADY_MOUNTED','此容器已有小屋，请先调用 dispose');
   if(roomOptions.signal?.aborted)throw roomError('ABORTED','小屋挂载已取消');
   const view=createRoomView(container,{controls});
+  let navigation=null,studioPanel=null;
   let disposed=false,failed=false,controller=null,shop=null,profile=null,companion=null,creativePanel=null,connection=null,styleToken=null,theme=null,themeListener=null;
   const safe=(callback,...args)=>{try{callback?.(...args);}catch{/* 宿主观察者异常不影响已完成的操作。 */}};
-  function releasePanels(){creativePanel?.dispose();connection?.dispose();shop?.dispose();profile?.dispose();companion?.dispose();creativePanel=connection=shop=profile=companion=null;}
+  function releasePanels(){studioPanel?.dispose();studioPanel=null;navigation?.dispose();navigation=null;creativePanel?.dispose();connection?.dispose();shop?.dispose();profile?.dispose();companion?.dispose();creativePanel=connection=shop=profile=companion=null;}
   function dispose(){
     if(disposed)return;disposed=true;
     roomOptions.signal?.removeEventListener('abort',onAbort);
@@ -66,7 +69,7 @@ export function mountPetHouse(options={}){
   try{
     if(styles)styleToken=acquireStyles(container,roomOptions.loadTimeoutMs||30000);
     controller=mountRoom({...roomOptions,canvas:view.canvas,uiRoot:view.controlsRoot,
-      onState(state){if(disposed||failed)return;view.updateState(state);shop?.update(state);profile?.update(state);companion?.update(state);creativePanel?.update(state);safe(roomOptions.onState,state);},
+      onState(state){if(disposed||failed)return;view.updateState(state);shop?.update(state);profile?.update(state);companion?.update(state);creativePanel?.update(state);navigation?.update(state);safe(roomOptions.onState,state);},
       onEvent(type,detail){
         if(disposed||failed)return;
         if(type!=='ready')connection?.emit(type,detail);safe(roomOptions.onEvent,type,detail);
@@ -80,7 +83,7 @@ export function mountPetHouse(options={}){
     if(extendApi){if(typeof extendApi!=='function')throw new TypeError('extendApi 必须为宿主提供的函数');const extended=extendApi(controller.api);if(!extended||typeof extended.getState!=='function'||typeof extended.dispose!=='function')throw new TypeError('extendApi 必须保留房间基础接口');controller.api=extended;}
     theme=createRoomTheme({root:view.root,api:controller.api,controls});
     themeListener=event=>{if(controller.api.getState().ready&&event.detail?.theme!==controller.api.getCompanion?.().companion?.theme)controller.api.updateCompanion?.({theme:event.detail.theme});};view.root.addEventListener('room-ui-theme-change',themeListener);
-    if(panels&&!failed){shop=createShopPanel({root:view.root,api:controller.api,pointsLabel,demo});profile=createProfilePanel({root:view.root,api:controller.api,pointsLabel});companion=createCompanionPanel({root:view.root,api:controller.api});creativePanel=createCreativePanel({root:view.root,api:controller.api});}
+    if(panels&&!failed){shop=createShopPanel({root:view.root,api:controller.api,pointsLabel,demo});profile=createProfilePanel({root:view.root,api:controller.api,pointsLabel});companion=createCompanionPanel({root:view.root,api:controller.api});creativePanel=createCreativePanel({root:view.root,api:controller.api});navigation=createRoomNavigation({root:view.root,api:controller.api});studioPanel=createStudioPanel({root:view.root,api:controller.api});navigation.update(controller.api.getState());}
     if(bridge&&!failed){
       const configuration=bridge===true?{}:bridge;
       connection=createRoomBridge({...configuration,api:controller.api,getState:controller.api.getState,eventTarget:view.canvas,

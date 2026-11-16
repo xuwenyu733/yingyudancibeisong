@@ -1,5 +1,5 @@
 import {validateRoomSnapshot} from './room-world.mjs';
-import {SHOP_CATALOG,BUILTIN_STORAGE,ROOM_TIERS} from './economy.mjs';
+import {furnitureProduct,SHOP_CATALOG,BUILTIN_STORAGE,ROOM_TIERS} from './economy.mjs';
 import {giftProduct} from './gift-catalog.mjs';
 const builtin=new Set(BUILTIN_STORAGE.map(item=>item.id)),catalog=new Map(SHOP_CATALOG.map(item=>[item.sku,item]));
 // Only visible decoration is public. Never share profiles, photos, wallets or extra storage.
@@ -17,7 +17,7 @@ export function createPublishedDesign(input){
  }
  const visible=new Set(layout?Object.keys(layout.furniture):[...builtin].filter(id=>!stored.includes(id)));
  const furnitureStyles=Object.fromEntries(Object.entries(saved.companion.furnitureStyles).filter(([id])=>visible.has(id)).map(([id,style])=>[id,Object.fromEntries(Object.entries(style).filter(([key])=>!['achievementSkin','skinId'].includes(key)))]));
- return validateRoomSnapshot({name:saved.name,template:saved.template,scene:{roomLevel:level,layout,layouts:layout?{[level]:layout}:{},stored,appearance:saved.scene.appearance},companion:{furnitureStyles,theme:saved.companion.theme,photos:[],wallDrawing:saved.companion.wallDrawing},extras:{}});
+ return validateRoomSnapshot({name:saved.name,template:saved.template,scene:{roomLevel:level,layout,layouts:layout?{[level]:layout}:{},stored,appearance:saved.scene.appearance},companion:{furnitureStyles,theme:saved.companion.theme,roomArt:saved.companion.roomArt||'original',photos:[],wallDrawing:saved.companion.wallDrawing},extras:{}});
 }
 export function designFingerprint(snapshot){return JSON.stringify(createPublishedDesign(snapshot));}
 export function quoteDesign(input,{owned=[],maxRoomLevel=0,balance=0,rewards=[],badges=[]}={}){
@@ -25,7 +25,7 @@ export function quoteDesign(input,{owned=[],maxRoomLevel=0,balance=0,rewards=[],
  for(const id of Object.keys(snapshot.scene.layout?.furniture||{}))if(id.startsWith('shop-'))required.add(id.slice(5));
  if(snapshot.scene.appearance.flooring)required.add(snapshot.scene.appearance.flooring);
  for(const sku of required){
-  const product=catalog.get(sku),gift=giftProduct(sku);
+  const product=furnitureProduct(sku),gift=giftProduct(sku);
   if(gift){const reward=rewards.find(item=>item.id===gift.rewardId&&item.kind===gift.giftKind);if(!owned.includes(sku)||!reward||(reward.expiresAt&&Date.parse(reward.expiresAt)<=Date.now()))unavailable.push({sku,name:gift.name||sku,reason:'这是限定礼物，需要先自行解锁且仍在有效期内'});}
   else if(!owned.includes(sku))missing.push({sku,name:product.name,price:product.price});
  }

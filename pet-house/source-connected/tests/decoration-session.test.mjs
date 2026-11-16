@@ -25,3 +25,11 @@ test('cancel then reenter settles the first host request before the second prepa
   const first=session.enter();session.exit(false);const second=session.enter();
   assert.equal(await first,false);resume(true);assert.equal(await second,true);session.dispose();
 });
+
+test('only a saved change reports changed; empty, undone or cancelled sessions do not request publication',async()=>{
+ const f=fixture(),events=[],session=createDecorationSession({manager:f.manager,prepare:()=>true,onEvent:(type,detail)=>{if(type==='decoration-mode'&&!detail.active)events.push(detail);}});
+ await session.enter();session.exit();assert.equal(events.at(-1).changed,false);
+ await session.enter();f.value=5;session.exit();assert.equal(events.at(-1).changed,true);
+ await session.enter();f.value=8;f.value=5;session.exit();assert.equal(events.at(-1).changed,false);
+ await session.enter();f.value=12;session.exit(false);assert.equal(events.at(-1).changed,false);assert.equal(f.value,5);session.dispose();
+});

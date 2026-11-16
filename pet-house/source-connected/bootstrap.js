@@ -1,12 +1,22 @@
-import {startDemo} from './demo-app.js';
-import {openDatabaseStorage} from './database-sync.mjs';
-
 const params=new URLSearchParams(location.search);
 const enabled=params.get('storage')!=='local';
-const status=enabled?await fetch('/api/v1/status',{cache:'no-store',signal:AbortSignal.timeout(1500)}).then(response=>response.ok?response.json():null).catch(()=>null):null;
-if(enabled&&status?.social!==false){
+const status=await fetch('/api/v1/status',{cache:'no-store',signal:AbortSignal.timeout(1500)}).then(response=>response.ok?response.json():null).catch(()=>null);
+if(status?.roomAccess){
+  // An older active worker can still serve cached dependencies on the first online visit after an upgrade.
+  const release=new URL(import.meta.url).searchParams.get('v')?.replaceAll('.','');
+  if(release&&navigator.serviceWorker?.controller&&globalThis.caches){
+    try{
+      const names=await caches.keys();
+      await Promise.all(names.filter(name=>name.startsWith('pet-room-v')&&!name.startsWith(`pet-room-v${release}-`)).map(name=>caches.delete(name)));
+    }catch{/* The browser may restrict Cache Storage in an embedded frame. */}
+  }
+  const {startProtectedHouse}=await import('./protected-entry.js?v=2.42.0');await startProtectedHouse();
+}else if(!status){
+  const message=document.createElement('p');message.className='room-entry-message';message.textContent='无法核验仓鼠屋可用时间，请联网后从学习页面重新打开。';document.getElementById('app').append(message);
+}else if(enabled&&status?.social!==false){
   await import('./online-entry.js');
 }else{
+const [{startDemo},{openDatabaseStorage}]=await Promise.all([import('./demo-app.js'),import('./database-sync.mjs')]);
 let badge;
 function showStatus(value){
   if(!badge){

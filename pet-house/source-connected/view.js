@@ -1,7 +1,8 @@
+import {observeRoomViewport} from './responsive-layout.mjs';
 // 可选演示视图。核心mountRoom不依赖这些DOM，也不会自动插入UI。
 let viewSequence=0;
 const TEMPLATE = `
-  <canvas data-room-control="room" tabindex="0" aria-label="伙伴房间。点击灯开关暖光，点击沙发坐下或起立，点击地面行走，按住动物拖动可跟随移动。方向键或WASD移动，空格停下。"></canvas>
+  <canvas data-room-control="room" tabindex="0" aria-label="伙伴房间。双指缩放视野。点击灯开关暖光，点击沙发坐下或起立，点击地面行走，按住动物拖动可跟随移动。方向键或WASD移动，空格停下。"></canvas>
   <div data-room-control="loading" role="status"><img class="room-loading-pet" src="${new URL('./assets/pets/previews/apricot-fox.png',import.meta.url).href}" alt="杏橘狐在等你"><strong class="room-loading-title">伙伴正在整理小屋…</strong><p class="room-loading-copy">把小毯子铺好，把小灯点亮，马上就能一起玩啦～</p></div>
   <output data-room-control="scene-status" class="sr-only" aria-hidden="true"></output>
   <button data-room-control="decorate" class="edit-button" disabled>装修</button>
@@ -20,7 +21,7 @@ const TEMPLATE = `
       <button data-room-control="store-furniture" class="edit-button" disabled title="将选中的家具收回仓库">收回仓库</button>
     </div>
     <div data-room-control="decoration-panel-body" class="decoration-panel__body">
-      <p>点击下方家具选用，或直接拖进房间。拖动房间里的家具可调整位置。</p>
+      <p>双指缩放房间视野。单指拖动家具调整位置，或从下方家具栏拖进房间。</p>
       <label><input data-room-control="snap-grid" type="checkbox" checked> 摆放吸附（0.1米）</label>
       <fieldset class="room-finishes"><legend>墙面颜色 · 免费切换</legend><div data-room-control="wall-colors" class="wall-colors"></div><label>自选墙色<input data-room-control="custom-wall-color" type="color" value="#ffedc2" aria-label="自选墙面颜色"></label><button data-room-control="reset-flooring" class="edit-button">恢复原木地面</button><p class="edit-small">配色与地砖切换即时保存。挂件可拖到左墙、后墙，旋转按钮可换墙。</p></fieldset>
       <details data-room-control="decoration-organizer" class="decoration-organizer">
@@ -56,13 +57,9 @@ const TEMPLATE = `
         <button data-room-control="strip-filter" data-strip-filter="wall" class="storage-strip__filter" aria-pressed="false">挂件</button>
         <button data-room-control="strip-filter" data-strip-filter="storage" class="storage-strip__filter" aria-pressed="false">仓库</button>
       </div>
-      <span data-room-control="storage-strip-hint" class="storage-strip__hint">点击选用 · 拖进房间</span>
-      <div class="storage-strip__navigation">
-        <button data-room-control="storage-prev" class="storage-strip__arrow" aria-label="查看上一排家具" title="向左浏览家具">‹</button>
-        <button data-room-control="storage-next" class="storage-strip__arrow" aria-label="查看下一排家具" title="向右浏览家具">›</button>
-      </div>
+      <span data-room-control="storage-strip-hint" class="storage-strip__hint">滚轮或左右滑动浏览 · 向上拖入房间</span>
     </div>
-    <div class="storage-strip__row" data-room-control="storage-strip-row" tabindex="0" role="group" aria-label="已拥有的家具，可左右滑动"></div>
+    <div class="storage-strip__row" data-room-control="storage-strip-row" tabindex="0" role="group" aria-label="已拥有的家具，可用滚轮或左右滑动浏览"></div>
     <p data-room-control="storage-empty" class="storage-strip__empty" hidden>还没有可用家具，先去商店逛逛吧。</p>
   </section>
   <div data-room-control="edit-feedback" role="status" hidden></div>
@@ -77,11 +74,12 @@ export function createRoomView(container,{controls=true}={}) {
   get('toggle-decoration-panel').setAttribute('aria-controls',body.id);
   if(!controls){get('decorate').remove();get('decoration-panel').remove();get('storage-strip').remove();get('edit-feedback').remove();}
   const win=container.ownerDocument.defaultView;
+  const responsive=observeRoomViewport(root);
   let hiddenTimer=0,disposed=false;
   return {root,canvas:get('room'),controlsRoot:controls?root:null,
     updateState(state){if(!disposed){get('scene-status').textContent=JSON.stringify(state);if(state.shop?.width){const area=`${state.shop.roomName} · ${(state.shop.width*state.shop.depth).toFixed(1)} ㎡`;if(get('room-area').textContent!==area)get('room-area').textContent=area;} }},
     ready(){if(disposed)return;win.clearTimeout(hiddenTimer);const loading=get('loading');loading.classList.remove('error');loading.style.opacity='0';hiddenTimer=win.setTimeout(()=>{if(!disposed)loading.hidden=true;},300);},
     error(error){if(disposed)return;win.clearTimeout(hiddenTimer);const loading=get('loading');loading.hidden=false;loading.style.opacity='1';loading.classList.add('error');loading.textContent=`房间暂时无法打开：${error?.message||'未知错误'}。请检查WebGL2支持与资源路径，通过本地服务预览。`;},
-    dispose(){if(disposed)return;disposed=true;win.clearTimeout(hiddenTimer);root.remove();},
+    dispose(){if(disposed)return;disposed=true;responsive.dispose();win.clearTimeout(hiddenTimer);root.remove();},
   };
 }

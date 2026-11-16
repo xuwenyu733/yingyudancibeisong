@@ -8,5 +8,5 @@
   "display": "standalone",
   "background_color": "#f3eddd",
   "theme_color": "#f3eddd",
-  "orientation": "portrait"
+  "orientation": "landscape"
 }

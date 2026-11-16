@@ -1,4 +1,4 @@
-﻿param([switch]$CheckOnly,[switch]$Configure,[switch]$NonInteractive)
+param([switch]$CheckOnly,[switch]$Configure,[switch]$NonInteractive)
 $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false) } catch {}
 $backendDir = Join-Path $PSScriptRoot 'backend'
@@ -40,7 +40,8 @@ try {
     try {
         if ($CheckOnly) { & node server/check-connection.mjs }
         else {
-            Write-Host ('打开小屋：http://127.0.0.1:{0}/?storage=mysql' -f $effectivePort)
+            Write-Host '小屋限时已启用，请从学习页面的仓鼠屋入口进入。'
+            Write-Host ('小屋服务：http://127.0.0.1:{0}/?storage=mysql' -f $effectivePort)
             Write-Host ('数据库目录：http://127.0.0.1:{0}/database' -f $effectivePort)
             Write-Host '按 Ctrl+C 停止服务。'
             & node server/server.mjs

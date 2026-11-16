@@ -5,22 +5,28 @@ export function createCompanionTutorial({root,api}){
   const el=(tag,className,text,parent)=>{const node=doc.createElement(tag);if(tag==='button')node.type='button';node.className=className;if(text!=null)node.textContent=text;parent?.append(node);return node;};
   const guide=el('aside','companion-tour companion-practice-tour',null,root);guide.hidden=true;guide.setAttribute('aria-label','伙伴布置小提示');
   const mascot=el('div','companion-practice-pet',null,root);mascot.hidden=true;mascot.setAttribute('aria-hidden','true');
-  const pet=el('img','',null,mascot);pet.src=new URL('./assets/pets/previews/apricot-fox.png',import.meta.url).href;pet.alt='';pet.draggable=false;
-  el('span','companion-practice-hand','☝',mascot);
+  el('span','companion-practice-hand','👇',mascot);
   const copy=el('div','companion-tour-copy',null,guide),heading=el('strong','','',copy),text=el('p','','',copy),actions=el('div','companion-tour-actions',null,copy);
   const skip=el('button','','先自己玩',actions),close=el('button','companion-tour-close','×',guide);close.setAttribute('aria-label','关闭布置提示');
   const steps=[
-    ['先打开「装修」','点一下装修，我走到按钮旁边等你。','[data-room-control="decorate"]'],
+    ['先打开「装修」','跟着手指提示，点一下装修。','[data-room-control="decorate"]'],
     ['亲手拖一下','从底部选家具，再在房间里拖动，松手摆稳；仓库家具也能向上拖入。','[data-room-control="storage-strip"]'],
-    ['帮宝贝转个身','选好家具后点「旋转90°」。触屏也能双指转动、捏合大小。','[data-room-control="rotate-furniture"]'],
+    ['帮宝贝转个身','选好家具后点「旋转90°」。双指张开或捏合，可以拉近或拉远房间视野。','[data-room-control="rotate-furniture"]'],
     ['把喜欢留住','位置和方向都试过啦！点「完成保存」，我帮你记住这次创作。','[data-room-control="finish-decoration"]'],
   ];
   function clearTarget(){highlighted?.classList.remove('companion-tour-target');highlighted=null;}
   function position(){
-    if(disposed||paused||guide.hidden)return;const selector=step===1&&selected?'[data-room-control="room"]':steps[step][2],target=root.querySelector(selector);
+    if(disposed||paused||guide.hidden)return;
+    const selector=step===1&&selected?'[data-room-control="room"]':steps[step][2];
+    const shortcut=step===0?root.querySelector('[data-room-action="decorate"]'):null;
+    const target=shortcut?.getClientRects?.().length?shortcut:root.querySelector(selector);
     if(!target||target.closest('[hidden]')){clearTarget();return;}if(target!==highlighted){clearTarget();highlighted=target;target.classList.add('companion-tour-target');}
     const bounds=root.getBoundingClientRect?.(),rect=target.getBoundingClientRect?.();if(!bounds||!rect||!bounds.width||!bounds.height||!mascot.style)return;
-    const x=Math.max(4,Math.min(bounds.width-90,rect.left-bounds.left+Math.min(36,rect.width/2))),y=Math.max(48,Math.min(bounds.height-105,rect.top-bounds.top-82));
+    const pointsRight=target===shortcut&&rect.left-bounds.left>bounds.width*.85;
+    const left=rect.left-bounds.left,top=rect.top-bounds.top;
+    const x=Math.max(4,Math.min(bounds.width-32,pointsRight?left-32:left+(rect.width-28)/2));
+    const y=Math.max(4,Math.min(bounds.height-32,pointsRight?top+(rect.height-28)/2:top-30));
+    mascot.dataset.direction=pointsRight?'right':'down';
     const transform=`translate(${x}px,${y}px)`;if(mascot.style.transform!==transform)mascot.style.transform=transform;
   }
   function render(){
@@ -54,7 +60,7 @@ export function createCompanionTutorial({root,api}){
     start,pause(){paused=true;render();},resume(){paused=false;render();},
     update(state){
       if(disposed)return;ready=!!state?.ready;decorating=!!state?.decoration;
-      if(ready&&!started&&!timer){let saved;try{saved=api.getCompanion?.().companion;}catch{}if(saved?.tourDone){done=true;return;}timer=win.setTimeout(()=>{timer=0;if(!disposed)start();},1800);}
+      if(ready&&!started&&!timer&&typeof api.beginFurnitureTrial!=='function'){let saved;try{saved=api.getCompanion?.().companion;}catch{}if(saved?.tourDone){done=true;return;}timer=win.setTimeout(()=>{timer=0;if(!disposed)start();},1800);}
       if(started)render();
     },
     dispose(){if(disposed)return;disposed=true;win.clearTimeout(timer);clearTarget();events.abort();guide.remove();mascot.remove();},

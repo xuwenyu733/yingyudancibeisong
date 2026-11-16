@@ -4,9 +4,7 @@ import {
 import {RoundedBoxGeometry} from './vendor/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries,mergeVertices} from './vendor/addons/utils/BufferGeometryUtils.js';
 
-const C=Object.freeze({cream:0xfff1d1,wood:0xd3ab78,woodLight:0xe9ca99,mint:0x88b9a0,
-  leaf:0x78a884,leafLight:0xa3c38f,soil:0x957158,clay:0xdba88a,gold:0xe8c471,
-  blue:0x94b8c1,lilac:0xb8a5c7,coral:0xe5aa8e});
+import {HOME_COLORS as C} from './visual-style.mjs';
 const CATALOG=Object.freeze({
   'clover-planter':{label:'四叶草盆栽',size:[.82,.97,.82]},
   'reading-shelf':{label:'小小阅读架',size:[1.07,1.51,.47]},

@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {ROOM_TIME_POLICY as P,roomDay,settleRoomTime,roomTimeStatus} from './room-time-policy.mjs';
+const base=Date.UTC(2026,10,5),fresh=()=>({used:0,continuous:0,settled:base,lastActive:0,restUntil:0});
+test('Beijing 08:00 remains only a reporting boundary',()=>{assert.equal(roomDay(Date.UTC(2026,10,4,23,59,59)).key,'2026-11-04');assert.equal(roomDay(base).key,'2026-11-05');assert.equal(roomDay(base).end,base+86400000);});
+test('overlapping tabs and devices count their union, never their sum',()=>{const value=settleRoomTime(fresh(),[{from:base,until:base+12000},{from:base+5000,until:base+15000}],base+15000);assert.equal(value.used,15000);assert.equal(value.continuous,0);});
+test('a disconnected tab is bounded by its final server lease',()=>{const value=settleRoomTime(fresh(),[{from:base,until:base+P.leaseMs}],base+5*60000);assert.equal(value.used,P.leaseMs);});
+test('continuous use beyond the previous break threshold is counted in full',()=>{const value=settleRoomTime(fresh(),[{from:base,until:base+45*60000}],base+45*60000);assert.equal(value.used,45*60000);assert.equal(value.restUntil,0);assert.equal(roomTimeStatus(value,base+45*60000).allowed,true);});
+test('the former daily threshold never clamps usage or blocks a child',()=>{const value=settleRoomTime(fresh(),[{from:base,until:base+6*3600000}],base+6*3600000),status=roomTimeStatus(value,base+6*3600000);assert.equal(value.used,6*3600000);assert.equal(status.allowed,true);assert.equal(status.reason,null);assert.equal(status.limitMs,null);assert.equal(status.remainingMs,null);});
+test('legacy mandatory-break fields cannot prevent accounting or access',()=>{const value=settleRoomTime({...fresh(),used:1800000,continuous:900000,restUntil:base+3600000},[{from:base,until:base+10000}],base+10000);assert.equal(value.used,1810000);assert.equal(value.restUntil,0);assert.equal(value.continuous,0);assert.equal(roomTimeStatus(value,base+10000).allowed,true);});
+test('inactive gaps do not create phantom online time',()=>{const value=settleRoomTime(fresh(),[{from:base,until:base+5000},{from:base+60000,until:base+65000}],base+65000);assert.equal(value.used,10000);});
+test('settlement cannot repeat already charged intervals',()=>{let value=settleRoomTime(fresh(),[{from:base,until:base+15000}],base+10000);value=settleRoomTime(value,[{from:base,until:base+15000}],base+10000);assert.equal(value.used,10000);});

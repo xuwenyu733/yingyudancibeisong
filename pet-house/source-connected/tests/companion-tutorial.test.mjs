@@ -32,8 +32,9 @@ test('tutorial requires actual enter, successful drag, rotation and saved finish
   f.emit('decoration-mode',{active:false,saved:true});assert.equal(f.guide.hidden,true);assert.deepEqual(f.calls,[{tourDone:true}]);f.tutorial.dispose();
 });
 
-test('pet moves near current target, pauses for the handbook and reset follows canceled decoration',()=>{
+test('the hand points to the current target without showing another pet',()=>{
   const f=fixture();f.tutorial.update({ready:true});f.tutorial.start();const first=f.pet.style.transform;
+  assert.deepEqual(f.pet.children.map(node=>node.tagName),['SPAN']);
   f.emit('decoration-mode',{active:true});assert.notEqual(f.pet.style.transform,first);const second=f.pet.style.transform;
   f.emit('furniture-selected',{id:'table'});assert.notEqual(f.pet.style.transform,second);
   f.tutorial.pause();assert.equal(f.pet.hidden,true);assert.equal(f.guide.hidden,true);f.tutorial.resume();assert.equal(f.pet.hidden,false);

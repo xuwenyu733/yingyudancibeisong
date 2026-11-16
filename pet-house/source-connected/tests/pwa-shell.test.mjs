@@ -12,7 +12,10 @@ test('PWA shell files exist and register correctly', () => {
 
   const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.ok(index.includes('rel="manifest"'), 'index.html 应链接 site.webmanifest');
-  assert.ok(index.includes('serviceWorker'), 'index.html 应注册 service worker');
+  assert.match(index,/<script type="module" src="\.\/register-worker\.js"><\/script>/,'index.html 应加载符合 CSP 的外部注册模块');
+  const registration = readFileSync(new URL('../register-worker.js', import.meta.url), 'utf8');
+  assert.ok(registration.includes('navigator.serviceWorker.register'), '外部模块应注册 service worker');
+  assert.ok(registration.includes("new URL('./sw.js',import.meta.url)"), '注册路径应相对模块地址解析');
 
   const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
   assert.ok(sw.includes("'./index.html'"), 'sw.js 预缓存壳应包含 entry 页面');

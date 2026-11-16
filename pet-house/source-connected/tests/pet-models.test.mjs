@@ -41,7 +41,7 @@ test('species retain distinct body geometry when every animal uses the same mono
 test('shop thumbnails are distinct, current renders of each runtime species model',()=>{
   const manifest=JSON.parse(readFileSync(new URL('../assets/pets/previews/metadata.json',import.meta.url),'utf8'));
   assert.equal(manifest.kind,'runtime-model-studio-render');assert.equal(manifest.source,'characters/pet-models.js');
-  const source=readFileSync(new URL('../characters/pet-models.js',import.meta.url));assert.equal(manifest.sourceSha256,createHash('sha256').update(source).digest('hex'),'model geometry changes require regenerated previews');
+  const source=readFileSync(new URL('../characters/pet-models.js',import.meta.url),'utf8').replace(/\r\n/g,'\n');assert.equal(manifest.sourceSha256,createHash('sha256').update(source).digest('hex'),'model geometry changes require regenerated previews');
   assert.deepEqual(manifest.entries.map(entry=>entry.sku),['apricot-fox',...PET_MODELS.map(entry=>entry.sku)]);
   const hashes=[];
   for(const entry of manifest.entries){

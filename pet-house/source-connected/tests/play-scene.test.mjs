@@ -37,9 +37,22 @@ test('pet hit regions resolve named mesh ancestry and animated wrappers unwrap c
   assert.equal(result.kind,'primary');assert.equal(result.region,'head');const headJoint=f.character.model.getObjectByName('Fox_Head'),children=headJoint.children.filter(child=>child.name!=='play-reaction-pivot');assert.equal(children.length,0);
   f.actor.pose.update(.1);f.play.update(.1);assert.ok(headJoint.children[0].rotation.x<0);f.play.dispose();assert.ok(headJoint.children.some(node=>node===head));assert.ok(!f.character.model.getObjectByName('play-reaction-pivot'));f.character.dispose();
 });
-test('occluding furniture wins and animal dragging rejects blocked destinations',()=>{
+test('play props never spawn a second pet while the owned pet kicks and the scene updates',()=>{
+  const f=fixture();
+  try{
+    f.play.sync({learningEvents:['lesson']});
+    f.play.update(0);
+    const ball=f.play.getState().ball;
+    const ray=rayAt(new THREE.Vector3(ball.x,ball.y+3,ball.z),new THREE.Vector3(ball.x,ball.y,ball.z));
+    assert.equal(f.play.interact(ray).kind,'ball');
+    for(let frame=0;frame<200;frame++)f.play.update(.08);
+    assert.equal(f.scene.getObjectByName('play-buddy'),undefined);
+    assert.equal(f.scene.getObjectByName('OriginalFox'),f.character.model);
+    assert.deepEqual(f.events.filter(event=>event.type==='ball-kicked').map(event=>event.detail.by),['primary']);
+  }finally{f.close();}
+});
+test('occluding furniture wins over the ball',()=>{
   const f=fixture({canVisit:point=>point.x<1});f.play.sync({learningEvents:[]});f.play.update(0);const state=f.play.getState(),ball=state.ball;
   const blocker=new THREE.Mesh(new THREE.BoxGeometry(1,.3,1),new THREE.MeshBasicMaterial());blocker.position.set(ball.x,ball.y+1,ball.z);f.scene.add(blocker);f.furniture.set('blocker',blocker);
-  const ray=rayAt(new THREE.Vector3(ball.x,ball.y+3,ball.z),new THREE.Vector3(ball.x,ball.y,ball.z));assert.equal(f.play.interact(ray).handled,false);assert.equal(f.play.leadBuddy({x:2,z:1}),false);assert.equal(f.play.leadBuddy({x:-2,z:-2}),true);
-  for(let i=0;i<50;i++)f.play.update(.08);assert.ok(f.play.getState().buddy.x<1);assert.ok(f.play.getState().buddy.z<state.buddy.z);f.close();blocker.geometry.dispose();blocker.material.dispose();
+  const ray=rayAt(new THREE.Vector3(ball.x,ball.y+3,ball.z),new THREE.Vector3(ball.x,ball.y,ball.z));assert.equal(f.play.interact(ray).handled,false);f.close();blocker.geometry.dispose();blocker.material.dispose();
 });

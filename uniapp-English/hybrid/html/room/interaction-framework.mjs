@@ -54,7 +54,7 @@ export function planInteraction(event,detail={},context={}){
     case 'reset-layout':plan.sounds.push('placement');sync();plan.actions.push({type:'sync-layout'});if(!context.reducedMotion)plan.actions.push({type:'transition-layout',durationMs:300});plan.bubble='小家具回到最初的位置啦！我们再添一点新想法吧～';break;
     case 'estate-room-entered':plan.sounds.push('click');sync();ritual();plan.bubble=`欢迎来到「${text(detail.roomName||context.roomName,'暖暖小屋',30)}」，${owner}，我先替你看看新家～`;break;
     case 'water-start':plan.bubble='咕嘟咕嘟，给小花喝一口水～';break;
-    case 'water-done':plan.sounds.push('water');plan.bubble='喝饱啦！小叶子也在对你挥手呢～';break;
+    case 'water-done':plan.sounds.push('water');plan.bubble=detail.targetId==='shop-clover-planter'?'四叶草浇好啦，今天的绿色小角落也照顾到了。':'盆栽浇好啦，留一点阳光，陪它慢慢长。';break;
     case 'idle-nuzzle':react('nuzzle');plan.bubble=`${owner}，我来蹭蹭你～休息一下也很好呀。`;break;
     case 'night-start':plan.actions.push({type:'night',enabled:true});plan.bubble=`${owner}，夜深啦，我会把灯留得暖暖的～`;break;
     case 'gift-unlocked':plan.sounds.push('cheer');sync();react('cheer');plan.bubble=text(detail.message,`${owner}，送你一个小礼物！它已经在小花园旁边啦～`);break;

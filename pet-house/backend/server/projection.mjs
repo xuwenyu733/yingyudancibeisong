@@ -1,6 +1,7 @@
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
+import {projectionRecorder,applyProjectionDiff} from './projection-diff.mjs';
 
 // All writes run on the caller's connection and transaction. Never open another
 // connection here: snapshot and readable rows must commit or roll back together.
@@ -33,14 +34,16 @@ export async function seedCatalog(connection,{sourceRoot}={}){
 }
 
 /** Project an already validated pet-estate-save. Snapshot remains authoritative. */
-export async function projectArchive(connection,namespace,archive,{sourceRoot,entries}={}){
+export async function projectArchive(connection,namespace,archive,{sourceRoot,entries,previousArchive,previousEntries}={}){
+  if(previousArchive){const before=projectionRecorder(),after=projectionRecorder();await projectArchive(before,namespace,previousArchive,{sourceRoot,entries:previousEntries});await projectArchive(after,namespace,archive,{sourceRoot,entries});return applyProjectionDiff(connection,before,after);}
   if(typeof namespace!=='string'||!namespace||namespace.length>160)throw new TypeError('存档空间键无效');
   if(archive?.format!=='pet-estate-save'||archive.version!==1||!archive.estate?.bank||!Array.isArray(archive.estate.rooms)||!archive.profile)throw new TypeError('投影需要经过项目校验的完整庄园存档');
   const [economy,,gifts]=await catalogModules(sourceRoot),estate=archive.estate,bank=estate.bank,companion=estate.companion,profile=archive.profile;
   const itemKeys=new Set([...economy.SHOP_CATALOG.map(item=>item.sku),...economy.BUILTIN_STORAGE.map(item=>item.id)]);
   const allGiftSkus=new Set([...bank.owned,...estate.rooms.flatMap(room=>room.scene.stored||[]),...(companion.rewards||[]).map(gifts.giftSku).filter(Boolean)].filter(sku=>gifts.giftProduct(sku)));
   for(const sku of allGiftSkus){await putItem(connection,{...gifts.giftProduct(sku),sourceModule:'gift-catalog.mjs'});itemKeys.add(sku);}
-  const furnitureSku=id=>itemKeys.has(id)?id:id.startsWith('shop-')&&itemKeys.has(id.slice(5))?id.slice(5):null;
+  const productSku=id=>economy.furnitureProduct(id)?.baseSku||id;
+  const furnitureSku=id=>{const key=productSku(id.startsWith('shop-')?id.slice(5):id);return itemKeys.has(key)?key:null;};
   // Cascades remove only this account's previous projection. The outer caller's
   // transaction prevents readers from observing a half-rebuilt set of rows.
   await connection.execute('DELETE FROM usr_accounts WHERE account_key=?',[namespace]);
@@ -49,7 +52,7 @@ export async function projectArchive(connection,namespace,archive,{sourceRoot,en
   await insert(connection,'wallet_accounts',{account_key:namespace,balance_points:bank.balance,total_spent_points:bank.totalSpent});
 
   const builtin=new Set(economy.BUILTIN_STORAGE.map(item=>item.id));
-  for(const sku of new Set([...builtin,...bank.owned])){
+  for(const sku of new Set([...builtin,...bank.owned.map(productSku)])){
     const gift=gifts.giftProduct(sku),memory=companion.memories?.[gift?.rewardId||sku];
     await insert(connection,'inv_ownership',{account_key:namespace,item_sku:sku,ownership_kind:builtin.has(sku)?'builtin':gift?'gift':'purchased',acquired_at:datetime(memory?.at)});
   }
@@ -67,7 +70,7 @@ export async function projectArchive(connection,namespace,archive,{sourceRoot,en
         for(const [boxIndex,box]of (def.boxes||[]).entries())await insert(connection,'room_colliders',{account_key:namespace,room_id:room.id,tier_level:tierLevel,furniture_id:id,box_index:boxIndex,center_x:box.center[0],center_y:box.center[1],center_z:box.center[2],size_x:box.size[0],size_y:box.size[1],size_z:box.size[2]});
       }
     }
-    for(const sku of scene.stored||[])await insert(connection,'inv_room_storage',{account_key:namespace,room_id:room.id,item_sku:sku});
+    for(const sku of new Set((scene.stored||[]).map(productSku)))await insert(connection,'inv_room_storage',{account_key:namespace,room_id:room.id,item_sku:sku});
     for(const [id,style]of Object.entries(local.furnitureStyles||{}))await insert(connection,'room_styles',{account_key:namespace,room_id:room.id,furniture_id:id,paint_color:style.color||null,sticker:style.sticker,doodle:style.doodle,achievement_skin:own(style,'achievementSkin')?style.achievementSkin:null,skin_id:style.skinId||null,drawing_json:json(style.drawing)});
     if(local.wallDrawing)await insert(connection,'room_drawings',{account_key:namespace,room_id:room.id,drawing_json:json(local.wallDrawing),stroke_count:local.wallDrawing.strokes.length});
     for(const [key,value]of Object.entries(room.extras||{}))await insert(connection,'room_extras',{account_key:namespace,room_id:room.id,storage_key_hash:createHash('sha256').update(key,'utf8').digest('hex'),storage_key:key,value_text:value});

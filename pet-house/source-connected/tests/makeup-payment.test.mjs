@@ -26,7 +26,7 @@ function fixture({estate=false,balance=1000,volatile=false}={}){
   assert.equal(profile.setName('测试主人').ok,true);
   assert.equal(profile.checkIn('2026-10-28').ok,true);
   const events=[];
-  const context={disposed:false,lifecycle:'ready',localDate:()=> '2026-10-30',previousDay,MAKEUP_COST:100,economy,profile,
+  const context={options:{},disposed:false,lifecycle:'ready',localDate:()=> '2026-10-30',previousDay,MAKEUP_COST:100,economy,profile,
     roomStorage,storageKey,createEconomy,createProfile,buildArchive,restoreArchive,
     notify:(type,detail)=>events.push({type,detail}),tradeFailure:(code,message)=>({ok:false,code,message})};
   const makeUpCheckIn=new Function('context',`with(context){${source.slice(start,end)};return makeUpCheckIn;}`)(context);

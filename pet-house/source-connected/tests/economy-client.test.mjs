@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createEconomyClient} from '../economy-client.mjs';
+function fixture(fetcher){
+ const app={inert:false},calls=[],transport={revision:2,async flush(){return {ok:true};},acceptRemote(home,base){assert.equal(base,this.revision);this.revision=home.revision;calls.push('accept');}},api={getState:()=>({ready:true}),getEstate:()=>({estate:{activeRoomId:'room-1'}}),setPresentationPaused:p=>calls.push(p),async reloadFromStorage(){calls.push('reload');return {ok:true};},getShop:()=>({balance:80})};
+ const client=createEconomyClient({fetcher,getRoom:()=>({api}),getTransport:()=>transport,doc:{getElementById:id=>id==='app'?app:null,querySelector:()=>null},clock:()=>1234567890000});return {client,transport,app,calls};
+}
+test('online commerce sends a command and adopts only confirmed remote assets',async()=>{let sent;const f=fixture(async(_url,options)=>{sent=JSON.parse(options.body);return Response.json({ok:true,home:{revision:3,entries:{}}});});const result=await f.client.execute({type:'purchase',sku:'table'});assert(result.ok);assert.equal(sent.baseRevision,2);assert.equal(sent.roomId,'room-1');assert.equal(sent.issuedAt,1234567890000);assert(sent.requestId.startsWith(sent.issuedAt.toString(36)+'_'));assert.deepEqual(sent.action,{type:'purchase',sku:'table'});assert.deepEqual(f.calls,['accept','reload'].reduce((all,x)=>all.concat(x),[true]).concat(false));assert.equal(f.app.inert,false);});
+test('lost responses retain the same transaction identity and prohibit a different command',async()=>{const sent=[];let fail=true;const f=fixture(async(_url,options)=>{sent.push(JSON.parse(options.body));if(fail)throw Error('offline');return Response.json({ok:true,home:{revision:3,entries:{}}});});assert.equal((await f.client.execute({type:'expand'})).ok,false);assert.equal((await f.client.execute({type:'purchase-pet',sku:'x'})).code,'ECONOMY_UNCONFIRMED');fail=false;assert((await f.client.execute({type:'expand'})).ok);assert.equal(sent.length,2);assert.equal(sent[0].requestId,sent[1].requestId);assert.equal(sent[0].issuedAt,sent[1].issuedAt);});
+test('a failed save prevents spending and a rejected command restores interaction',async()=>{let sends=0;const f=fixture(async()=>{sends++;return Response.json({ok:false,code:'INSUFFICIENT_POINTS',message:'积分不足'},{status:400});});f.transport.flush=async()=>({ok:false,code:'SYNC_OFFLINE'});assert.equal((await f.client.execute({type:'expand'})).code,'SYNC_OFFLINE');assert.equal(sends,0);f.transport.flush=async()=>({ok:true});assert.equal((await f.client.execute({type:'expand'})).code,'INSUFFICIENT_POINTS');assert.equal(f.app.inert,false);assert.equal(f.client.busy,false);assert(!f.calls.includes('accept'));});
+test('concurrent commands cannot race the same local revision',async()=>{let finish;const f=fixture(()=>new Promise(resolve=>{finish=resolve;}));const first=f.client.execute({type:'visit'});await Promise.resolve();assert.equal((await f.client.execute({type:'visit'})).code,'ECONOMY_BUSY');finish(Response.json({ok:true,home:{revision:3,entries:{}}}));assert((await first).ok);});
+
+test('a genuine conflict keeps both backup recovery actions available to the entry UI',async()=>{
+ const recovery={exportBackup:()=>({local:'unsaved',remote:'confirmed'}),backupAndLoadRemote:async()=>({ok:true})};
+ const f=fixture(async()=>Response.json({ok:true,home:{revision:3,entries:{}}}));
+ f.transport.acceptRemote=()=>{throw Object.assign(new Error('local edits preserved'),{code:'SYNC_CONFLICT',recovery});};
+ const result=await f.client.execute({type:'visit'});
+ assert.equal(result.code,'SYNC_CONFLICT');assert.equal(result.recovery,recovery);assert.deepEqual(result.recovery.exportBackup(),{local:'unsaved',remote:'confirmed'});
+ assert.equal(f.app.inert,false);assert(!f.calls.includes('reload'),'a real conflict must not silently replace local edits');
+});
+
+ test('explicit copy request id cannot purchase another instance after the scene remount',async()=>{let sends=0;const f=fixture(async()=>{sends++;return Response.json({ok:true,home:{revision:3,entries:{}}});});assert((await f.client.execute({type:'purchase',sku:'planter-copy-2'},{requestId:'caller-1',requestScope:'purchase-copy:planter'})).ok);const replay=await f.client.execute({type:'purchase',sku:'planter-copy-3'},{requestId:'caller-1',requestScope:'purchase-copy:planter'});assert(replay.ok&&replay.replayed);assert.equal(sends,1);assert.equal((await f.client.execute({type:'expand'},{requestId:'caller-1'})).code,'REQUEST_ID_REUSED');});

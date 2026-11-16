@@ -1,12 +1,12 @@
 /** Floor-local worlds. Shared money, ownership, pets and transaction claims never enter a snapshot. */
-import {createEconomy,SHOP_CATALOG,BUILTIN_STORAGE,ROOM_TIERS} from './economy.mjs';
+import {createEconomy,furnitureProduct,SHOP_CATALOG,BUILTIN_STORAGE,ROOM_TIERS} from './economy.mjs';
 import {defaultCompanion,validateCompanion} from './companion-state.mjs';
 import {giftProduct} from './gift-catalog.mjs';
 
 export const MAX_ROOM_WORLD_SAVES=5;
 export const ROOM_WORLD_FORMAT='pet-room-world';
 const sceneKeys=['roomLevel','layout','layouts','stored','appearance'];
-const companionKeys=['furnitureStyles','theme','photos','wallDrawing'];
+const companionKeys=['furnitureStyles','theme','roomArt','photos','wallDrawing'];
 const templates=['cream','mint','candy'],encoder=new TextEncoder();
 const builtin=new Set(BUILTIN_STORAGE.map(item=>item.id));
 const catalog=new Map(SHOP_CATALOG.map(item=>[item.sku,item]));
@@ -16,7 +16,7 @@ const error=(code,message)=>Object.assign(new Error(message),{code});
 const only=(value,keys)=>{if(!plain(value)||Object.keys(value).some(key=>!keys.includes(key)))throw error('ROOM_WORLD_INVALID','楼层存档包含不支持的字段');};
 const date=value=>typeof value==='string'&&value.length<=40&&Number.isFinite(Date.parse(value));
 const id=value=>typeof value==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9:_-]{0,63}$/.test(value);
-const historyKey=key=>/-(?:estate-)?backups-v1$/.test(key);
+const historyKey=key=>/-(?:estate-)?backups-v1$/.test(key)||key.endsWith('-furniture-groups-v1');
 export function worldName(value,max=40){
   if(typeof value!=='string')throw error('ROOM_WORLD_NAME','请给存档点填写名字');
   const text=value.trim().replace(/[\u0000-\u001f<>]/g,'');
@@ -58,7 +58,7 @@ export function validateRoomSnapshot(input){
   }
   const baseline=createEconomy({storageAdapter:null}).getState();
   const raw=JSON.stringify({version:1,balance:0,totalSpent:0,petOwned:baseline.petOwned,activePet:baseline.activePet,claims:{learning:[],requests:[],rewards:[],spends:[]},
-    owned:[...catalog.keys(),...gifts],maxRoomLevel:ROOM_TIERS.length-1,...value.scene});
+    owned:[...new Set([...catalog.keys(),...gifts,...(value.scene.stored||[]).filter(sku=>furnitureProduct(sku)),...[value.scene.layout,...Object.values(value.scene.layouts||{})].flatMap(layout=>Object.keys(layout?.furniture||{}).filter(id=>id.startsWith('shop-')).map(id=>id.slice(5)))])],maxRoomLevel:ROOM_TIERS.length-1,...value.scene});
   const account=createEconomy({storageAdapter:{getItem:()=>raw,setItem(){throw new Error('validation only');}}}).getState();
   if(!account.valid)throw error('ROOM_WORLD_INVALID',account.error?.message||'楼层场景无效');
   value.scene=Object.fromEntries(sceneKeys.map(key=>[key,account[key]]));
@@ -87,14 +87,14 @@ function validateSnapshotLayout(layout){
   const vector=value=>Array.isArray(value)&&value.length===3&&value.every(Number.isFinite);
   for(const [key,transform]of Object.entries(layout.furniture)){
     const sku=key.startsWith('shop-')?key.slice(5):null;
-    if(!builtin.has(key)&&!(sku&&(catalog.has(sku)&&catalog.get(sku).category!=='flooring'||giftProduct(sku))))throw error('ROOM_WORLD_INVALID','楼层存档包含未知家具');
+    if(!builtin.has(key)&&!(sku&&(furnitureProduct(sku)&&furnitureProduct(sku).category!=='flooring'||giftProduct(sku))))throw error('ROOM_WORLD_INVALID','楼层存档包含未知家具');
     if(plain(transform)&&Number.isFinite(transform.scale))transform.scale=[transform.scale,transform.scale,transform.scale];
     if(!key||key.length>160||!plain(transform)||!vector(transform.position)||!vector(transform.rotation)||!vector(transform.scale)||transform.position.some(n=>Math.abs(n)>1000)||transform.scale.some(n=>n<.0001||n>100)||transform.rotation.some(n=>Math.abs(n)>1e6)||Math.abs(transform.rotation[0])>1e-8||Math.abs(transform.rotation[2])>1e-8)throw error('ROOM_WORLD_INVALID','家具位置、旋转或缩放无效');
     const definition=layout.definitions?.[key];
     if(sku&&!definition)throw error('ROOM_WORLD_INVALID','商店家具缺少碰撞定义');
     if(definition){
       if(!plain(definition)||!Array.isArray(definition.boxes)||!definition.boxes.length||definition.boxes.length>32||definition.boxes.some(box=>!plain(box)||!vector(box.center)||box.center.some(n=>Math.abs(n)>100)||!vector(box.size)||box.size.some(n=>n<.0001||n>100)))throw error('ROOM_WORLD_INVALID','家具碰撞定义无效');
-      for(const flag of ['blocksNavigation','blocksPlacement','draggable'])if(own(definition,flag)&&typeof definition[flag]!=='boolean')throw error('ROOM_WORLD_INVALID','家具碰撞选项无效');
+      for(const flag of ['blocksNavigation','blocksPlacement','draggable','locked'])if(own(definition,flag)&&typeof definition[flag]!=='boolean')throw error('ROOM_WORLD_INVALID','家具碰撞选项无效');
     }
   }
   if(layout.lampSupport!==undefined&&layout.lampSupport!==null&&(typeof layout.lampSupport!=='string'||!own(layout.furniture,layout.lampSupport)))throw error('ROOM_WORLD_INVALID','台灯支架无效');
@@ -123,7 +123,7 @@ export function applyRoomSnapshot(room,input,{owned,rewards=[],storageKey,source
   if(saved.scene.roomLevel>current.maxRoomLevel)throw error('ROOM_WORLD_LOCKED','这个存档使用尚未解锁的大房型，请先用积分扩建当前楼层');
   const owns=new Set(owned),now=Date.now();
   const available=sku=>{if(!owns.has(sku))return false;const gift=giftProduct(sku);if(!gift)return true;const reward=rewards.find(item=>item.id===gift.rewardId&&item.kind===gift.giftKind);return !!reward&&(!reward.expiresAt||Date.parse(reward.expiresAt)>now);};
-  const storable=sku=>builtin.has(sku)||owns.has(sku)&&(catalog.get(sku)?.category!=='flooring'&&catalog.has(sku)||!!giftProduct(sku));
+  const storable=sku=>builtin.has(sku)||owns.has(sku)&&(furnitureProduct(sku)?.category!=='flooring'&&!!furnitureProduct(sku)||!!giftProduct(sku));
   const permitted=id=>!id.startsWith('shop-')||available(id.slice(5));
   function cleanLayout(input){
     if(input===null||input===undefined)return null;

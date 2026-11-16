@@ -24,7 +24,7 @@
 @media (max-width: 720px) {
   .pet-room-nameplate {
     top: auto !important;
-    bottom: max(52px, calc(12px + env(safe-area-inset-bottom))) !important;
+    bottom: calc(var(--room-mobile-bottom,68px) + 8px) !important;
     left: 10px !important;
     right: auto !important;
     transform: none !important;
@@ -71,7 +71,7 @@
 
   /* 底部面积标签避开左下角名字牌 */
   .pet-room-view .room-area {
-    bottom: max(52px, calc(12px + env(safe-area-inset-bottom))) !important;
+    bottom: calc(var(--room-mobile-bottom,68px) + 8px) !important;
     right: 10px !important;
     z-index: 11;
   }

@@ -4,9 +4,10 @@ import {grantDemoTestPoints} from './demo-points.mjs';
 import {resolveDirectHome} from './direct-home.mjs';
 import {loginAccount,readSession,readAccounts} from './account-session.mjs';
 import {exportAccountTransfer} from './account-migration.mjs';
+import {showDatabaseConflict} from './database-recovery-ui.js';
 
 /** Shared standalone entry: an optional transport wraps each account separately. */
-export function startDemo({openStorage,legacyStorageKey,legacyLinks=[],onlineAccount,directHomeKey,extraApi={},designService,onReady,onGameEvent}={}){
+export function startDemo({openStorage,legacyStorageKey,legacyLinks=[],onlineAccount,directHomeKey,extraApi={},designService,economyService,demo=true,initialPoints=1000,pointsLabel='体验积分',onReady,onGameEvent}={}){
   const params=new URLSearchParams(location.search),app=document.getElementById('app');
   const storage=(()=>{try{return globalThis.localStorage;}catch{return null;}})();
   let room=null,transport=null,alias=null,generation=0;
@@ -28,7 +29,7 @@ export function startDemo({openStorage,legacyStorageKey,legacyLinks=[],onlineAcc
       if(serial!==generation){next?.dispose();return;}
       transport=next;
       const adapter=next?.adapter||storage;
-      grantDemoTestPoints({storageKey,storageAdapter:adapter});
+      if(demo)grantDemoTestPoints({storageKey,storageAdapter:adapter});
       app.replaceChildren();
       const exportTransfer=()=>{
         if(serial!==generation||!room)return null;
@@ -39,9 +40,9 @@ export function startDemo({openStorage,legacyStorageKey,legacyLinks=[],onlineAcc
       };
       const utilities={...extraApi,getAccountId:()=>storageKey,exportTransfer};
       room=(params.get('preview')!=='single'?mountPetEstate:mountPetHouse)({
-        container:app,storageKey,storageAdapter:adapter,designService,
+        container:app,storageKey,storageAdapter:adapter,designService,economyService,
         quality:['low','balanced','high'].includes(params.get('quality'))?params.get('quality'):'auto',
-        initialPoints:1000,pointsLabel:'体验积分',demo:true,styles:false,
+        initialPoints,pointsLabel,demo,styles:false,
         bridge:{legacyName:'PetRoom',roomId:'pet-room-demo'},
         extendApi:core=>({...core,...utilities}),
         onEvent:type=>{if(serial===generation)void onGameEvent?.(type,room?.api);},
@@ -55,6 +56,7 @@ export function startDemo({openStorage,legacyStorageKey,legacyLinks=[],onlineAcc
     }catch(error){
       if(serial!==generation)return;
       disposeRoom();next?.dispose();transport=null;app.replaceChildren();
+      if(error.code==='SYNC_CONFLICT'&&error.recovery){showDatabaseConflict({app,error,onRecovered:()=>mount(storageKey)});return;}
       const message=document.createElement('p');message.textContent=error.message;app.append(message);
       const retry=document.createElement('button');retry.type='button';retry.textContent='重新打开';retry.onclick=()=>void mount(storageKey);app.append(retry);
     }

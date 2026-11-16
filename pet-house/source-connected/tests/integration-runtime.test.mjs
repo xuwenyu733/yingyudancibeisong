@@ -6,21 +6,25 @@ import vm from 'node:vm';
 import {resolveQuality,resolveRoomStorage} from '../runtime.mjs';
 import {DEFAULT_ASSET_URLS} from '../assets.mjs';
 import {createRendererSurface} from '../renderer-surface.mjs';
+import {createAdaptiveQuality,applySceneQuality} from '../adaptive-quality.mjs';
 
 const source=readFileSync(new URL('../room.js',import.meta.url),'utf8');
-test('low FPS fallback changes the live quality state without crashing the room',()=>{
-  const body=source.slice(source.indexOf('  function applyAutoDowngrade(){'),source.indexOf('  async function initialize(){'));
+test('adaptive quality resizes the actual renderer callback and recovers without changing geometry',()=>{
+  const begin=source.indexOf('  const adaptive=createAdaptiveQuality('),body=source.slice(begin,source.indexOf('\n',begin));
   const events=[],buffers=[];
   const canvas={style:{visibility:''}},renderer={setDrawingBufferSize:(...size)=>buffers.push(size),shadowMap:{enabled:true}};
   const surface=createRendererSurface({canvas,renderer,render(){}});
-  const context={quality:{...resolveQuality('balanced')},disposed:false,lowFpsStreak:4,
-    renderer,sun:{shadow:{mapSize:{set(){}}}},
+  const context={options:{quality:'auto'},createAdaptiveQuality,applySceneQuality,scene:{traverse(){}},quality:{...resolveQuality('balanced')},disposed:false,
+    renderer,sun:{shadow:{mapSize:{set(){}},map:null}},
     win:{devicePixelRatio:2},resize(){surface.resize(800,600,Math.min(context.win.devicePixelRatio,context.quality.maxPixelRatio));},resolveQuality,notify:(type,detail)=>events.push({type,...detail})};
   context.resize();buffers.length=0;
-  const run=vm.runInNewContext(`${body};applyAutoDowngrade`,context);run();run();
-  assert.equal(context.quality.profile,'low');assert.equal(context.quality.maxFPS,30);
+  const run=vm.runInNewContext(`${body};adaptive`,context);
+  for(let now=0;now<20000;now+=50)run.sample({now,interval:50,cost:20});
+  assert.equal(context.quality.profile,'balanced');assert.equal(context.quality.maxFPS,60);
   assert.equal(context.quality.autoDowngraded,true);assert.equal(context.renderer.shadowMap.enabled,false);
-  assert.deepEqual(buffers,[[800,600,1]]);assert.equal(events.length,1);assert.equal(events[0].from,'balanced');surface.dispose();
+  assert.equal(buffers.length,2);assert.equal(events.length,2);assert.equal(events[1].level,2);
+  for(let now=20000;now<55000;now+=16.667)run.sample({now,interval:16.667,cost:3});
+  assert.equal(context.quality.maxPixelRatio,1.5);assert.equal(context.quality.autoDowngraded,false);assert.equal(renderer.shadowMap.enabled,true);surface.dispose();
 });
 test('complete package entry can be imported by SSR without reading document or window',()=>{
   const url=new URL('../pet-house.js',import.meta.url).href;

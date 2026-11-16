@@ -1,12 +1,12 @@
 /**
  * 购买家具的候选落点排序（纯逻辑，可在 Node 中测试）。
  * 原来的“从近到远、从左到右”贪心会把新家具摆到过道/视线中央；
- * 这里按“靠近墙壁优先”排序：候选点不变、可放置集合不变，只调整尝试顺序，
- * 让新家具更自然贴墙，同时仍然避开已有家具（由 layoutManager 校验）。
+ * 默认保留靠墙排序；accessible 模式优先尝试靠前、较易点选的位置。
+ * 两种模式的候选集合相同，始终由 layoutManager 校验碰撞和导航。
  */
 export function placementOrder(bounds, options = {}) {
   // 兼容两种调用：placementOrder(bounds, .65) 与 placementOrder(bounds, {step:.65, margin:0})
-  const { step = .65, margin = 0 } = Number.isFinite(options) ? { step: options } : options;
+  const { step = .65, margin = 0, accessible = false } = Number.isFinite(options) ? { step: options } : options;
   const points = [];
   if (!bounds || !Number.isFinite(step) || step <= 0 || !Number.isFinite(margin) || margin < 0) return points;
   const keys = ['minX', 'maxX', 'minZ', 'maxZ'];
@@ -20,6 +20,10 @@ export function placementOrder(bounds, options = {}) {
     x - (bounds.minX + margin), (bounds.maxX - margin) - x,
     z - (bounds.minZ + margin), (bounds.maxZ - margin) - z,
   );
-  points.sort((a, b) => wallDistance(a) - wallDistance(b));
+  if(accessible){
+    const width=Math.max(step,bounds.maxX-bounds.minX),depth=Math.max(step,bounds.maxZ-bounds.minZ),x=(bounds.minX+bounds.maxX)/2,z=(bounds.minZ+bounds.maxZ)/2+depth*.18;
+    const score=point=>((point[0]-x)/width)**2+((point[1]-z)/depth)**2;
+    points.sort((a,b)=>score(a)-score(b));
+  }else points.sort((a, b) => wallDistance(a) - wallDistance(b));
   return points;
 }

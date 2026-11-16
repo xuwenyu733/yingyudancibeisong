@@ -8,7 +8,7 @@ import {acquireStorageLock} from './storage.mjs';
 import {validateCompanion,COMPANION_SUFFIX} from './companion-state.mjs';
 
 export const ARCHIVE_FORMAT = 1;
-export const ARCHIVE_VERSION = '2.28.1';
+export const ARCHIVE_VERSION = '2.42.0';
 
 const plain = value => value !== null && typeof value === 'object' && [Object.prototype,null].includes(Object.getPrototypeOf(value));
 const economyViewKeys=['valid','writable','error','catalog','tiers','nextTier','pets'];

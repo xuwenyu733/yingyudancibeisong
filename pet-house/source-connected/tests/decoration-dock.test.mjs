@@ -83,26 +83,26 @@ test('decoration bottom dock and collapse interactions in Chromium', { skip: !pl
       assert.equal(await page.locator(control('selected-name')).textContent(), '家具 1');
     }));
 
-    await t.test('overflow arrows reveal later furniture and return to the start', () => pageFor(async page => {
-      assert.equal(await page.locator(control('storage-prev')).isDisabled(), true);
-      assert.equal(await page.locator(control('storage-next')).isEnabled(), true);
-      await page.locator(control('storage-next')).click();
-      await page.waitForFunction(() => document.querySelector('[data-room-control="storage-strip-row"]').scrollLeft > 20);
-      assert.equal(await page.locator(control('storage-prev')).isEnabled(), true);
-      await page.locator(control('storage-prev')).click();
-      await page.waitForFunction(() => document.querySelector('[data-room-control="storage-strip-row"]').scrollLeft < 2);
-      assert.equal(await page.locator(control('storage-prev')).isDisabled(), true);
+    await t.test('the mouse wheel scrolls furniture continuously in both directions', () => pageFor(async page => {
+      const row=page.locator(control('storage-strip-row'));
+      assert.equal(await page.locator(control('storage-prev')+','+control('storage-next')).count(),0);
+      await row.hover();
+      await page.mouse.wheel(0,40);
+      await page.waitForFunction(() => document.querySelector('[data-room-control="storage-strip-row"]').scrollLeft === 40);
+      await page.mouse.wheel(0,25);
+      await page.waitForFunction(() => document.querySelector('[data-room-control="storage-strip-row"]').scrollLeft === 65);
+      await page.mouse.wheel(0,-200);
+      await page.waitForFunction(() => document.querySelector('[data-room-control="storage-strip-row"]').scrollLeft === 0);
     }));
 
-    await t.test('instant arrow navigation updates both boundary controls in the same interaction', () => pageFor(async page => {
-      // A reduced-motion instant scroll changes scrollLeft before the browser
-      // delivers its scroll event. Read in this same task to cover that gap.
+    await t.test('line-mode wheel input stays gradual and modified wheel is left to the browser', () => pageFor(async page => {
       const result=await page.evaluate(()=>{
-        const row=document.querySelector('[data-room-control="storage-strip-row"]'),previous=document.querySelector('[data-room-control="storage-prev"]'),next=document.querySelector('[data-room-control="storage-next"]');
-        next.click();const forward={left:row.scrollLeft,previousDisabled:previous.disabled};previous.click();return {forward,backward:{left:row.scrollLeft,previousDisabled:previous.disabled,nextDisabled:next.disabled}};
+        const row=document.querySelector('[data-room-control="storage-strip-row"]');
+        const scroll=options=>row.dispatchEvent(new WheelEvent('wheel',{deltaMode:1,deltaY:2,cancelable:true,...options}));
+        const allowed=scroll({});const afterScroll=row.scrollLeft;const modifierAllowed=scroll({ctrlKey:true});
+        return {allowed,afterScroll,modifierAllowed,afterModifier:row.scrollLeft};
       });
-      assert.ok(result.forward.left>20);assert.equal(result.forward.previousDisabled,false);
-      assert.ok(result.backward.left<2);assert.equal(result.backward.previousDisabled,true);assert.equal(result.backward.nextDisabled,false);
+      assert.deepEqual(result,{allowed:false,afterScroll:32,modifierAllowed:true,afterModifier:32});
     }));
 
     await t.test('dragging from a stored card commits only on canvas release with a finite ground position', () => pageFor(async page => {

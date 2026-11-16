@@ -328,6 +328,12 @@ test('invalid import options and non-Error adapter exceptions remain contained',
 });
 
 const SHOP_BOX={label:'商店小柜',boxes:[{center:[0,.5,0],size:[.5,1,.5]}],blocksNavigation:true,blocksPlacement:true};
+test('a rejected interaction approach rolls registration back before its collection or edit snapshot changes',()=>{
+ const context=fixture(),{manager}=context,root=addShopRoot(context),before=manager.snapshot();let checked=false;
+ assert.equal(manager.registerFurniture(root.name,root,SHOP_BOX,{validatePlacement:({obstacles,bounds})=>{checked=true;assert(obstacles.some(x=>x.id===root.name));assert(Number.isFinite(bounds.minX));return false;}}),false);
+ assert(checked);assert.deepEqual(manager.snapshot(),before);assert(!manager.obstacles.some(x=>x.id===root.name));assert(!manager.definitions[root.name]);
+ assert.equal(manager.registerFurniture(root.name,root,SHOP_BOX,{validatePlacement:()=>true}),true);assert(manager.definitions[root.name]);
+});
 function addShopRoot(context,id='shop-cabinet-1',position=[2.5,0,2.5]) {
   const root=new Group();root.name=id;root.position.fromArray(position);
   context.scene.add(root);context.furniture.set(id,root);return root;

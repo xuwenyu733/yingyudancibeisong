@@ -1,10 +1,14 @@
 <template>
   <view class="room-page">
-    <!-- App 上 web-view 默认盖住同页组件，需用 plus 把子 webview 下移露出顶栏 -->
     <view class="bar" :style="barStyle">
-      <view class="page-back" @click="back" />
+      <view class="page-back" role="button" aria-label="返回" @click="back" />
       <text class="title">学习小屋</text>
-      <text class="reload" @click="reload">刷新</text>
+      <view class="bar-actions">
+        <!-- #ifdef APP-PLUS -->
+        <button class="back ghost" @click="toggleOrientation">横竖切换</button>
+        <!-- #endif -->
+        <button class="back ghost" @click="reload">刷新</button>
+      </view>
     </view>
 
     <view class="stage">
@@ -14,7 +18,8 @@
         class="frame"
         :src="roomSrc"
         title="杏橘狐学习小屋"
-        allow="autoplay"
+        allow="autoplay; fullscreen"
+        allowfullscreen
       />
       <!-- #endif -->
 
@@ -30,21 +35,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
-import { onReady, onShow } from "@dcloudio/uni-app";
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
+import { onHide, onReady, onShow } from "@dcloudio/uni-app";
 import { usePlayerStore } from "../../stores/player";
-import { buildRoomUrl, roomRuntimeTip } from "../../utils/room-bridge";
+import { buildAuthenticatedRoomUrl, createNativeRoomOrientation } from "../../utils/room-bridge";
 import { chromePadStyle, hydrateSafeArea, statusBarPx } from "../../utils/safe-area";
 
 const BAR_CONTENT = 44;
+const barStyle = computed(() => chromePadStyle(BAR_CONTENT));
+
 const player = usePlayerStore();
+const roomOrientation = createNativeRoomOrientation();
 const roomSrc = ref("");
 const tip = ref("");
 const tipFading = ref(false);
-let tipTimer: ReturnType<typeof setTimeout> | null = null;
+let roomGeneration = 0;
+let pageActive = false;
 let layoutTimer: ReturnType<typeof setTimeout> | null = null;
-
-const barStyle = computed(() => chromePadStyle(BAR_CONTENT));
+let tipTimer: ReturnType<typeof setTimeout> | null = null;
 
 function clearTipTimer() {
   if (tipTimer) {
@@ -83,6 +91,7 @@ function handleCreditsApplied(applied = 0) {
 function layoutAppWebview() {
   // #ifdef APP-PLUS
   try {
+    if (!pageActive || !roomSrc.value) return;
     hydrateSafeArea();
     const pages = getCurrentPages();
     const page = pages[pages.length - 1] as {
@@ -94,7 +103,8 @@ function layoutAppWebview() {
     const child = current?.children?.()?.[0];
     if (!child) return;
     const top = Math.max(statusBarPx.value, 0) + BAR_CONTENT;
-    const height = Math.max(120, plus.display.resolutionHeight - top);
+    const screenHeight = Number(plus.display.resolutionHeight) || uni.getSystemInfoSync().windowHeight;
+    const height = Math.max(120, screenHeight - top);
     child.setStyle({
       top: `${top}px`,
       height: `${height}px`,
@@ -108,7 +118,8 @@ function layoutAppWebview() {
 
 function scheduleLayout() {
   // #ifdef APP-PLUS
-  if (layoutTimer) clearTimeout(layoutTimer);
+  clearLayoutTimer();
+  if (!pageActive) return;
   layoutTimer = setTimeout(() => {
     layoutAppWebview();
     layoutTimer = null;
@@ -116,20 +127,47 @@ function scheduleLayout() {
   // #endif
 }
 
-function refresh() {
-  player.hydrate();
-  hydrateSafeArea();
-  roomSrc.value = buildRoomUrl();
-  showTip(roomRuntimeTip(), false);
-  scheduleLayout();
+function clearLayoutTimer() {
+  if (layoutTimer) clearTimeout(layoutTimer);
+  layoutTimer = null;
+}
+
+async function refresh() {
+  if (!pageActive) return;
+  const serial = ++roomGeneration;
+  player.hydrate(); hydrateSafeArea(); roomSrc.value = "";
+  showTip("正在连接你的小屋…", true);
+  try {
+    const url = await buildAuthenticatedRoomUrl();
+    if (serial !== roomGeneration) return;
+    roomSrc.value = url;
+    dismissTip();
+    await nextTick();
+    if (serial === roomGeneration) scheduleLayout();
+  } catch (error) {
+    if (serial === roomGeneration) showTip(error instanceof Error ? error.message : "小屋连接未完成，请点击刷新重试", true);
+  }
 }
 
 function reload() {
-  roomSrc.value = "";
-  setTimeout(refresh, 30);
+  void refresh();
 }
 
+// #ifdef APP-PLUS
+function toggleOrientation() {
+  const { windowWidth, windowHeight } = uni.getSystemInfoSync();
+  const direction = windowWidth > windowHeight ? "portrait" : "landscape";
+  if (!roomOrientation.set(direction)) showTip("暂时无法切换屏幕方向");
+  else scheduleLayout();
+}
+// #endif
+
 function back() {
+  pageActive = false;
+  clearLayoutTimer();
+  ++roomGeneration;
+  roomOrientation.leave();
+  // 固定回到家园 Tab（学习小屋入口页），不依赖页面栈来源
   uni.switchTab({ url: "/pages/pet/index" });
 }
 
@@ -137,40 +175,54 @@ function onMessage(event: { detail?: { data?: unknown[] } }) {
   const payload = event.detail?.data?.[0] as
     | { event?: string; detail?: { applied?: number } }
     | undefined;
+  if ((payload?.event === "room-access-exit" || payload?.event === "host-exit")) { back(); return; }
   if (payload?.event === "host-credits-applied") {
     handleCreditsApplied(payload.detail?.applied || 0);
   }
-  if (payload?.event === "host-exit") back();
 }
 
 function onWindowMessage(event: MessageEvent) {
+  const frame = document.querySelector(".room-page iframe") as HTMLIFrameElement | null;
+  if (!frame || event.source !== frame.contentWindow || !roomSrc.value || event.origin !== new URL(roomSrc.value).origin) return;
   const data = event.data as { event?: string; detail?: { applied?: number } };
+  if ((data?.event === "room-access-exit" || data?.event === "host-exit")) { back(); return; }
   if (data?.event === "host-credits-applied") {
     handleCreditsApplied(data.detail?.applied || 0);
   }
-  if (data?.event === "host-exit") back();
 }
 
-onReady(() => {
-  scheduleLayout();
-});
+onReady(scheduleLayout);
 
 onMounted(() => {
+  uni.onWindowResize(scheduleLayout);
   // #ifdef H5
   window.addEventListener("message", onWindowMessage);
   // #endif
 });
 
 onUnmounted(() => {
+  pageActive = false;
+  uni.offWindowResize(scheduleLayout);
+  clearLayoutTimer();
+  ++roomGeneration;
   clearTipTimer();
-  if (layoutTimer) clearTimeout(layoutTimer);
+  roomOrientation.leave();
   // #ifdef H5
   window.removeEventListener("message", onWindowMessage);
   // #endif
 });
 
 onShow(() => {
-  refresh();
+  pageActive = true;
+  void refresh();
+});
+onHide(() => {
+  pageActive = false;
+  clearLayoutTimer();
+  ++roomGeneration;
+  roomSrc.value = "";
+  clearTipTimer();
+  roomOrientation.leave();
 });
 </script>
 
@@ -180,52 +232,62 @@ onShow(() => {
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: #eef6ef;
+  background: #f3eddd;
   overflow: hidden;
 }
 
 .bar {
   position: relative;
-  flex: none;
   z-index: 20;
+  box-sizing: border-box;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding-right: 12px;
-  padding-bottom: 8px;
   padding-left: 8px;
-  box-sizing: border-box;
   background: rgba(247, 244, 238, 0.98);
+  border-bottom: 1px solid #e5dcc7;
   backdrop-filter: blur(8px);
 }
 
 .title {
-  position: absolute;
-  left: 72px;
-  right: 72px;
+  flex: 1;
+  min-width: 0;
   text-align: center;
   font-weight: 800;
   font-size: 15px;
-  color: #1d3557;
-  pointer-events: none;
+  color: #465341;
 }
 
-.reload {
-  z-index: 1;
-  min-width: 40px;
-  text-align: right;
-  color: #249672;
-  font-size: 13px;
-  font-weight: 700;
+.bar-actions { display: flex; align-items: center; gap: 6px; }
+
+.back {
+  min-width: 56px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  margin: 0;
+  border: 0;
+  background: #587553;
+  color: #ffffff;
+  font-size: 12px;
 }
+
+.back.ghost {
+  background: #fffdfa;
+  color: #53674e;
+  border: 1px solid #dddcc9;
+}
+.back::after { border: 0; }
 
 .stage {
   position: relative;
   flex: 1;
   min-height: 0;
   width: 100%;
-  background: #f3eddd;
 }
 
 .frame {
@@ -247,15 +309,21 @@ onShow(() => {
   border-radius: 12px;
   font-size: 12px;
   line-height: 1.45;
-  color: #1d3557;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid #c9e8da;
-  box-shadow: 0 6px 18px rgba(29, 53, 87, 0.1);
+  color: #5b4636;
+  background: rgba(255, 249, 235, 0.94);
+  border: 1px solid rgba(214, 184, 140, 0.55);
+  box-shadow: 0 6px 18px rgba(70, 50, 20, 0.12);
   transition: opacity 0.28s ease, transform 0.28s ease;
 }
 
 .tip.fade {
   opacity: 0;
   transform: translateY(6px);
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .bar { padding-right: max(10px, env(safe-area-inset-right)); padding-left: max(10px, env(safe-area-inset-left)); gap: 6px; }
+  .back { height: 28px; line-height: 28px; font-size: 11px; }
+  .title { font-size: 13px; }
+  .tip { left: max(10px, env(safe-area-inset-left)); right: calc(86px + env(safe-area-inset-right)); padding: 5px 9px; font-size: 11px; pointer-events: none; }
 }
 </style>

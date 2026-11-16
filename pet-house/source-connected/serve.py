@@ -17,6 +17,11 @@ class LocalHTTPServer(ThreadingHTTPServer):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=8766)
+    parser.add_argument(
+        '--host',
+        default='127.0.0.1',
+        help='Listen address. Use 0.0.0.0 so phone H5 on LAN can open the room.',
+    )
     parser.add_argument('--no-browser', action='store_true')
     parser.add_argument('--preview', choices=['qa', 'estate'], default=None)
     args = parser.parse_args()
@@ -27,20 +32,25 @@ def main():
             self.send_header('Cache-Control', 'no-cache')
             super().end_headers()
     handler = functools.partial(Handler, directory=str(root))
+    host = args.host
     server = None
     for port in range(args.port, args.port + 10):
         try:
-            server = LocalHTTPServer(('127.0.0.1', port), handler)
+            server = LocalHTTPServer((host, port), handler)
             break
         except OSError:
             continue
     if server is None:
         raise SystemExit('No available local port. Try: python serve.py --port 8865')
-    url = f'http://127.0.0.1:{server.server_port}/'
+    display_host = '127.0.0.1' if host in ('0.0.0.0', '::') else host
+    url = f'http://{display_host}:{server.server_port}/'
     if args.preview:
         url += f'?preview={args.preview}'
     print(f'ORIGINAL PET ROOM: {url}', flush=True)
-    print('Local only. Press Ctrl+C to stop.', flush=True)
+    if host in ('0.0.0.0', '::'):
+        print('Listening on all interfaces (phone LAN OK). Press Ctrl+C to stop.', flush=True)
+    else:
+        print('Local only. Use --host 0.0.0.0 for phone H5. Press Ctrl+C to stop.', flush=True)
     if not args.no_browser:
         webbrowser.open(url)
     try:

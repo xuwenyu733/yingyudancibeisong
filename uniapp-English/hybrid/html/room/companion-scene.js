@@ -1,13 +1,15 @@
+import {createDish,createStoryBook} from './cozy-props.mjs';
+import {artById} from './studio-art.mjs';
 import {growthFor} from './growth.mjs';
 import {skinForAchievement,drawAchievementSkin} from './achievement-skins.mjs';
 import {drawFurnitureDrawing} from './drawing.mjs';
 /** Cosmetic meshes live outside the layout registry: animations never change saved transforms. */
-export function createCompanionScene({THREE,scene,doc,getActor,getFurniture,getSize,canVisit=()=>true,reducedMotion=false}){
+export function createCompanionScene({THREE,scene,doc,getActor,getFurniture,getSize,canVisit=()=>true,reducedMotion=false,appearanceOnly=false,allowPublicGrowth=false}){
   let disposed=false,signature='',outfitRoot=null,worldRoot=null,stylesSignature='',reaction=null,walkRitual=null,night=false;
   const motions=new Map(),cosmetics=new Map(),ownedResources=new Set(),pivots=new Map();
   let scaledModel=null,modelBaseScale=null,currentActor=null,gaitBase=null,elapsed=0,hatAttachment=null,hatAnchor=null;
   const blinkRest=new Map(),jointRest=new Map();
-  const growthRest=new Map(),sleepEyes=new Map(),sleepJoints=new Map();let fetching=null,sleeping=false;
+  const growthRest=new Map(),sleepEyes=new Map(),sleepJoints=new Map();let fetching=null,sleeping=false,meal=null;
   function track(object){object.traverse(node=>{node.layers.enable(1);if(node.geometry)ownedResources.add(node.geometry);for(const mat of Array.isArray(node.material)?node.material:[node.material])if(mat){ownedResources.add(mat);if(mat.map)ownedResources.add(mat.map);}});return object;}
   function releaseResource(resource){if(resource&&ownedResources.delete(resource))resource.dispose();}
   function release(object){if(!object)return;object.removeFromParent();object.traverse(node=>{releaseResource(node.geometry);for(const material of Array.isArray(node.material)?node.material:[node.material]){if(material&&ownedResources.has(material)){releaseResource(material.map);releaseResource(material);}}});}
@@ -15,11 +17,12 @@ export function createCompanionScene({THREE,scene,doc,getActor,getFurniture,getS
   function restoreJoints(){for(const [node,rotation]of jointRest)node.rotation.copy(rotation);jointRest.clear();}
   function wake(){for(const[node,scale]of sleepEyes)node.scale.copy(scale);for(const[node,rotation]of sleepJoints)node.rotation.copy(rotation);sleepEyes.clear();sleepJoints.clear();sleeping=false;resetGait();}
   function restoreGrowth(){for(const[node,scale]of growthRest)node.scale.copy(scale);growthRest.clear();}
+  function cancelMeal(){meal?.prop.dispose();meal=null;}
   function cancelFetch(){if(fetching?.prop)release(fetching.prop);fetching=null;}
   function resetGait(){if(currentActor?.gait&&gaitBase){currentActor.gait.position.copy(gaitBase.position);currentActor.gait.rotation.copy(gaitBase.rotation);}}
   function adoptActor(actor){
     const model=actor?.character?.model;if(model===scaledModel&&actor===currentActor)return;
-    wake();cancelFetch();restoreGrowth();restoreBlink();restoreJoints();resetGait();if(scaledModel&&modelBaseScale)scaledModel.scale.copy(modelBaseScale);
+    wake();cancelFetch();cancelMeal();restoreGrowth();restoreBlink();restoreJoints();resetGait();if(scaledModel&&modelBaseScale)scaledModel.scale.copy(modelBaseScale);
     currentActor=actor;scaledModel=model;modelBaseScale=model?.scale.clone()||null;
     gaitBase=actor?.gait?{position:actor.gait.position.clone(),rotation:actor.gait.rotation.clone()}:null;
     reaction=null;walkRitual=null;signature='';
@@ -40,16 +43,17 @@ export function createCompanionScene({THREE,scene,doc,getActor,getFurniture,getS
     else {const s=star();s.position.y=.35;root.add(s);root.add(mesh(new THREE.CylinderGeometry(.018,.018,.28,7),0xd7b16b,0,.14,0));}return root;}
   function sync(companion,profile={}){
     if(disposed)return;const actor=getActor(),size=getSize();adoptActor(actor);
-    const now=Date.now(),activeRewards=(companion.rewards||[]).filter(item=>!item.sku&&(!item.expiresAt||Date.parse(item.expiresAt)>now)).slice(-6),growth=growthFor(companion);
+    const now=Date.now(),activeRewards=(companion.rewards||[]).filter(item=>!item.sku&&(!item.expiresAt||Date.parse(item.expiresAt)>now)).slice(-6),growth=(appearanceOnly||allowPublicGrowth)&&['baby','young','adult'].includes(companion.growthStage)?{id:companion.growthStage}:growthFor(companion);
     // Include currently visible rewards, so a time boundary invalidates an otherwise unchanged state.
     const next=JSON.stringify([companion.petName,companion.roomName,companion.outfit,activeRewards,companion.garden,growth.id,size,night]);
-    if(next!==signature||outfitRoot?.parent!==actor?.facing){signature=next;release(worldRoot);release(outfitRoot);worldRoot=new THREE.Group();scene.add(worldRoot);
+    if(next!==signature||outfitRoot?.parent!==actor?.facing){signature=next;release(worldRoot);release(outfitRoot);worldRoot=null;
+      if(!appearanceOnly){worldRoot=new THREE.Group();scene.add(worldRoot);
       const plate=label(`⌂ ${companion.roomName}`);if(plate){plate.position.set(-size.width/2+1.5,1.25,size.depth/2-.16);worldRoot.add(plate);worldRoot.add(mesh(new THREE.CylinderGeometry(.035,.035,1.2,8),0xc0a276,plate.position.x,.6,plate.position.z));}
       const garden=new THREE.Group();garden.position.set(size.width/2-.9,.03,size.depth/2-1.15);garden.add(mesh(new THREE.CylinderGeometry(.48,.36,.25,16),0xd8a882,0,.125,0));garden.add(mesh(new THREE.CylinderGeometry(.45,.45,.025,16),0x8d7056,0,.26,0));
       const flowers=Math.min(7,companion.garden?.flowers||0);for(let i=0;i<Math.max(1,flowers);i++){const f=decoration('flower');f.position.set(Math.cos(i*2.4)*.27,.27,Math.sin(i*2.4)*.24);f.scale.setScalar(flowers?(.65+Math.min(.4,flowers*.05)):.35);garden.add(f);}worldRoot.add(garden);
       activeRewards.forEach((item,i)=>{const r=decoration(item.kind);r.name=`companion-reward-${item.id}`;r.userData.companionRewardId=item.id;r.position.set(size.width/2-.75-(i%3)*.65,.04,size.depth/2-2.2-Math.floor(i/3)*.7);worldRoot.add(r);});
       if(night){for(let i=0;i<17;i++){const s=star(0xffe8a4,.035+(i%3)*.014);s.position.set(-size.width/2+.5+(i*.91)%(size.width-1),2.8+(i%4)*.28,-size.depth/2+.23);worldRoot.add(s);}const z=label('z Z z',.8,.25);if(z){z.position.set(1,2.1,0);worldRoot.add(z);}}
-      track(worldRoot);
+      track(worldRoot);}
       hatAttachment=null;hatAnchor=null;
       if(actor){
         restoreGrowth();const growthFactor=growth.id==='adult'?1.13:growth.id==='young'?1.07:1;
@@ -76,14 +80,18 @@ export function createCompanionScene({THREE,scene,doc,getActor,getFurniture,getS
           if(o.hat==='star'){hatAttachment.add(mesh(new THREE.ConeGeometry(hatRadius,.19,16),0xb2a6dd,0,.105,hatFront));const s=star(0xffdf82,.075);s.position.set(0,.145,hatFront+.105);hatAttachment.add(s);}
           else if(o.hat==='unicorn'){hatAttachment.add(mesh(new THREE.ConeGeometry(.06,.26,12),0xeac6f3,0,.14,hatFront));const ring=mesh(new THREE.TorusGeometry(hatRadius,.025,7,20),0xf2c9df,0,.025,hatFront);ring.rotation.x=Math.PI/2;hatAttachment.add(ring);}
           else if(o.hat==='ears')for(const x of [-.10,.10])hatAttachment.add(mesh(new THREE.ConeGeometry(.065,.16,3),0x97c7bd,x,.09,hatFront+.04));
+          else if(o.hat==='gardener'){hatAttachment.add(mesh(new THREE.CylinderGeometry(hatRadius*1.7,hatRadius*1.7,.035,20),0xe5c889,0,.025,hatFront));hatAttachment.add(mesh(new THREE.CylinderGeometry(hatRadius*.8,hatRadius,.15,16),0xe5c889,0,.11,hatFront));hatAttachment.add(mesh(new THREE.CylinderGeometry(hatRadius*.96,hatRadius*1.04,.035,16),0x7fa270,0,.08,hatFront));}
+          else if(o.hat==='chef'){hatAttachment.add(mesh(new THREE.CylinderGeometry(hatRadius*.9,hatRadius,.12,16),0xfff8e8,0,.075,hatFront));for(const x of [-.08,0,.08])hatAttachment.add(mesh(new THREE.SphereGeometry(.09,12,9),0xfffdf4,x,.17,hatFront));}
+          else if(o.hat==='designer'){const cap=mesh(new THREE.SphereGeometry(hatRadius*1.25,16,10),0xb994b7,.025,.07,hatFront);cap.scale.y=.45;hatAttachment.add(cap);hatAttachment.add(mesh(new THREE.CylinderGeometry(.018,.018,.05,7),0x775578,.03,.14,hatFront));}
           outfitRoot.add(hatAttachment);
         }
         if(o.scarf&&o.scarf!=='none'){const scarf=mesh(new THREE.TorusGeometry(.155,.045,7,18),o.scarf==='rose'?0xeaa3b5:0x91c8b8,0,.42,.01);scarf.rotation.x=Math.PI/2;outfitRoot.add(scarf);outfitRoot.add(mesh(new THREE.BoxGeometry(.07,.18,.04),o.scarf==='rose'?0xeaa3b5:0x91c8b8,.1,.31,.16));}
         if(o.backpack==='school'){outfitRoot.add(mesh(new THREE.BoxGeometry(.26,.28,.13),0xc6b7df,0,.35,-.21));for(const x of [-.1,.1])outfitRoot.add(mesh(new THREE.BoxGeometry(.025,.32,.025),0xf0cc91,x,.37,0));}
-        const name=label(companion.petName,1.15,.25);if(name){name.position.set(0,1.45,0);outfitRoot.add(name);}actor.facing.add(outfitRoot);track(outfitRoot);updateHat();}
+        const name=appearanceOnly?null:label(companion.petName,1.15,.25);if(name){name.position.set(0,1.45,0);outfitRoot.add(name);}actor.facing.add(outfitRoot);track(outfitRoot);updateHat();}
     }
+    if(appearanceOnly)return;
     const furniture=getFurniture();
-    const styleNext=JSON.stringify([companion.furnitureStyles,profile.badges,[...furniture].map(([id,root])=>[id,root.uuid])]);
+    const styleNext=JSON.stringify([companion.roomArt,companion.furnitureStyles,profile.badges,[...furniture].map(([id,root])=>[id,root.uuid])]);
     if(styleNext!==stylesSignature){
       stylesSignature=styleNext;
       for(const [id,data]of cosmetics)if(furniture.get(id)!==data.root){restoreMaterials(data);cosmetics.delete(id);motions.delete(id);unwrapPivot(data.root);}
@@ -94,8 +102,8 @@ export function createCompanionScene({THREE,scene,doc,getActor,getFurniture,getS
         restoreMaterials(data);
         const skin=skinForAchievement(style.skinId||(style.achievementSkin?(profile.badges||[])[0]:'')),skinOwned=skin&&(profile.badges||[]).includes(skin.badgeId);
         let skinTexture=null;if(skinOwned){const c=doc.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');if(ctx&&drawAchievementSkin(ctx,skin)){skinTexture=new THREE.CanvasTexture(c);skinTexture.colorSpace=THREE.SRGBColorSpace;skinTexture.wrapS=skinTexture.wrapT=THREE.RepeatWrapping;skinTexture.repeat.set(2,2);ownedResources.add(skinTexture);}}
-        for(const [node,original]of data.base)if(style.color||style.achievementSkin||skinTexture){
-          const paint=material=>{const clone=material.clone();if(style.color)clone.color?.set(style.color);if(skinTexture){clone.map=skinTexture;clone.color?.set(0xffffff);clone.needsUpdate=true;}else if(style.achievementSkin){clone.color?.lerp(new THREE.Color(0xffd883),.45);clone.emissive?.set(0x332000);}ownedResources.add(clone);return clone;};
+        for(const [node,original]of data.base)if(style.color||style.achievementSkin||skinTexture||(companion.roomArt&&companion.roomArt!=='original')){
+          const paint=material=>{const clone=material.clone();if(companion.roomArt&&companion.roomArt!=='original'&&!style.color&&!material.map)clone.color?.lerp(new THREE.Color(artById(companion.roomArt).tint),.48);if(style.color)clone.color?.set(style.color);if(skinTexture){clone.map=skinTexture;clone.color?.set(0xffffff);clone.needsUpdate=true;}else if(style.achievementSkin){clone.color?.lerp(new THREE.Color(0xffd883),.45);clone.emissive?.set(0x332000);}ownedResources.add(clone);return clone;};
           node.material=Array.isArray(original)?original.map(paint):paint(original);
         }
         const marks=[];
@@ -129,12 +137,29 @@ export function createCompanionScene({THREE,scene,doc,getActor,getFurniture,getS
   function visualRoot(root){if(pivots.has(root))return pivots.get(root);const pivot=new THREE.Group();pivot.name='cosmetic-animation';for(const child of [...root.children])pivot.add(child);root.add(pivot);root.userData.feelPivot=pivot;pivots.set(root,pivot);return pivot;}
   function land(id){const root=getFurniture().get(id);if(!root||reducedMotion||disposed)return;const pivot=visualRoot(root);resetPivot(pivot);motions.set(id,{pivot,t:0,kind:'land'});}
   function transition(before){if(reducedMotion||disposed)return;for(const [id,old]of Object.entries(before?.furniture||{})){const root=getFurniture().get(id);if(!root||!Array.isArray(old.position))continue;const offset=new THREE.Vector3(...old.position).sub(root.position).applyQuaternion(root.quaternion.clone().invert()).divide(root.scale);const yaw=Math.atan2(Math.sin((old.rotation?.[1]||0)-root.rotation.y),Math.cos((old.rotation?.[1]||0)-root.rotation.y));const pivot=visualRoot(root);resetPivot(pivot);motions.set(id,{pivot,t:0,kind:'move',offset,yaw});}}
-  function react(kind='cheer'){const actor=getActor();if(disposed||reducedMotion||!actor)return;wake();cancelFetch();restoreBlink();restoreJoints();reaction={kind,t:0};actor.pose?.setCelebrate?.(1);}
+  function react(kind='cheer'){const actor=getActor();if(disposed||reducedMotion||!actor)return;wake();cancelFetch();cancelMeal();restoreBlink();restoreJoints();reaction={kind,t:0};actor.pose?.setCelebrate?.(1);}
+  function shareMeal(recipe='cookies'){
+    const actor=getActor();if(disposed||!actor||!['cookies','juice','tea'].includes(recipe))return false;adoptActor(actor);wake();cancelFetch();cancelMeal();restoreBlink();restoreJoints();
+    const prop=createDish(recipe,{plate:false});prop.root.name='pet-shared-meal';prop.root.scale.setScalar(.55);actor.facing.add(prop.root);meal={prop,recipe};reaction={kind:'snack',t:0};walkRitual=null;return true;
+  }
+  function startFurniture(kind,choice=null){
+    const actor=getActor();if(disposed||!actor||!['read','tea'].includes(kind))return false;adoptActor(actor);wake();cancelFetch();cancelMeal();restoreBlink();restoreJoints();
+    const prop=kind==='read'?createStoryBook({color:choice?.color}):createDish(choice?.recipe||'tea',{plate:false});prop.root.name='pet-furniture-prop';prop.root.scale.setScalar(kind==='read'?.50:.55);actor.facing.add(prop.root);meal={prop,recipe:kind,activity:true};reaction={kind:'snack',t:0};walkRitual=null;return true;
+  }
+  function mealFrame(actor,t){
+    if(!meal)return;let head;actor.character.model.traverse(n=>{if(!head&&n.isMesh&&/HeadShell$/.test(n.name))head=n;});
+    const progress=reducedMotion?1:Math.min(1,t/.65);const point=new THREE.Vector3(0,.52,.26);
+    if(head){head.geometry.computeBoundingBox();head.updateWorldMatrix(true,false);const box=head.geometry.boundingBox;point.copy(head.localToWorld(new THREE.Vector3(0,box.min.y+(box.max.y-box.min.y)*.23,box.max.z+.08)));actor.facing.worldToLocal(point);}
+    point.y-=(1-progress)*.18+(meal.recipe==='read'?.18:0);meal.prop.root.position.copy(point);meal.prop.animate(t,reducedMotion);if(meal.recipe==='read')meal.prop.root.rotation.x=.55;
+    if(!reducedMotion){if(meal.recipe!=='read')meal.prop.root.rotation.x=meal.recipe==='cookies'?-.10:Math.sin(Math.max(0,t-.8)*2)*.12;if(!meal.activity)meal.prop.food.scale.setScalar(t>2.3?Math.max(.15,1-(t-2.3)*.6):1);
+      actor.character.model.traverse(node=>{if(/Head$/.test(node.name)||/Shoulder_[LR]$/.test(node.name)){if(!jointRest.has(node))jointRest.set(node,node.rotation.clone());const base=jointRest.get(node);node.rotation.copy(base);if(/Head$/.test(node.name))node.rotation.x+=Math.sin(t*5)*.06;else{node.rotation.x-=.85*progress;node.rotation.z+=(node.name.endsWith('_L')?1:-1)*.25*progress;}}});
+    }
+  }
   function ritual(){if(disposed||reducedMotion||!getActor())return;react('cheer');walkRitual={t:0};}
   function setNight(value){night=!!value;if(!night)wake();signature='';}
   function fetchGift(gift={}){
     const actor=getActor();if(disposed||reducedMotion||!actor||actor.state!=='idle'||typeof actor.walkTo!=='function')return false;
-    wake();cancelFetch();restoreBlink();restoreJoints();reaction=null;walkRitual=null;
+    wake();cancelFetch();cancelMeal();restoreBlink();restoreJoints();reaction=null;walkRitual=null;
     const home={x:actor.root.position.x,z:actor.root.position.z},size=getSize(),directions=[[.8,0],[0,-.8],[-.8,0],[0,.8],[.55,.55],[-.55,-.55]];
     const away=directions.map(([x,z])=>({x:home.x+x,z:home.z+z})).find(point=>Math.abs(point.x)<size.width/2-.65&&Math.abs(point.z)<size.depth/2-.65&&canVisit(point));
     if(!away||actor.walkTo(away)===false)return false;
@@ -170,14 +195,15 @@ export function createCompanionScene({THREE,scene,doc,getActor,getFurniture,getS
     if(night&&!reaction&&!fetching&&['idle','seated'].includes(actor.state))sleepPose(actor);else if(sleeping)wake();
     if(fetching)fetchFrame(actor,dt);
     if(reaction){reaction.t+=dt;const t=reaction.t;
-      if(reaction.kind==='nuzzle'){actor.gait.rotation.z=gaitBase.rotation.z+Math.sin(t*7)*.12;actor.gait.position.x=gaitBase.position.x+Math.sin(t*4)*.065;actor.character.model.traverse(node=>{if(/Head$/.test(node.name)){if(!jointRest.has(node))jointRest.set(node,node.rotation.clone());node.rotation.z=jointRest.get(node).z+Math.sin(t*5)*.18;}});}
+      if(reaction.kind==='snack')mealFrame(actor,t);
+      else if(reaction.kind==='nuzzle'){actor.gait.rotation.z=gaitBase.rotation.z+Math.sin(t*7)*.12;actor.gait.position.x=gaitBase.position.x+Math.sin(t*4)*.065;actor.character.model.traverse(node=>{if(/Head$/.test(node.name)){if(!jointRest.has(node))jointRest.set(node,node.rotation.clone());node.rotation.z=jointRest.get(node).z+Math.sin(t*5)*.18;}});}
       else if(reaction.kind==='clap')actor.character.model.traverse(node=>{if(/Shoulder_[LR]$/.test(node.name)){if(!jointRest.has(node))jointRest.set(node,node.rotation.clone());const left=node.name.endsWith('_L');node.rotation.x=-1.2;node.rotation.z=(left?1:-1)*(.65+Math.abs(Math.sin(t*13))*.50);}});
       else if(actor.state==='idle'){actor.gait.position.y=gaitBase.position.y+Math.max(0,Math.sin(t*Math.PI*2.4))*.24*Math.max(0,1-t/1.3);actor.character.model.traverse(node=>{if(/Shoulder_[LR]$/.test(node.name)){if(!jointRest.has(node))jointRest.set(node,node.rotation.clone());node.rotation.x=-1.5+Math.sin(t*7)*.12;node.rotation.z=(node.name.endsWith('_L')?1:-1)*.4;}});}
-      if(t>=.10&&t<=.48)actor.character.model.traverse(node=>{if(/EyeBlink_L$/.test(node.name)){if(!blinkRest.has(node))blinkRest.set(node,node.scale.clone());node.scale.y=blinkRest.get(node).y*(1-.88*Math.sin((t-.1)/.38*Math.PI));}});
+      if(!reducedMotion&&t>=.10&&t<=.48)actor.character.model.traverse(node=>{if(/EyeBlink_L$/.test(node.name)){if(!blinkRest.has(node))blinkRest.set(node,node.scale.clone());node.scale.y=blinkRest.get(node).y*(1-.88*Math.sin((t-.1)/.38*Math.PI));}});
       else if(blinkRest.size)restoreBlink();
-      if(t>1.5){reaction=null;restoreBlink();restoreJoints();resetGait();}
+      if(t>(meal?.activity?6.5:reaction.kind==='snack'?3.8:1.5)){cancelMeal();reaction=null;restoreBlink();restoreJoints();resetGait();}
     }
     if(walkRitual){walkRitual.t+=dt;if(actor.state==='idle')actor.gait.rotation.y=gaitBase.rotation.y+Math.sin(Math.min(1,walkRitual.t/1.8)*Math.PI*2)*.45;if(walkRitual.t>1.8){actor.gait.rotation.y=gaitBase.rotation.y;walkRitual=null;}}
   }
-  return {sync,land,transition,react,ritual,setNight,fetchGift,frame,interrupt(){wake();cancelFetch();restoreBlink();restoreJoints();reaction=walkRitual=null;},get sleeping(){return sleeping;},get active(){return !disposed&&(!!reaction||!!walkRitual||!!fetching||motions.size>0);},dispose(){if(disposed)return;disposed=true;wake();cancelFetch();restoreGrowth();restoreBlink();restoreJoints();resetGait();if(scaledModel&&modelBaseScale)scaledModel.scale.copy(modelBaseScale);release(worldRoot);release(outfitRoot);for(const data of cosmetics.values())restoreMaterials(data);for(const root of [...pivots.keys()])unwrapPivot(root);for(const resource of [...ownedResources]){try{releaseResource(resource);}catch{}}ownedResources.clear();motions.clear();cosmetics.clear();reaction=walkRitual=null;hatAttachment=hatAnchor=scaledModel=currentActor=null;}};
+  return {sync,land,transition,react,shareMeal,startFurniture,ritual,setNight,fetchGift,frame,interrupt(){wake();cancelFetch();cancelMeal();restoreBlink();restoreJoints();reaction=walkRitual=null;},get sleeping(){return sleeping;},get active(){return !disposed&&(!!reaction||!!walkRitual||!!fetching||motions.size>0);},dispose(){if(disposed)return;disposed=true;wake();cancelFetch();cancelMeal();restoreGrowth();restoreBlink();restoreJoints();resetGait();if(scaledModel&&modelBaseScale)scaledModel.scale.copy(modelBaseScale);release(worldRoot);release(outfitRoot);for(const data of cosmetics.values())restoreMaterials(data);for(const root of [...pivots.keys()])unwrapPivot(root);for(const resource of [...ownedResources]){try{releaseResource(resource);}catch{}}ownedResources.clear();motions.clear();cosmetics.clear();reaction=walkRitual=null;hatAttachment=hatAnchor=scaledModel=currentActor=null;}};
 }

@@ -1,19 +1,23 @@
 {
-    "name":  "pet-room-local-mysql",
-    "version":  "1.4.1",
-    "private":  true,
-    "type":  "module",
-    "scripts":  {
-                    "start":  "node server/server.mjs",
-                    "init":  "node server/init.mjs",
-                    "migrate:worlds":  "node server/migrate-worlds.mjs",
-                    "test":  "node --test server/*.test.mjs",
-                    "check":  "node server/check-connection.mjs",
-                    "migrate:friendly":  "node server/migrate-friendly.mjs",
-                    "migrate:social":  "node server/migrate-social.mjs",
-                    "migrate:designs":  "node server/migrate-designs.mjs"
-                },
-    "dependencies":  {
-                         "mysql2":  "^3.24.6"
-                     }
+  "name": "pet-room-local-mysql",
+  "version": "1.8.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.mjs",
+    "init": "node server/init.mjs",
+    "migrate:worlds": "node server/migrate-worlds.mjs",
+    "test": "node --test server/*.test.mjs",
+    "check": "node server/check-connection.mjs",
+    "migrate:friendly": "node server/migrate-friendly.mjs",
+    "migrate:social": "node server/migrate-social.mjs",
+    "migrate:designs": "node server/migrate-designs.mjs",
+    "migrate:room-access": "node server/migrate-room-access.mjs",
+    "migrate:unlimited": "node server/migrate-unlimited-room.mjs",
+    "migrate:life": "node server/migrate-room-life.mjs",
+    "migrate:junior": "node server/migrate-junior-style.mjs"
+  },
+  "dependencies": {
+    "mysql2": "^3.24.6"
+  }
 }

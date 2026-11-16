@@ -9,7 +9,7 @@ import {
   writeFileSync,
   readFileSync,
 } from 'node:fs'
-import { join, dirname } from 'node:path'
+import { join, dirname, resolve, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -24,10 +24,13 @@ const isRealDir = (p) => {
   }
 }
 const srcCandidate =
-  (isRealDir(roomV2) && roomV2) ||
   (isRealDir(petHouseSource) && petHouseSource) ||
+  (isRealDir(roomV2) && roomV2) ||
   null
 const dest = join(root, 'hybrid', 'html', 'room')
+const allowedBase = resolve(root, 'hybrid', 'html')
+const resolvedDest = resolve(dest)
+if (relative(allowedBase, resolvedDest) !== 'room' || resolvedDest === resolve(srcCandidate || root) || (existsSync(dest) && lstatSync(dest).isSymbolicLink())) throw new Error('拒绝清理预期仓鼠屋目录以外的路径')
 
 if (!srcCandidate) {
   console.error(
@@ -47,6 +50,7 @@ const copyFilter = (path) => {
   if (normalized.includes('/examples/')) return false
   if (normalized.includes('/server-proto/')) return false
   if (normalized.includes('/node_modules/')) return false
+  if (normalized.includes('/__pycache__') || normalized.endsWith('.pyc')) return false
   if (normalized.endsWith('/tools')) return false
   if (normalized.includes('/tools/')) return false
   // 根目录预览大图可跳过，assets 内缩略图保留
@@ -107,11 +111,19 @@ writeFileSync(
   <link rel="stylesheet" href="./creative-ui.css">
   <link rel="stylesheet" href="./social.css">
   <link rel="stylesheet" href="./design-ui.css">
+  <link rel="stylesheet" href="./room-access.css">
+  <link rel="stylesheet" href="./room-navigation.css">
+  <link rel="stylesheet" href="./room-landscape.css">
+  <link rel="stylesheet" href="./life-ui.css">
+  <link rel="stylesheet" href="./studio.css?v=2.36.1">
+  <link rel="stylesheet" href="./adventure.css?v=2.36.1">
+  <link rel="stylesheet" href="./responsive-layout.css?v=2.36.1">
   <link rel="stylesheet" href="./host-mobile.css">
   <style>html,body,#app{width:100%;height:100%;margin:0;overflow:hidden}body{background:#f3eddd}</style>
 </head>
 <body>
   <main id="app"></main>
+  <script src="./vendor/uni.webview.1.5.8.js"></script>
   <script type="module" src="./bootstrap-app.js"></script>
 </body>
 </html>

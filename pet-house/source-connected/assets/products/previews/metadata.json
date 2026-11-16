@@ -5,11 +5,11 @@
   "sources": [
     {
       "file": "scene-economy.js",
-      "sha256": "67bcfc4315cce30fabc46c33b77d2345c1511c2c24f31eb7952ae2799fbfbdc8"
+      "sha256": "133e2a377fd73243bb251956f1747a1274cc414095e8834d795415b72be17df8"
     },
     {
       "file": "surface-models.mjs",
-      "sha256": "ae2a5330025f3e48168cf3be6dc96d287af71bf879d0e62bd08d2b061de22127"
+      "sha256": "c75d8120ce2698b643e1265707eba90b09ad939558c30e4eca5c65aedb4c5f8c"
     },
     {
       "file": "decor.js",
@@ -26,6 +26,10 @@
     {
       "file": "product-previews.mjs",
       "sha256": "ea9e4ddd5a2a433a9f639f497bb0ff3c68a69baecbd886b5f597c58415ef2b43"
+    },
+    {
+      "file": "visual-style.mjs",
+      "sha256": "4a2243a7c5424585c87d8653457700e0fcf9219ec420e040dd9b0fddc50e8496"
     }
   ],
   "entries": [
@@ -50,8 +54,8 @@
       "file": "clover-planter.png",
       "width": 512,
       "height": 384,
-      "bytes": 36478,
-      "sha256": "ea860ce4848308f4464741e75ef6d6d262fae221b0f72267a55396b99b206d2d"
+      "bytes": 37304,
+      "sha256": "f11593fd392333a1a3c758e1b80b3cc7b55be743c138f73779c9cf4876f7ad35"
     },
     {
       "sku": "reading-shelf",
@@ -74,8 +78,8 @@
       "file": "reading-shelf.png",
       "width": 512,
       "height": 384,
-      "bytes": 56025,
-      "sha256": "0e3345fb6609367b9527c89a129f639a9e9e483cf4618cff77bad235c9438c60"
+      "bytes": 55969,
+      "sha256": "4f3c1f6f93a1dc79b177bdc872dc640f155c4eb2eced62ba8c220289dd97da08"
     },
     {
       "sku": "cloud-table",
@@ -98,8 +102,8 @@
       "file": "cloud-table.png",
       "width": 512,
       "height": 384,
-      "bytes": 27484,
-      "sha256": "d64bcb0170526671ab63d1f939d4bc0d575694eec2974a8af6c8720a90e7ec02"
+      "bytes": 27976,
+      "sha256": "4a3436580f4db28a702526d6088f9e6dc242b43d4867cd2c5549340b6e460550"
     },
     {
       "sku": "moon-ornament",
@@ -122,8 +126,8 @@
       "file": "moon-ornament.png",
       "width": 512,
       "height": 384,
-      "bytes": 23889,
-      "sha256": "fa0b628f2bf6f0a192b70f9fcb187d914dbda4f2143ee36be79c898f5215aea1"
+      "bytes": 24143,
+      "sha256": "a0bdb4dbce1c1582c72a7ab0bcd691b50886b8f9579b6fdeb35f69c952ba526f"
     },
     {
       "sku": "star-lamp",
@@ -146,8 +150,8 @@
       "file": "star-lamp.png",
       "width": 512,
       "height": 384,
-      "bytes": 27485,
-      "sha256": "2b0697e3447d55ca402ecca3f63402ac854b487e8b450bbe21c8bb366d93476e"
+      "bytes": 28103,
+      "sha256": "4afaa80fa605b8599c67b1933a2632b30e5997513b704303785e51f1ab0562c6"
     },
     {
       "sku": "mushroom-stool",
@@ -170,8 +174,8 @@
       "file": "mushroom-stool.png",
       "width": 512,
       "height": 384,
-      "bytes": 32242,
-      "sha256": "c19658fc5cf67bb219268f0de85bd0d3ff048bff3038ff465e7a0d89668e55f7"
+      "bytes": 33529,
+      "sha256": "6cc4fc0fcc41427996ae9eb293dc0c247d5ce69c89ec5ea878879d40f71d4fff"
     },
     {
       "sku": "beehive-ornament",
@@ -194,8 +198,8 @@
       "file": "beehive-ornament.png",
       "width": 512,
       "height": 384,
-      "bytes": 38102,
-      "sha256": "e62ca0d4587c62503e4c9e60e69ebd3f25d19e11882114548bb17cd1bb8e4321"
+      "bytes": 39113,
+      "sha256": "5775766c9512e21521e17f2a5f3763106311384f79ecb71a86a7c9e69a884b23"
     },
     {
       "sku": "rocket-toy",
@@ -218,8 +222,8 @@
       "file": "rocket-toy.png",
       "width": 512,
       "height": 384,
-      "bytes": 29352,
-      "sha256": "8f57b35523e57bc624ecf4bcbd5b29168d99d017ef45609526c00909bd22fb8e"
+      "bytes": 30630,
+      "sha256": "393c979a54bf36ce442060af8310c6314a548ab8126211970a21698ad9f5670b"
     },
     {
       "sku": "rainbow-arch",
@@ -242,8 +246,8 @@
       "file": "rainbow-arch.png",
       "width": 512,
       "height": 384,
-      "bytes": 39852,
-      "sha256": "ebea6cd8595fd4c53bd30c28509ef667b7da90db59efe4d22fbddfa96c9434f1"
+      "bytes": 40927,
+      "sha256": "83ce669049afdbf575563bdfdb44261cb6d54893f5f20ed6461ac123f20aa638"
     },
     {
       "sku": "candy-tree",
@@ -266,8 +270,8 @@
       "file": "candy-tree.png",
       "width": 512,
       "height": 384,
-      "bytes": 37027,
-      "sha256": "082e332f793d10b728ea43301a81d815a371ffb874d367ff23e823942f8e2643"
+      "bytes": 38128,
+      "sha256": "804a62bce1549cbc05e2082b40d608a51f4c3661fcf7c0b1eff72981e59970bc"
     },
     {
       "sku": "tile-honey-grid",
@@ -290,8 +294,8 @@
       "file": "tile-honey-grid.png",
       "width": 512,
       "height": 384,
-      "bytes": 10959,
-      "sha256": "ee8c3d623cdaa8fa650987fec4bda468f6cbd724d0afe23f71a1519311e4e8e5"
+      "bytes": 10978,
+      "sha256": "0b77f12b968fe7b542e13e21d93d952ffa958d475e1e0ecf844e73a0608ef86d"
     },
     {
       "sku": "tile-blush-checker",
@@ -314,8 +318,8 @@
       "file": "tile-blush-checker.png",
       "width": 512,
       "height": 384,
-      "bytes": 11953,
-      "sha256": "1d47c095e167a96b6d448e7272a9b52a57f7b6397e3e07ae3ea55bc266761a48"
+      "bytes": 11974,
+      "sha256": "8b3024e1fa6da3288155ba0ab4247bb1689d5c37eaeb661e574c0d8632f90407"
     },
     {
       "sku": "tile-mint-diamond",
@@ -338,8 +342,8 @@
       "file": "tile-mint-diamond.png",
       "width": 512,
       "height": 384,
-      "bytes": 16466,
-      "sha256": "34d63f064e05de33403bbdbb7c689db359393cb2f89c8057141224caa55bdcad"
+      "bytes": 16527,
+      "sha256": "1fe6b3cb5cda29d4d7072b7945df56370855dc757831922c0c02b55d07aaa242"
     },
     {
       "sku": "tile-blue-mosaic",
@@ -362,8 +366,8 @@
       "file": "tile-blue-mosaic.png",
       "width": 512,
       "height": 384,
-      "bytes": 17470,
-      "sha256": "7b6f1d4bfb255c20d9db78568b6aa0dfb5e263bdf34d802d4567f7f327cf51b1"
+      "bytes": 17652,
+      "sha256": "ee5e9b5a98214fd2099d1cd6a1c6ca08db42bc6cc01fe5abe6569b7653d73c71"
     },
     {
       "sku": "tile-sakura-terrazzo",
@@ -386,8 +390,8 @@
       "file": "tile-sakura-terrazzo.png",
       "width": 512,
       "height": 384,
-      "bytes": 16109,
-      "sha256": "b8dbdc9b6590225aaa4d69577c51b40667a9054a09a99a7a3c042b404b9bde27"
+      "bytes": 16166,
+      "sha256": "59076f4aa29c093221cbc14085e2c9607d2c73699b2a650f919176c62d3b597e"
     },
     {
       "sku": "tile-walnut-parquet",
@@ -410,8 +414,8 @@
       "file": "tile-walnut-parquet.png",
       "width": 512,
       "height": 384,
-      "bytes": 18311,
-      "sha256": "48989ff28f15325736e69e45ce35fd359f18992c2ea26aed57b36b8398aeb57d"
+      "bytes": 18350,
+      "sha256": "7dcb031239e4eea268f4ef364f8307d05f4833f6e1c3112256fe2713348bc721"
     },
     {
       "sku": "tile-moon-marble",
@@ -434,8 +438,8 @@
       "file": "tile-moon-marble.png",
       "width": 512,
       "height": 384,
-      "bytes": 15459,
-      "sha256": "e92a00a9538f1470c2935dc03f438d20b4bbf1d5811a282f62c96e212b72a4da"
+      "bytes": 15586,
+      "sha256": "006d5ff6191dd817dcf72c039da1093c9d422def0ea1cb3fe9bfd0643a02f429"
     },
     {
       "sku": "tile-royal-medallion",
@@ -458,8 +462,8 @@
       "file": "tile-royal-medallion.png",
       "width": 512,
       "height": 384,
-      "bytes": 26069,
-      "sha256": "be46c008aef5f20df70adb970841240ba5b1325c7a3fcda73e65f6050f60594e"
+      "bytes": 26085,
+      "sha256": "103bd1f412f8da6a1d7711d651625c224b61c420a6b85bd604189db0e2874ffc"
     },
     {
       "sku": "wall-botanical-frame",
@@ -482,8 +486,8 @@
       "file": "wall-botanical-frame.png",
       "width": 512,
       "height": 384,
-      "bytes": 50070,
-      "sha256": "3096ccc3ed3763c81f07b0a198f678f416ca356fcb38c1aea8f13c5f0d4897c7"
+      "bytes": 49671,
+      "sha256": "b0ef723d19d86b99e15aa6678adea36c4e378dde10478b7d37992414c0b588d4"
     },
     {
       "sku": "wall-daisy-wreath",
@@ -506,8 +510,8 @@
       "file": "wall-daisy-wreath.png",
       "width": 512,
       "height": 384,
-      "bytes": 45889,
-      "sha256": "913cc15bb0e75d25ce0f14d1dac78269daf59d680512ec07a545b0ffcd82d5d9"
+      "bytes": 47430,
+      "sha256": "8e62b8b29cb519a2466a7ec3f2095b3ed545658adfe2117189937fa044b754fc"
     },
     {
       "sku": "wall-rainbow-cloud",
@@ -530,8 +534,8 @@
       "file": "wall-rainbow-cloud.png",
       "width": 512,
       "height": 384,
-      "bytes": 46854,
-      "sha256": "726d5d39df8758098d902350238d3d0e520c162456fa4144c1de8492cd87d257"
+      "bytes": 49231,
+      "sha256": "8f503f789f7c8270d5abe5e453eac8d8be4f5d7c4848c3f957a007c13e4b9163"
     },
     {
       "sku": "wall-butterfly-duo",
@@ -554,8 +558,8 @@
       "file": "wall-butterfly-duo.png",
       "width": 512,
       "height": 384,
-      "bytes": 41550,
-      "sha256": "48649fdbb3560aea4b48ea75fe49afc4f62868d9b7c51500c34034c7a67d1716"
+      "bytes": 44183,
+      "sha256": "1510097428ba8eeaf3596e8b234091b871314c7c7831b14296e6a763f2712ab4"
     },
     {
       "sku": "wall-moon-mobile",
@@ -578,8 +582,8 @@
       "file": "wall-moon-mobile.png",
       "width": 512,
       "height": 384,
-      "bytes": 13657,
-      "sha256": "60ab2469f684d9088711d230b841d36ab242a87337f52ee7d34d22c3eb748992"
+      "bytes": 13984,
+      "sha256": "54b49cfe39519a9adb83393e3a844afef3dc8eb6e56535f6fe7a70e5877169ed"
     },
     {
       "sku": "wall-forest-clock",
@@ -602,8 +606,8 @@
       "file": "wall-forest-clock.png",
       "width": 512,
       "height": 384,
-      "bytes": 29801,
-      "sha256": "ef333c6d5f0fdc723d7715ca419b16a2c8a660f82206f96b51c37457fcde8ed6"
+      "bytes": 29714,
+      "sha256": "3c14a59e5cc4f47341c25d736babb88c629c65b9eb8a19144d7029fc6fe65c68"
     },
     {
       "sku": "wall-ocean-triptych",
@@ -626,8 +630,8 @@
       "file": "wall-ocean-triptych.png",
       "width": 512,
       "height": 384,
-      "bytes": 49968,
-      "sha256": "91176a02b89dcfdaab0633aeff42d1a001ccdf88e3045524777f6998dc48dd55"
+      "bytes": 52199,
+      "sha256": "ccb72440b749a67529a9b2043581041969677b63a4b00d49e416ceb653906247"
     },
     {
       "sku": "wall-sakura-fan",
@@ -650,8 +654,8 @@
       "file": "wall-sakura-fan.png",
       "width": 512,
       "height": 384,
-      "bytes": 49847,
-      "sha256": "92c528781754256cd1492522bdd129f632909eeb1dac52c06fee047ac170d914"
+      "bytes": 51741,
+      "sha256": "9566cf5c99cfc73d9eb6b4cd85f013a6eb572778f43ed8e98264b7998855f0be"
     },
     {
       "sku": "wall-starlight-mirror",
@@ -674,8 +678,8 @@
       "file": "wall-starlight-mirror.png",
       "width": 512,
       "height": 384,
-      "bytes": 45672,
-      "sha256": "5b4ce26e6b97babea7e115a81d49a193f33d8c110504391996dbad76ff38dd18"
+      "bytes": 46496,
+      "sha256": "c07a01dce0818cf26bb248ab466c0aff8d42674c06e7c4841981c5c1a2d482a3"
     },
     {
       "sku": "wall-crystal-chandelier",
@@ -698,8 +702,8 @@
       "file": "wall-crystal-chandelier.png",
       "width": 512,
       "height": 384,
-      "bytes": 32483,
-      "sha256": "d4d566f1a43cd3678848bfec88bc13293f58b104fc8fda13114ec3e6fb5bfeb0"
+      "bytes": 33646,
+      "sha256": "fd14a0613049c7ed1f4c2daed009a4e5e1c413f6fbf85cf7a3ab10e0b24e12d4"
     },
     {
       "sku": "wall-celestial-orrery",
@@ -722,8 +726,8 @@
       "file": "wall-celestial-orrery.png",
       "width": 512,
       "height": 384,
-      "bytes": 99057,
-      "sha256": "a04e2b25c74ab1cec33d0473bb235bf7e5aaee6a1f0db15d31e4f89249a0c824"
+      "bytes": 100647,
+      "sha256": "0909ac7d608dca9cb7b45a36a433b9767dd95e239675fc1ea70ff0061ad5823b"
     },
     {
       "sku": "wall-phoenix-tapestry",
@@ -746,8 +750,8 @@
       "file": "wall-phoenix-tapestry.png",
       "width": 512,
       "height": 384,
-      "bytes": 72386,
-      "sha256": "740c26a6116330ecc7ebb7395193fd840f76f7cd6f70ff00ed9da7d21392a3eb"
+      "bytes": 73895,
+      "sha256": "caa994639a57c962af7ebfc05cb13c8f938f0ce22a9ed60313a2d0f8448ef08c"
     },
     {
       "sku": "sofa",
@@ -770,8 +774,8 @@
       "file": "sofa.png",
       "width": 512,
       "height": 384,
-      "bytes": 95488,
-      "sha256": "9f927b698df776918a0e20dd584cd47863e65e7d8ba680fc14652eec57bd85a5"
+      "bytes": 96412,
+      "sha256": "b3204f0f4b9a5de1c4d1ab48047efb835b113ce5144e9cff8008ba0421cdef0b"
     },
     {
       "sku": "table",
@@ -794,8 +798,8 @@
       "file": "table.png",
       "width": 512,
       "height": 384,
-      "bytes": 54621,
-      "sha256": "fc06916bb6e7b8630b41c7bac565ad6ddffcb4e70b1b81872911250043c03a25"
+      "bytes": 54782,
+      "sha256": "b700f64c7fd9ce52bef23d3075bd0fc3e608830a45ee1626797b6a8a6f176da9"
     },
     {
       "sku": "lamp",
@@ -818,8 +822,8 @@
       "file": "lamp.png",
       "width": 512,
       "height": 384,
-      "bytes": 44284,
-      "sha256": "63b9d265f67a02efbbd808efbe768db2cfc83ca6817103780f85a30da2d989d5"
+      "bytes": 44960,
+      "sha256": "1118e238e2f97b63d0e41c84e50e5bc58c6aea0010b0641018ef124aae5425ca"
     },
     {
       "sku": "rug",
@@ -842,8 +846,8 @@
       "file": "rug.png",
       "width": 512,
       "height": 384,
-      "bytes": 12439,
-      "sha256": "3238382d745ae4c7eb7bb14b1fb8a63c618f4af486b67b6362ce4a356982da3e"
+      "bytes": 12768,
+      "sha256": "214844538d476821c95038d2fc892f6a844d739cdc71eb71f9a51d43c543f869"
     },
     {
       "sku": "lamp-cabinet",
@@ -866,8 +870,8 @@
       "file": "lamp-cabinet.png",
       "width": 512,
       "height": 384,
-      "bytes": 43241,
-      "sha256": "e6940852af149cc61e22e8d9568a2667b5802d9882aae20b553e9d301182aecf"
+      "bytes": 41619,
+      "sha256": "e57bab6495023053c8d8974d80ff59633c886643965a1db08e2ed0f9c45868ea"
     },
     {
       "sku": "plant-shelf",
@@ -890,8 +894,8 @@
       "file": "plant-shelf.png",
       "width": 512,
       "height": 384,
-      "bytes": 25806,
-      "sha256": "684008a683930a5e884f73dbc568b040d389ed30212cac516625f484df00f184"
+      "bytes": 26057,
+      "sha256": "cea59a75eb240fb81258f9839c0e41685976f7971382ca8c182b2a2d7bae3103"
     },
     {
       "sku": "wall-pictures",
@@ -914,8 +918,8 @@
       "file": "wall-pictures.png",
       "width": 512,
       "height": 384,
-      "bytes": 10065,
-      "sha256": "87c019020244d7dc933a6ea61838f5bff7b4ad42e5a1f8dc379ade02c470ddce"
+      "bytes": 10082,
+      "sha256": "e23d05c34a320a8d6e03ff0347b7f8e0ad0be99f0cc5187831e61bae77b07e91"
     },
     {
       "sku": "floor-pot",
@@ -938,8 +942,8 @@
       "file": "floor-pot.png",
       "width": 512,
       "height": 384,
-      "bytes": 36143,
-      "sha256": "6fb72842599e2f14e1e528838f24b20481e3b34ccf3abc17e19117c81032cce0"
+      "bytes": 36872,
+      "sha256": "d42387c0f1b81398310a38cccbdfcb566526d50b65ab9f1c8ddb8493591cfd91"
     },
     {
       "sku": "ottoman-a",
@@ -962,8 +966,8 @@
       "file": "ottoman-a.png",
       "width": 512,
       "height": 384,
-      "bytes": 45571,
-      "sha256": "95895f56e8da570195af3f53038f1f2a3bea4a1695ae3767b87e030b9bf01d66"
+      "bytes": 46592,
+      "sha256": "86cd49fe951447255ed16b22c3b5facccc2d6b12501685a57b00dd5bc6d0cf5d"
     },
     {
       "sku": "ottoman-b",
@@ -986,8 +990,8 @@
       "file": "ottoman-b.png",
       "width": 512,
       "height": 384,
-      "bytes": 45586,
-      "sha256": "02ed46514095df4109958ad5b69f9467d2add759fde049372b4455a79f555246"
+      "bytes": 46801,
+      "sha256": "166f5712bdfcd918f58e4b22dd9f38248ce871315dae8572a759bac85377792d"
     },
     {
       "sku": "front-fence",
@@ -1010,8 +1014,8 @@
       "file": "front-fence.png",
       "width": 512,
       "height": 384,
-      "bytes": 39480,
-      "sha256": "bc447c018b268854eb6c538458891b88d2e47e4d3dfbd15b4da6d36e3f6c613b"
+      "bytes": 40122,
+      "sha256": "d22936cbaf6992178af3bab38383610388d973464e9bb194a3a9069419458d70"
     }
   ]
 }

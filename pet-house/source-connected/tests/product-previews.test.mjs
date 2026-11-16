@@ -15,7 +15,7 @@ test('actual product portraits cover every shop item and room/storage builtin',(
 });
 test('portrait source hashes track the current runtime geometry and material definitions',()=>{
  assert.equal(manifest.kind,'runtime-product-studio-render');assert.equal(manifest.transparent,true);
- for(const source of manifest.sources)assert.equal(hash(readFileSync(new URL(source.file,root))),source.sha256,`Regenerate actual product pictures after changing ${source.file}`);
+ for(const source of manifest.sources)assert.equal(hash(readFileSync(new URL(source.file,root),'utf8').replace(/\r\n/g,'\n')),source.sha256,`Regenerate actual product pictures after changing ${source.file}`);
 });
 test('all product images are distinct valid 512 by 384 PNGs matching their manifest',()=>{
  const fingerprints=[];

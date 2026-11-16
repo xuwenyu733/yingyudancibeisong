@@ -21,7 +21,7 @@ test('v2.27 two-floor paid expansion, create-room receipts and friend settings s
     projected.push({sql,values});return [[],[]];
   }};
   const pool={async getConnection(){return conn;},async execute(){return [[saved],[]];}},repository=createSaveRepository(pool,validate,{sourceRoot});
-  assert.deepEqual(await repository.save(namespace,0,entries),{ok:true,revision:1});
+  assert.deepEqual(await repository.save(namespace,0,entries,{trustedAuthority:true}),{ok:true,revision:1});
   assert.deepEqual((await repository.load(namespace)).entries,entries);
   assert.equal(saved.archive.estate.bank.balance,2400);assert.equal(saved.archive.estate.bank.totalSpent,600);
   assert.equal(saved.archive.estate.companion.homeFriendLimit,3);assert.deepEqual(saved.archive.estate.companion.friendNames,['小月亮','豆豆','新朋友']);
