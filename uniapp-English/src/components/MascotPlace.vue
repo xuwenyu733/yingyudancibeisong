@@ -1,6 +1,12 @@
 <template>
-  <view class="mascot-place" :class="[size, { round }]" :style="boxStyle">
-    <text class="face" :style="faceStyle">🦊</text>
+  <view class="mascot-place" :class="[size, { round, photo: !!src }]" :style="boxStyle">
+    <image
+      v-if="src"
+      class="art"
+      :src="src"
+      mode="aspectFit"
+    />
+    <text v-else class="face" :style="faceStyle">🦊</text>
   </view>
 </template>
 
@@ -9,16 +15,18 @@ import { computed } from "vue";
 
 const props = withDefaults(
   defineProps<{
-    size?: "sm" | "md" | "lg";
+    size?: "sm" | "md" | "lg" | "hero";
     round?: boolean;
     width?: string;
     height?: string;
+    src?: string;
   }>(),
   {
     size: "md",
     round: false,
     width: "",
     height: "",
+    src: "",
   },
 );
 
@@ -54,6 +62,16 @@ const faceStyle = computed(() => {
   border-radius: 50%;
 }
 
+.mascot-place.photo {
+  background: transparent;
+}
+
+.art {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .face {
   line-height: 1;
 }
@@ -83,5 +101,11 @@ const faceStyle = computed(() => {
 
 .lg .face {
   font-size: 96rpx;
+}
+
+.hero {
+  width: 100%;
+  height: 360rpx;
+  border-radius: 28rpx;
 }
 </style>

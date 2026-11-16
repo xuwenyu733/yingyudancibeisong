@@ -1,4 +1,10 @@
 {
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^BrandBar$": "@/components/BrandBar.vue"
+    }
+  },
   "pages": [
     {
       "path": "pages/home/index",

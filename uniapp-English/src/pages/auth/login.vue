@@ -2,7 +2,7 @@
   <view class="page login">
     <view class="top">
       <view class="brand-row">
-        <MascotPlace size="sm" round />
+        <image class="brand-logo" src="/static/illustrations/fox.png?v=20261110w" mode="aspectFit" />
         <view>
           <text class="brand-title">单词闯关</text>
           <text class="brand-sub">小学 · 初中</text>
@@ -20,10 +20,11 @@
     </view>
 
     <view class="hero">
-      <MascotPlace size="lg" width="280rpx" height="280rpx" />
-      <text class="float a">Aa</text>
-      <text class="float b">Bb</text>
-      <text class="float c">Cc</text>
+      <image
+        class="hero-art"
+        src="/static/illustrations/login-hero.png?v=20261110w3"
+        mode="aspectFit"
+      />
     </view>
 
     <view class="card box">
@@ -149,6 +150,14 @@ async function login() {
   gap: 16rpx;
 }
 
+.brand-logo {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
 .brand-title {
   display: block;
   font-size: 32rpx;
@@ -189,44 +198,19 @@ async function login() {
 .hero {
   position: relative;
   margin: 28rpx 0;
-  height: 320rpx;
+  height: 360rpx;
   border-radius: 36rpx;
-  background: linear-gradient(180deg, #fff8ea 0%, #e7f6ee 100%);
+  background: #fff9f0;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-.float {
-  position: absolute;
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 20rpx;
-  background: #fff;
-  box-shadow: 0 8rpx 18rpx rgba(29, 53, 87, 0.08);
-  text-align: center;
-  line-height: 72rpx;
-  font-weight: 800;
-  color: #249672;
-}
-
-.float.a {
-  left: 28rpx;
-  top: 36%;
-  transform: rotate(-8deg);
-}
-
-.float.b {
-  right: 36rpx;
-  top: 18%;
-  transform: rotate(10deg);
-  color: #f59a3a;
-}
-
-.float.c {
-  right: 72rpx;
-  bottom: 18%;
+.hero-art {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .box {

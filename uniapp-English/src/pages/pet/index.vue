@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <BrandBar />
     <view class="hero card">
       <MascotPlace class="fox-img" size="lg" />
       <text class="kicker">杏橘狐 · 我的伙伴</text>
@@ -18,9 +19,9 @@
     </view>
 
     <view class="card checkin-card">
-      <view class="row-between">
-        <view>
-          <view class="heading">每日签到</view>
+      <view class="task checkin-row">
+        <view class="task-main">
+          <view class="task-title">每日签到</view>
           <text class="muted"
             >连续 {{ missions?.checkIn.streak || 1 }} 天 · 今日
             +{{ missions?.checkIn.rewardPreview || 10 }}</text
@@ -74,6 +75,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
+import BrandBar from "../../components/BrandBar.vue";
 import MascotPlace from "../../components/MascotPlace.vue";
 import {
   claimDailyTask,
@@ -215,11 +217,9 @@ function goStudy() {
   border-color: #c9e8da;
 }
 
-.row-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
+.checkin-row {
+  padding: 0;
+  border-top: none;
 }
 
 .task {
@@ -264,12 +264,19 @@ function goStudy() {
 }
 
 .btn.mini {
-  margin-top: 0;
+  margin: 0 0 0 auto;
   width: 160rpx;
+  min-width: 160rpx;
   height: 72rpx;
   line-height: 72rpx;
+  padding: 0;
   font-size: 24rpx;
   flex-shrink: 0;
+  align-self: center;
+}
+
+.btn.mini::after {
+  border: none;
 }
 
 .btn.ghost {

@@ -1,21 +1,22 @@
 <template>
   <view class="page">
-    <view class="head">
-      <view>
-        <view class="title">家长中心</view>
-        <text class="muted">每一点进步，都值得被看见</text>
+    <BrandBar :child-text="childText" />
+
+    <view class="hero-row">
+      <view class="hero-copy">
+        <view class="title-wrap">
+          <text class="title">家长中心</text>
+          <text class="spark a">✦</text>
+          <text class="spark b">✧</text>
+        </view>
+        <text class="muted slogan">每一点进步，都值得被看见</text>
       </view>
-      <text class="back" @click="goHome">返回孩子的学习页</text>
+      <view class="home-pill" @click="goHome">‹ 返回孩子的学习页</view>
     </view>
 
-    <view class="card child">
-      <view class="child-main">
-        <view class="avatar" :style="{ background: avatar.color }">{{ letter }}</view>
-        <view class="child-info">
-          <view class="name-row">
-            <text class="heading ellipsis">{{ childText }}</text>
-            <text class="tag green">当前孩子</text>
-          </view>
+    <view class="card child-card">
+      <view class="child-grid">
+        <view class="book-picker">
           <picker
             v-if="volumeLabels.length"
             mode="selector"
@@ -23,98 +24,158 @@
             :value="volumeIndex"
             @change="onTextbook"
           >
-            <view class="field picker book-field">
-              <text class="book-text">{{ volumeLabels[volumeIndex] || "未选择教材" }}</text>
-              <text class="chevron">›</text>
+            <view class="select-field">
+              <text class="select-text">{{ volumeLabels[volumeIndex] || "未选择教材" }}</text>
+              <text class="chevron">▾</text>
             </view>
           </picker>
-          <text class="muted">学习教材随时可调整</text>
+          <view v-else class="select-field muted-field">暂无可用教材</view>
+        </view>
+
+        <view class="switch-picker">
+          <view class="action-chip" @click="openChildSheet">⇄ 切换孩子</view>
+        </view>
+
+        <text class="muted hint">学习教材随时可调整</text>
+        <view class="action-chip add-chip" @click="goCreate">+ 添加孩子</view>
+      </view>
+    </view>
+
+    <view v-if="childSheetOpen" class="sheet-mask" @click="closeChildSheet">
+      <view class="child-sheet" @click.stop>
+        <view class="sheet-head">
+          <text class="sheet-title">选择孩子</text>
+          <text class="sheet-close" @click="closeChildSheet">关闭</text>
+        </view>
+        <view
+          v-for="child in children"
+          :key="child.id"
+          class="child-option"
+          @click="pickChild(child.id)"
+        >
+          <view class="child-option-main">
+            <text class="child-option-name">{{ child.nickname }}</text>
+            <text class="muted">{{ gradeLabel(child.grade) }}</text>
+          </view>
+          <text v-if="child.id === currentId" class="child-current">当前</text>
+          <text v-else class="child-pick">选择</text>
+        </view>
+        <view v-if="!children.length" class="sheet-empty muted">还没有孩子档案</view>
+      </view>
+    </view>
+
+    <view class="section-head">
+      <text class="section-title">本周学习概览</text>
+    </view>
+
+    <view class="card overview">
+      <view class="stat">
+        <view class="icon-slot">📖</view>
+        <text class="stat-label">学习词次</text>
+        <view class="num-row">
+          <text class="num green">{{ report?.studiedCount || 0 }}</text>
         </view>
       </view>
-      <view class="child-actions">
-        <picker mode="selector" :range="childNames" @change="onSwitch">
-          <view class="action-chip">切换孩子</view>
-        </picker>
-        <view class="action-chip" @click="goCreate">添加孩子</view>
+      <view class="divider" />
+      <view class="stat">
+        <view class="icon-slot">✅</view>
+        <text class="stat-label">答题正确率</text>
+        <view class="num-row">
+          <text class="num green">{{ report?.accuracy || 0 }}</text>
+          <text class="num-unit green">%</text>
+        </view>
+      </view>
+      <view class="divider" />
+      <view class="stat">
+        <view class="icon-slot">📅</view>
+        <text class="stat-label">打卡天数</text>
+        <view class="num-row">
+          <text class="num orange">{{ report?.activeDays || 0 }}</text>
+          <text class="num-unit orange">天</text>
+        </view>
       </view>
     </view>
 
-    <view class="stats">
-      <view class="card stat">
-        <text class="icon">📖</text>
-        <text class="muted">学习词次</text>
-        <view class="num">{{ report?.studiedCount || 0 }}</view>
-      </view>
-      <view class="card stat">
-        <text class="icon">✅</text>
-        <text class="muted">答题正确率</text>
-        <view class="num">{{ report?.accuracy || 0 }}%</view>
-      </view>
-      <view class="card stat">
-        <text class="icon">📅</text>
-        <text class="muted">打卡天数</text>
-        <view class="num">{{ report?.activeDays || 0 }}天</view>
-      </view>
-    </view>
-    <text class="muted sample">本周学习概览</text>
-
-    <view class="card">
+    <view class="card trail">
       <view class="row-between">
-        <view class="heading sm">这一周的学习足迹</view>
-        <text class="link" @click="goReport">查看完整周报</text>
+        <text class="section-title">这一周的学习足迹</text>
+        <text class="link" @click="goReport">查看完整周报 ></text>
       </view>
-      <view class="bars">
-        <view v-for="(item, index) in report?.daily || []" :key="item.date" class="bar-col">
-          <text class="bar-num">{{ item.count }}</text>
-          <view class="bar" :style="{ height: barHeight(item.count) }" />
-          <text class="muted">周{{ weekdays[index] || "" }}</text>
+      <view class="trail-body">
+        <view class="chart">
+          <view v-for="(item, index) in dailyRows" :key="item.date" class="chart-col">
+            <text class="bar-num">{{ item.count }}</text>
+            <view class="chart-bar" :style="{ height: barHeight(item.count) }" />
+            <text class="day">周{{ weekdays[index] || "" }}</text>
+          </view>
+        </view>
+        <view class="total-box">
+          <text class="total-label">合计</text>
+          <text class="total-num">{{ report?.studiedCount || 0 }}</text>
         </view>
       </view>
-      <view class="total">合计 {{ report?.studiedCount || 0 }}</view>
     </view>
 
-    <view class="card">
-      <view class="heading sm">学习提醒</view>
+    <view class="card remind">
+      <text class="section-title">学习提醒</text>
       <view class="switch-row">
-        <text>每日提醒</text>
+        <text class="switch-label">每日提醒</text>
         <switch color="#2eb086" :checked="reminder?.enabled" @change="onToggle" />
       </view>
-      <text class="muted">{{ reminderHint }}</text>
-      <!-- #ifdef MP-WEIXIN -->
-      <button class="btn action" :disabled="subscribing" @click="subscribe">
-        {{ subscribing ? "请求中..." : "授权微信订阅消息" }}
-      </button>
-      <!-- #endif -->
-      <button class="btn btn-line" :disabled="testing" @click="testSend">
-        {{ testing ? "发送中..." : "设置提醒 / 测试推送" }}
-      </button>
+      <view class="time-row">
+        <text class="switch-label">提醒时间</text>
+        <picker mode="selector" :range="timeOptions" :value="timeIndex" @change="onTime">
+          <view class="select-field time-select">
+            <text class="select-text">{{ reminderTime }}</text>
+            <text class="chevron">▾</text>
+          </view>
+        </picker>
+      </view>
+      <text class="muted tip-line">提醒发给家长，一起陪伴孩子学习</text>
+      <view class="auth-row">
+        <view class="auth-left" @click="subscribe">
+          <text class="wx">💬</text>
+          <text class="muted">微信通知{{ reminder?.accepted ? "已授权" : "待授权" }}</text>
+          <text class="info">ⓘ</text>
+        </view>
+        <view
+          class="setup-chip"
+          :class="{ disabled: testing }"
+          @click="testSend"
+        >
+          {{ testing ? "发送中..." : "设置提醒" }}
+        </view>
+      </view>
     </view>
 
-    <view class="card tip">
-      <MascotPlace size="sm" round />
+    <view class="tip">
+      <image
+        class="tip-art"
+        src="/static/illustrations/parent-tip.png?v=20261110w2"
+        mode="aspectFill"
+      />
       <view class="tip-copy">
         <text class="tip-title">陪伴小建议</text>
         <text class="muted">先肯定坚持，再一起复习还没记牢的单词。</text>
       </view>
     </view>
 
-    <view class="card">
+    <view class="card member">
       <text class="kicker">会员</text>
-      <view class="heading sm">{{ memberText }}</view>
+      <view class="member-title">{{ memberText }}</view>
       <text class="muted">{{ memberHint }}</text>
       <button class="btn action" @click="goMember">
         {{ status?.active ? "续费会员" : "开通会员" }}
       </button>
     </view>
 
-    <button class="btn btn-line" @click="logout">退出登录</button>
+    <button class="btn btn-line logout" @click="logout">退出登录</button>
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
-import MascotPlace from "../../components/MascotPlace.vue";
 import {
   acceptReminder,
   fetchChildren,
@@ -135,7 +196,7 @@ import type {
   Textbook,
   WeeklyReport,
 } from "../../types/api";
-import { avatarLetter, resolveAvatarOption } from "../../utils/avatar";
+import BrandBar from "../../components/BrandBar.vue";
 import { ensureLogin } from "../../utils/auth";
 import { errorMessage, gradeLabel } from "../../utils/format";
 
@@ -145,20 +206,19 @@ const report = ref<WeeklyReport | null>(null);
 const status = ref<MembershipStatus | null>(null);
 const reminder = ref<ReminderStatus | null>(null);
 const books = ref<Textbook[]>([]);
-const subscribing = ref(false);
 const testing = ref(false);
+const childSheetOpen = ref(false);
 const session = useSessionStore();
 const weekdays = ["一", "二", "三", "四", "五", "六", "日"];
-const avatar = computed(() => resolveAvatarOption());
-const letter = computed(() => avatarLetter(current.value?.nickname || uni.getStorageSync("wq_nickname")));
+const timeOptions = ["19:00", "19:30", "20:00", "20:30", "21:00"];
+const reminderTime = ref((uni.getStorageSync("wq_reminder_time") as string) || "20:00");
 
 const current = computed(() => children.value.find((item) => item.id === currentId.value));
-const childNames = computed(() => children.value.map((item) => item.nickname));
 const gradeBooks = computed(() =>
   current.value ? books.value.filter((item) => item.grade === current.value!.grade) : [],
 );
 const volumeLabels = computed(() =>
-  gradeBooks.value.map((item) => `${item.publisher} · ${item.name} · ${item.volume}`),
+  gradeBooks.value.map((item) => `${item.publisher} · ${item.volume || item.name}`),
 );
 const volumeIndex = computed(() => {
   if (!current.value?.textbookId) return 0;
@@ -176,18 +236,20 @@ const memberHint = computed(() =>
     ? `有效期至 ${status.value.endAt.slice(0, 10)}`
     : "开通后解锁全部单元，每日 30 词",
 );
-const reminderHint = computed(() => {
-  if (!reminder.value) return "";
-  const modeText = reminder.value.mode === "wechat" ? "真实微信推送" : "开发模拟推送";
-  const acceptText = reminder.value.accepted ? "已授权" : "待授权";
-  return `提醒发给家长，一起陪伴孩子学习。${modeText} · 微信通知${acceptText}`;
+const timeIndex = computed(() =>
+  Math.max(0, timeOptions.findIndex((item) => item === reminderTime.value)),
+);
+const dailyRows = computed(() => {
+  if (report.value?.daily?.length) return report.value.daily;
+  return weekdays.map((_, index) => ({ date: `empty-${index}`, count: 0 }));
 });
 const maxCount = computed(() =>
-  Math.max(1, ...(report.value?.daily.map((item) => item.count) || [1])),
+  Math.max(1, ...dailyRows.value.map((item) => item.count)),
 );
 
 function barHeight(count: number) {
-  return `${Math.max(12, Math.round((count / maxCount.value) * 140))}rpx`;
+  if (!count) return "8rpx";
+  return `${Math.max(8, Math.round((count / maxCount.value) * 140))}rpx`;
 }
 
 async function load() {
@@ -211,7 +273,7 @@ async function load() {
   }
 }
 
-async function onSwitch(event: { detail: { value: string | number } }) {
+function openChildSheet() {
   if (children.value.length === 0) {
     uni.showToast({ title: "还没有孩子档案", icon: "none" });
     return;
@@ -220,10 +282,26 @@ async function onSwitch(event: { detail: { value: string | number } }) {
     uni.showToast({ title: "目前只有一个孩子", icon: "none" });
     return;
   }
-  const child = children.value[Number(event.detail.value)];
-  if (!child) return;
-  await selectChild(child.id);
-  await load();
+  childSheetOpen.value = true;
+}
+
+function closeChildSheet() {
+  childSheetOpen.value = false;
+}
+
+async function pickChild(id: string) {
+  if (id === currentId.value) {
+    closeChildSheet();
+    return;
+  }
+  try {
+    await selectChild(id);
+    await load();
+    closeChildSheet();
+    uni.showToast({ title: "已切换孩子", icon: "none" });
+  } catch (error) {
+    uni.showToast({ title: errorMessage(error), icon: "none" });
+  }
 }
 
 async function onTextbook(event: { detail: { value: string | number } }) {
@@ -248,17 +326,21 @@ async function onToggle(event: { detail: { value: boolean } }) {
   }
 }
 
+function onTime(event: { detail: { value: string | number } }) {
+  reminderTime.value = timeOptions[Number(event.detail.value)] || "20:00";
+  uni.setStorageSync("wq_reminder_time", reminderTime.value);
+}
+
 async function subscribe() {
   const templateId = import.meta.env.VITE_WECHAT_SUBSCRIBE_TEMPLATE_ID as string | undefined;
   if (!templateId) {
     uni.showModal({
       title: "还没配模板 ID",
-      content: "请配置订阅消息模板，或先点测试推送走模拟。",
+      content: "请配置订阅消息模板，或先点设置提醒走模拟。",
       showCancel: false,
     });
     return;
   }
-  subscribing.value = true;
   try {
     const result = await new Promise<Record<string, string>>((resolve, reject) => {
       uni.requestSubscribeMessage({
@@ -275,18 +357,22 @@ async function subscribe() {
     uni.showToast({ title: "授权成功", icon: "success" });
   } catch (error) {
     uni.showToast({ title: errorMessage(error), icon: "none" });
-  } finally {
-    subscribing.value = false;
   }
 }
 
 async function testSend() {
+  if (testing.value) return;
   testing.value = true;
   try {
+    // #ifdef MP-WEIXIN
+    if (!reminder.value?.accepted) {
+      await subscribe();
+    }
+    // #endif
     const result = await mockSendReminder();
     uni.showModal({
       title: result.status === "mock" || result.status === "sent" ? "提醒已触发" : "未发送",
-      content: result.reason,
+      content: `${result.reason}\n提醒时间：${reminderTime.value}`,
       showCancel: false,
     });
     reminder.value = await fetchReminder();
@@ -320,165 +406,373 @@ onShow(() => {
 </script>
 
 <style scoped>
-.head {
+.hero-row {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16rpx;
-  align-items: flex-start;
-  margin-bottom: 16rpx;
+  margin-bottom: 18rpx;
 }
 
-.title {
-  font-size: 42rpx;
-  font-weight: 800;
-}
-
-.back {
-  color: #249672;
-  font-weight: 750;
-  font-size: 24rpx;
-}
-
-.child-main {
-  display: flex;
-  gap: 18rpx;
-  align-items: flex-start;
-}
-
-.child-info {
+.hero-copy {
   flex: 1;
   min-width: 0;
 }
 
-.avatar {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 36rpx;
-  font-weight: 800;
-  display: flex;
+.title-wrap {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
-.name-row {
-  display: flex;
+.title {
+  font-size: 44rpx;
+  font-weight: 850;
+  color: #1d3557;
+  line-height: 1.2;
+}
+
+.spark {
+  position: absolute;
+  color: #f0b429;
+  font-size: 18rpx;
+  line-height: 1;
+}
+
+.spark.a {
+  top: -2rpx;
+  right: -22rpx;
+}
+
+.spark.b {
+  top: 18rpx;
+  right: -36rpx;
+  font-size: 14rpx;
+}
+
+.slogan {
+  display: block;
+  margin-top: 8rpx;
+}
+
+.home-pill {
+  flex: none;
+  max-width: 280rpx;
+  padding: 14rpx 22rpx;
+  border-radius: 999rpx;
+  background: #e8f7f0;
+  color: #249672;
+  font-size: 22rpx;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.child-card {
+  margin-bottom: 18rpx;
+  padding: 18rpx 20rpx;
+}
+
+.child-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 12rpx;
+  row-gap: 10rpx;
   align-items: center;
-  gap: 12rpx;
+}
+
+.book-picker {
+  grid-column: 1;
+  grid-row: 1;
   min-width: 0;
 }
 
-.heading {
-  font-size: 34rpx;
-  font-weight: 800;
-  max-width: 360rpx;
+.switch-picker {
+  grid-column: 2;
+  grid-row: 1;
 }
 
-.heading.sm {
-  font-size: 30rpx;
-  font-weight: 800;
-  max-width: none;
+.hint {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 22rpx;
+  line-height: 52rpx;
+  height: 52rpx;
 }
 
-.picker {
-  margin-top: 12rpx;
-  height: 80rpx;
-  display: flex;
-  align-items: center;
+.add-chip {
+  grid-column: 2;
+  grid-row: 2;
 }
 
-.book-field {
-  width: 100%;
+.select-field {
+  height: 56rpx;
+  padding: 0 16rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid #e6eee9;
+  background: #fbfcfa;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12rpx;
-  padding-right: 16rpx;
+  gap: 10rpx;
+  box-sizing: border-box;
 }
 
-.book-text {
+.time-select {
+  min-width: 148rpx;
+}
+
+.muted-field {
+  color: #8a94a6;
+  font-size: 24rpx;
+}
+
+.select-text {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #1d3557;
+  font-weight: 650;
 }
 
 .chevron {
-  color: #6b7c8f;
-  font-size: 32rpx;
+  color: #8a94a6;
+  font-size: 20rpx;
   flex-shrink: 0;
 }
 
-.child-actions {
-  display: flex;
-  gap: 12rpx;
-  margin-top: 18rpx;
-}
-
 .action-chip {
-  height: 68rpx;
-  line-height: 68rpx;
-  padding: 0 28rpx;
+  min-width: 156rpx;
+  height: 52rpx;
+  padding: 0 18rpx;
   border-radius: 999rpx;
   border: 2rpx solid #c9e8da;
   background: #fff;
   color: #249672;
-  font-size: 26rpx;
-  font-weight: 700;
+  font-size: 22rpx;
+  font-weight: 750;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
-.stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12rpx;
+.sheet-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: rgba(29, 53, 87, 0.36);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
-.stat {
-  margin-bottom: 0;
+.child-sheet {
+  width: 100%;
+  max-height: 70vh;
+  background: #fff;
+  border-radius: 28rpx 28rpx 0 0;
+  padding: 24rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
-.icon {
-  font-size: 32rpx;
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
 }
 
-.num {
-  font-size: 40rpx;
+.sheet-title {
+  font-size: 30rpx;
   font-weight: 800;
   color: #1d3557;
 }
 
-.sample {
+.sheet-close {
+  color: #6b7c8f;
+  font-size: 24rpx;
+  padding: 8rpx 4rpx;
+}
+
+.child-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 22rpx 8rpx;
+  border-bottom: 2rpx solid #eef3f0;
+}
+
+.child-option:last-child {
+  border-bottom: none;
+}
+
+.child-option-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.child-option-name {
   display: block;
-  margin: 12rpx 0 14rpx;
+  font-size: 30rpx;
+  font-weight: 750;
+  color: #1d3557;
+  margin-bottom: 4rpx;
+}
+
+.child-current {
+  flex-shrink: 0;
+  height: 40rpx;
+  padding: 0 14rpx;
+  border-radius: 999rpx;
+  background: #e8f7f0;
+  color: #249672;
+  font-size: 20rpx;
+  font-weight: 750;
+  line-height: 40rpx;
+}
+
+.child-pick {
+  flex-shrink: 0;
+  color: #8a94a6;
+  font-size: 24rpx;
+}
+
+.sheet-empty {
+  padding: 32rpx 8rpx;
+  text-align: center;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin: 8rpx 0 14rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #1d3557;
+}
+
+.overview {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 22rpx 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  text-align: center;
+  min-width: 0;
+}
+
+.divider {
+  width: 2rpx;
+  margin: 12rpx 0;
+  background: #eef2f0;
+  flex: none;
+}
+
+.icon-slot {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  line-height: 1;
+}
+
+.stat-label {
+  height: 32rpx;
+  line-height: 32rpx;
+  font-size: 22rpx;
+  color: #8a94a6;
+}
+
+.num-row {
+  min-height: 48rpx;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2rpx;
+}
+
+.num {
+  font-size: 40rpx;
+  font-weight: 850;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.num-unit {
+  font-size: 24rpx;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.num.green,
+.num-unit.green {
+  color: #2eb086;
+}
+
+.num.orange,
+.num-unit.orange {
+  color: #e39b2c;
+}
+
+.trail {
+  margin-bottom: 16rpx;
 }
 
 .row-between {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12rpx;
-  align-items: center;
 }
 
 .link {
   color: #249672;
   font-weight: 750;
-  font-size: 24rpx;
+  font-size: 22rpx;
+  white-space: nowrap;
 }
 
-.bars {
+.trail-body {
   display: flex;
   align-items: flex-end;
-  gap: 8rpx;
-  height: 200rpx;
+  gap: 16rpx;
   margin-top: 18rpx;
 }
 
-.bar-col {
+.chart {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 6rpx;
+  height: 200rpx;
+}
+
+.chart-col {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -489,41 +783,128 @@ onShow(() => {
 .bar-num {
   font-size: 20rpx;
   font-weight: 700;
+  color: #1d3557;
 }
 
-.bar {
-  width: 16rpx;
+.chart-bar {
+  width: 18rpx;
   border-radius: 999rpx;
-  background: #2eb086;
+  background: linear-gradient(180deg, #49c295, #2eb086);
 }
 
-.total {
-  display: inline-flex;
-  margin-top: 16rpx;
-  padding: 10rpx 16rpx;
-  border-radius: 16rpx;
+.day {
+  font-size: 20rpx;
+  color: #8a94a6;
+}
+
+.total-box {
+  flex: none;
+  width: 108rpx;
+  padding: 16rpx 10rpx;
+  border-radius: 20rpx;
   background: #e8f7f0;
-  color: #249672;
-  font-weight: 750;
+  text-align: center;
 }
 
-.switch-row {
+.total-label {
+  display: block;
+  font-size: 20rpx;
+  color: #6b7c8f;
+}
+
+.total-num {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 36rpx;
+  font-weight: 850;
+  color: #2eb086;
+}
+
+.remind {
+  margin-bottom: 16rpx;
+}
+
+.switch-row,
+.time-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 16rpx 0;
-  font-weight: 700;
+  margin-top: 18rpx;
 }
 
-.action {
-  margin-top: 20rpx;
+.switch-label {
+  font-size: 28rpx;
+  font-weight: 750;
+  color: #1d3557;
+}
+
+.tip-line {
+  display: block;
+  margin-top: 14rpx;
+}
+
+.auth-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.auth-left {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 0;
+  flex: 1;
+}
+
+.wx {
+  font-size: 26rpx;
+}
+
+.info {
+  color: #a0aab8;
+  font-size: 22rpx;
+}
+
+.setup-chip {
+  flex: none;
+  min-width: 148rpx;
+  height: 56rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid #c9e8da;
+  background: #fff;
+  color: #249672;
+  font-size: 24rpx;
+  font-weight: 750;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.setup-chip.disabled {
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .tip {
   display: flex;
-  gap: 16rpx;
+  gap: 24rpx;
   align-items: center;
-  background: linear-gradient(90deg, #fff 0%, #f5fbf8 100%);
+  background: transparent;
+  margin: 8rpx 4rpx 20rpx;
+  padding: 0;
+}
+
+.tip-art {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 28rpx;
+  background: transparent;
+  flex-shrink: 0;
 }
 
 .tip-copy {
@@ -534,5 +915,21 @@ onShow(() => {
 .tip-title {
   display: block;
   font-weight: 800;
+  margin-bottom: 6rpx;
+}
+
+.member-title {
+  margin: 8rpx 0 10rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+}
+
+.action {
+  margin-top: 20rpx;
+}
+
+.logout {
+  margin-top: 8rpx;
+  margin-bottom: 24rpx;
 }
 </style>

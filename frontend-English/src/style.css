@@ -7,8 +7,8 @@
   --muted: #6b7c8f;
   --line: #e6eee9;
   --card: #ffffff;
-  --bg: #f7f4ee;
-  --bg-hill: #eef6ef;
+  --bg: #fff9f0;
+  --bg-hill: #f7f1e4;
   --orange: #f59a3a;
   --orange-soft: #fff3e4;
   --danger: #b91c1c;
@@ -33,9 +33,9 @@ body {
     sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(1200px 420px at 12% -10%, #fff8e8 0%, transparent 55%),
-    radial-gradient(900px 380px at 90% 0%, #e8f7f0 0%, transparent 50%),
-    linear-gradient(180deg, #fbfaf6 0%, var(--bg) 55%, var(--bg-hill) 100%);
+    radial-gradient(1200px 420px at 12% -10%, #fffaf0 0%, transparent 55%),
+    radial-gradient(900px 380px at 90% 0%, #fff4dc 0%, transparent 50%),
+    linear-gradient(180deg, #fffdf8 0%, var(--bg) 55%, var(--bg-hill) 100%);
 }
 
 button,

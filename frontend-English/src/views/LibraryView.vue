@@ -19,22 +19,24 @@ const keyword = ref('')
 const gradeOptions = computed(() =>
   stage.value === 'junior' ? [7, 8, 9] : [1, 2, 3, 4, 5, 6],
 )
-const volumes = computed(() => {
-  const set = new Set(
-    filteredByStage.value.map((item) => item.volume).filter(Boolean),
-  )
-  return ['全部', ...set]
-})
 const filteredByStage = computed(() =>
   books.value.filter((item) =>
     stage.value === 'junior' ? item.grade >= 7 : item.grade <= 6,
   ),
 )
+const volumes = computed(() => {
+  const set = new Set(
+    filteredByStage.value.map((item) => item.volume).filter(Boolean),
+  )
+  return ['全部册别', ...set]
+})
 const filtered = computed(() => {
   const q = keyword.value.trim().toLowerCase()
   return filteredByStage.value.filter((item) => {
     if (grade.value && item.grade !== grade.value) return false
-    if (volume.value !== '全部' && item.volume !== volume.value) return false
+    if (volume.value !== '全部' && volume.value !== '全部册别' && item.volume !== volume.value) {
+      return false
+    }
     if (!q) return true
     return (
       item.name.toLowerCase().includes(q) ||
@@ -43,6 +45,12 @@ const filtered = computed(() => {
     )
   })
 })
+
+function showAllBooks() {
+  grade.value = 0
+  volume.value = '全部'
+  keyword.value = ''
+}
 const currentBook = computed(() => {
   const id = task.value?.textbook?.id
   return filtered.value.find((item) => item.id === id) || filtered.value[0] || null
@@ -108,19 +116,40 @@ function openUnit(unit: UnitView) {
     </header>
 
     <div class="filters">
-      <button class="pill" :class="{ active: stage === 'primary' }" @click="switchStage('primary')">
-        小学
-      </button>
-      <button class="pill" :class="{ active: stage === 'junior' }" @click="switchStage('junior')">
-        初中
-      </button>
-      <select v-model.number="grade" class="field compact">
-        <option v-for="item in gradeOptions" :key="item" :value="item">{{ gradeLabel(item) }}</option>
-      </select>
-      <select v-model="volume" class="field compact">
-        <option v-for="item in volumes" :key="item" :value="item">{{ item }}</option>
-      </select>
-      <span class="muted grow">查看全部教材 ></span>
+      <div class="stage-switch">
+        <button
+          class="stage-item"
+          :class="{ active: stage === 'primary' }"
+          type="button"
+          @click="switchStage('primary')"
+        >
+          小学
+        </button>
+        <button
+          class="stage-item"
+          :class="{ active: stage === 'junior' }"
+          type="button"
+          @click="switchStage('junior')"
+        >
+          初中
+        </button>
+      </div>
+      <label class="select-pill">
+        <select v-model.number="grade">
+          <option :value="0">全部年级</option>
+          <option v-for="item in gradeOptions" :key="item" :value="item">{{ gradeLabel(item) }}</option>
+        </select>
+        <span class="chevron">▾</span>
+      </label>
+      <label class="select-pill">
+        <select v-model="volume">
+          <option v-for="item in volumes" :key="item" :value="item === '全部册别' ? '全部' : item">
+            {{ item }}
+          </option>
+        </select>
+        <span class="chevron">▾</span>
+      </label>
+      <button class="all-link" type="button" @click="showAllBooks">查看全部教材</button>
     </div>
 
     <div v-if="errorText" class="card">{{ errorText }}</div>
@@ -229,21 +258,98 @@ function openUnit(unit: UnitView) {
 
 .filters {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 8px;
   align-items: center;
+  width: 100%;
   margin-bottom: 18px;
+  overflow: hidden;
 }
 
-.field.compact {
-  width: auto;
-  min-width: 120px;
-  margin-top: 0;
-  height: 40px;
+.stage-switch {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 999px;
+  background: #eef3f0;
+  border: 1.5px solid var(--line);
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
-.grow {
-  margin-left: auto;
+.stage-item {
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #6b7c8f;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.stage-item.active {
+  background: #2eb086;
+  color: #fff;
+}
+
+.select-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 128px;
+  padding: 0 24px 0 10px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1.5px solid var(--line);
+}
+
+.select-pill select {
+  appearance: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  font-size: 12px;
+  font-weight: 650;
+  color: #1d3557;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  position: absolute;
+  right: 8px;
+  color: #8a94a6;
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.all-link {
+  margin-left: 2px;
+  border: 0;
+  background: transparent;
+  color: #249672;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  cursor: pointer;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0;
 }
 
 .board {

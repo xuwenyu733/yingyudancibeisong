@@ -1,5 +1,10 @@
 <template>
   <view class="page">
+    <view class="page-head">
+      <view class="page-back" @click="goBack" />
+      <text class="page-title">积分商城</text>
+    </view>
+
     <view class="card top">
       <text class="muted">当前积分</text>
       <view class="points">{{ player.points }}</view>
@@ -65,6 +70,15 @@ function buttonText(item: ShopGoods) {
   return `兑换 · ${item.price}`;
 }
 
+function goBack() {
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack();
+    return;
+  }
+  uni.switchTab({ url: "/pages/pet/index" });
+}
+
 async function buy(item: ShopGoods) {
   buying.value = true;
   try {
@@ -100,7 +114,7 @@ onShow(() => {
 .points {
   font-size: 40rpx;
   font-weight: 800;
-  color: #ff6b6b;
+  color: #2eb086;
 }
 
 .tabs {
@@ -114,16 +128,17 @@ onShow(() => {
   text-align: center;
   padding: 16rpx 0;
   border-radius: 999rpx;
-  background: #fff0e8;
-  color: #c96a5c;
-  border: 1px solid #ffd4c8;
+  background: #eef3f0;
+  color: #6b7c8f;
+  border: 2rpx solid #e6eee9;
   font-size: 24rpx;
+  font-weight: 700;
 }
 
 .tab.on {
-  background: linear-gradient(135deg, #ff7a6b, #ff5d8f);
+  background: #2eb086;
   color: #ffffff;
-  border-color: transparent;
+  border-color: #2eb086;
 }
 
 .item .row {
@@ -141,7 +156,7 @@ onShow(() => {
 
 .price {
   font-weight: 800;
-  color: #ff6b6b;
+  color: #249672;
   white-space: nowrap;
 }
 

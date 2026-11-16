@@ -1,14 +1,16 @@
 <template>
   <view class="page">
+    <BrandBar :child-text="brandChildText" />
+
     <view class="top">
       <view>
         <view class="hello">{{ greeting }}</view>
         <text class="muted">{{ heroTitle }}</text>
       </view>
       <view class="meta">
-        <text class="chip">📅 连续 {{ task?.streak || 0 }} 天</text>
-        <text class="chip">⭐ {{ player.points }} 积分</text>
-        <text class="parent" @click="goParent">家长入口</text>
+        <text class="meta-item chip">📅 连续 {{ task?.streak || 0 }} 天</text>
+        <text class="meta-item chip">⭐ {{ player.points }} 积分</text>
+        <text class="meta-item parent" @click="goParent">家长入口</text>
       </view>
     </view>
 
@@ -21,18 +23,23 @@
     </view>
 
     <template v-else>
-      <!-- 例图03 小学 / 例图05 初中：按年级切换，不要混成一套 -->
+      <!-- 例图03 小学 / 例图05 初中：文案左、插画右撑满纵向 -->
       <view class="card hero">
-        <text class="tag">{{ task?.textbook?.name || "同步词库" }} · {{ task?.unit?.title || "今日任务" }}</text>
-        <view class="heading">{{ unitTitle }}</view>
-        <text class="muted">
-          今日目标 {{ dailyGoal }} 个单词，已经完成 {{ task?.studiedToday || 0 }} 个
-        </text>
-        <view class="progress">
-          <view class="progress-fill" :style="{ width: progress }" />
+        <view class="hero-copy">
+          <view class="heading">{{ unitTitle }}</view>
+          <text class="muted goal-line">
+            今日目标 {{ dailyGoal }} 词 · 已完成 {{ task?.studiedToday || 0 }}
+          </text>
+          <view class="progress">
+            <view class="progress-fill" :style="{ width: progress }" />
+          </view>
+          <button class="btn action" :disabled="!canStart" @click="start">{{ startLabel }}</button>
         </view>
-        <button class="btn action" :disabled="!canStart" @click="start">{{ startLabel }}</button>
-        <text class="muted motto">按自己的节奏，慢慢来就好</text>
+        <image
+          class="hero-art"
+          :src="isJunior ? '/static/illustrations/home-junior.png?v=20261110w' : '/static/illustrations/home-primary.png?v=20261110w'"
+          mode="aspectFill"
+        />
       </view>
 
       <view class="card route">
@@ -126,9 +133,10 @@ import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { fetchTextbooks, fetchToday, fetchWeekly, fetchWrongWords } from "../../api";
 import type { Textbook, TodayTask, WeeklyReport } from "../../types/api";
+import BrandBar from "../../components/BrandBar.vue";
 import { usePlayerStore } from "../../stores/player";
 import { ensureLogin } from "../../utils/auth";
-import { errorMessage } from "../../utils/format";
+import { errorMessage, gradeLabel } from "../../utils/format";
 
 const player = usePlayerStore();
 const task = ref<TodayTask | null>(null);
@@ -138,6 +146,11 @@ const wrongCount = ref(0);
 const errorText = ref("");
 const weekdays = ["一", "二", "三", "四", "五", "六", "日"];
 
+const brandChildText = computed(() => {
+  const child = task.value?.child;
+  if (!child) return "";
+  return `${child.nickname} · ${gradeLabel(child.grade)}`;
+});
 const isJunior = computed(() => (task.value?.child?.grade || 0) >= 7);
 const dailyGoal = computed(() =>
   Number(uni.getStorageSync("wq_daily_goal") || task.value?.dailyLimit || 10),
@@ -243,22 +256,77 @@ onShow(() => {
 
 .meta {
   display: flex;
-  flex-wrap: wrap;
+  width: 100%;
   gap: 12rpx;
-  align-items: center;
+  align-items: stretch;
   margin-top: 14rpx;
+  box-sizing: border-box;
+}
+
+.meta-item {
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .parent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.8);
+  border: 2rpx solid #e6eee9;
   color: #249672;
   font-weight: 750;
-  font-size: 24rpx;
+  font-size: 22rpx;
 }
 
 .hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #fff 0%, #f4fbf7 60%, #fff6e8 100%);
+  background: #ffffff;
+  min-height: 280rpx;
+  padding: 28rpx 24rpx;
+  display: flex;
+  align-items: center;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+  max-width: 52%;
+  padding-right: 12rpx;
+}
+
+.hero-art {
+  position: absolute;
+  top: 0;
+  right: -20rpx;
+  bottom: 0;
+  z-index: 1;
+  width: 56%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hero-copy .heading {
+  margin: 0 0 10rpx;
+  font-size: 30rpx;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.goal-line {
+  display: block;
+  font-size: 22rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .heading {
@@ -273,16 +341,21 @@ onShow(() => {
 }
 
 .progress {
-  margin: 18rpx 0 22rpx;
+  margin: 14rpx 0 18rpx;
+}
+
+.hero-copy .action {
+  margin-top: 0;
+  width: auto;
+  min-width: 200rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 24rpx;
+  font-size: 26rpx;
 }
 
 .action {
   margin-top: 4rpx;
-}
-
-.motto {
-  display: block;
-  margin-top: 14rpx;
 }
 
 .modules {

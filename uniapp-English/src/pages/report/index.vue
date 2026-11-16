@@ -1,5 +1,10 @@
 <template>
   <view class="page">
+    <view class="page-head">
+      <view class="page-back" @click="goBack" />
+      <text class="page-title">本周掌握</text>
+    </view>
+
     <view class="card">
       <text class="kicker">近 7 天</text>
       <view class="heading">{{ title }}</view>
@@ -17,9 +22,9 @@
           <text class="muted">连续天数</text>
         </view>
       </view>
-      <view class="bars">
-        <view v-for="item in report?.daily || []" :key="item.date" class="bar-col">
-          <view class="bar" :style="{ height: barHeight(item.count) }" />
+      <view class="chart">
+        <view v-for="item in report?.daily || []" :key="item.date" class="chart-col">
+          <view class="chart-bar" :style="{ height: barHeight(item.count) }" />
           <text class="day">{{ item.date.slice(5) }}</text>
         </view>
       </view>
@@ -73,6 +78,15 @@ const maxCount = computed(() =>
 
 function barHeight(count: number) {
   return `${Math.max(8, Math.round((count / maxCount.value) * 160))}rpx`;
+}
+
+function goBack() {
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack();
+    return;
+  }
+  uni.switchTab({ url: "/pages/home/index" });
 }
 
 function makePoster() {
@@ -158,7 +172,7 @@ onShow(() => {
   font-weight: 700;
 }
 
-.bars {
+.chart {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -166,17 +180,17 @@ onShow(() => {
   margin-top: 28rpx;
 }
 
-.bar-col {
+.chart-col {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 72rpx;
 }
 
-.bar {
+.chart-bar {
   width: 28rpx;
   border-radius: 999rpx;
-  background: linear-gradient(180deg, #ffc857, #ff6b6b);
+  background: linear-gradient(180deg, #49c295, #2eb086);
 }
 
 .day {

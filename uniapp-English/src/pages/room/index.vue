@@ -2,9 +2,9 @@
   <view class="room-page">
     <!-- App 上 web-view 默认盖住同页组件，需用 plus 把子 webview 下移露出顶栏 -->
     <view class="bar" :style="barStyle">
-      <button class="back" @click="back">返回</button>
+      <view class="page-back" @click="back" />
       <text class="title">学习小屋</text>
-      <button class="back ghost" @click="reload">刷新</button>
+      <text class="reload" @click="reload">刷新</text>
     </view>
 
     <view class="stage">
@@ -185,45 +185,39 @@ onShow(() => {
 }
 
 .bar {
+  position: relative;
   flex: none;
   z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding-right: 10px;
+  padding-right: 12px;
   padding-bottom: 8px;
-  padding-left: 10px;
+  padding-left: 8px;
   box-sizing: border-box;
-  background: rgba(232, 247, 240, 0.98);
-  border-bottom: 1px solid #c9e8da;
+  background: rgba(247, 244, 238, 0.98);
   backdrop-filter: blur(8px);
 }
 
 .title {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  text-align: center;
   font-weight: 800;
   font-size: 15px;
   color: #1d3557;
+  pointer-events: none;
 }
 
-.back {
-  min-width: 56px;
-  height: 32px;
-  line-height: 32px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: #2eb086;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 700;
-  box-shadow: 0 4px 10px rgba(46, 176, 134, 0.28);
-}
-
-.back.ghost {
-  background: #ffffff;
+.reload {
+  z-index: 1;
+  min-width: 40px;
+  text-align: right;
   color: #249672;
-  border: 1px solid #c9e8da;
-  box-shadow: none;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .stage {

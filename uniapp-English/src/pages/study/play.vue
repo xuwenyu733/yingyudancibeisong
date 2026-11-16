@@ -16,6 +16,11 @@
 
     <view v-if="loading" class="card">正在出题...</view>
     <view v-else-if="!current" class="card empty">
+      <image
+        class="empty-art"
+        src="/static/illustrations/study-play.png?v=20261110w"
+        mode="aspectFit"
+      />
       <view class="heading">这一关暂时没有单词</view>
       <text class="muted">{{
         sessionMode === "review"
@@ -35,48 +40,55 @@
       </view>
 
       <view class="card quiz">
-        <text class="tag green">认识新单词</text>
+        <view class="quiz-copy">
+          <text class="tag green">认识新单词</text>
 
-        <!-- 看词选义：只露英文，中文在选项里选 -->
-        <template v-if="mode === 'read' && !picked">
-          <view class="spell">{{ current.spelling }}</view>
-          <text class="phonetic">{{ current.phonetic }}</text>
-          <button class="play small" @click="replay">🔊 听发音</button>
-        </template>
+          <!-- 看词选义：只露英文，中文在选项里选 -->
+          <template v-if="mode === 'read' && !picked">
+            <view class="spell">{{ current.spelling }}</view>
+            <text class="phonetic">{{ current.phonetic }}</text>
+            <button class="play small" @click="replay">🔊 听发音</button>
+          </template>
 
-        <!-- 听音选义：不露拼写与中文 -->
-        <template v-else-if="mode === 'listen' && !picked">
-          <view class="spell ghost">？？？</view>
-          <button class="play" @click="replay">🔊 再听一遍</button>
-          <text class="phonetic">听发音，选出正确中文</text>
-        </template>
+          <!-- 听音选义：不露拼写与中文 -->
+          <template v-else-if="mode === 'listen' && !picked">
+            <view class="spell ghost">？？？</view>
+            <button class="play" @click="replay">🔊 再听一遍</button>
+            <text class="phonetic">听发音，选出正确中文</text>
+          </template>
 
-        <!-- 英译汉默写：只露英文 -->
-        <template v-else-if="mode === 'en2zh' && !picked">
-          <view class="spell">{{ current.spelling }}</view>
-          <text class="phonetic">{{ current.phonetic }}</text>
-          <button class="play small" @click="replay">🔊 听发音</button>
-          <text class="hint">写出中文意思（义项接近即可）</text>
-        </template>
+          <!-- 英译汉默写：只露英文 -->
+          <template v-else-if="mode === 'en2zh' && !picked">
+            <view class="spell">{{ current.spelling }}</view>
+            <text class="phonetic">{{ current.phonetic }}</text>
+            <button class="play small" @click="replay">🔊 听发音</button>
+            <text class="hint">写出中文意思（义项接近即可）</text>
+          </template>
 
-        <!-- 汉译英默写：只露中文 -->
-        <template v-else-if="mode === 'zh2en' && !picked">
-          <view class="meaning">{{ current.meaning }}</view>
-          <text class="blank">{{ clozeHint }}</text>
-          <button class="play small" @click="replay">🔊 听发音</button>
-          <text class="hint">根据释义与例句，写出英文单词</text>
-        </template>
+          <!-- 汉译英默写：只露中文 -->
+          <template v-else-if="mode === 'zh2en' && !picked">
+            <view class="meaning">{{ current.meaning }}</view>
+            <text class="blank">{{ clozeHint }}</text>
+            <button class="play small" @click="replay">🔊 听发音</button>
+            <text class="hint">根据释义与例句，写出英文单词</text>
+          </template>
 
-        <!-- 作答后揭晓 -->
-        <template v-else>
-          <view class="spell">{{ current.spelling }}</view>
-          <text class="phonetic">{{ current.phonetic }}</text>
-          <text class="meaning-line">{{ current.meaning }}</text>
-          <text v-if="isTypedMode && !lastCorrect" class="your-answer">
-            你的答案：{{ picked }}
-          </text>
-          <text class="example">{{ current.example }}</text>
-        </template>
+          <!-- 作答后揭晓 -->
+          <template v-else>
+            <view class="spell">{{ current.spelling }}</view>
+            <text class="phonetic">{{ current.phonetic }}</text>
+            <text class="meaning-line">{{ current.meaning }}</text>
+            <text v-if="isTypedMode && !lastCorrect" class="your-answer">
+              你的答案：{{ picked }}
+            </text>
+            <text class="example">{{ current.example }}</text>
+          </template>
+        </view>
+        <image
+          class="quiz-art"
+          src="/static/illustrations/study-card.png?v=20261111b"
+          mode="aspectFill"
+        />
       </view>
 
       <view v-if="isTypedMode && !picked" class="write-box">
@@ -507,16 +519,41 @@ function shuffle(list: string[]) {
 
 .quiz {
   position: relative;
-  text-align: center;
-  padding: 36rpx 28rpx 48rpx;
+  text-align: left;
+  min-height: 380rpx;
+  padding: 28rpx 24rpx 32rpx;
   overflow: hidden;
-  background: linear-gradient(180deg, #fff 0%, #f7fcf9 100%);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+}
+
+.quiz-copy {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+  max-width: 46%;
+  padding-right: 4rpx;
+}
+
+.quiz-art {
+  position: absolute;
+  top: 0;
+  right: -48rpx;
+  bottom: 0;
+  z-index: 1;
+  width: 72%;
+  height: 100%;
+  pointer-events: none;
+  background: transparent;
 }
 
 .spell {
-  font-size: 68rpx;
+  font-size: 56rpx;
   font-weight: 800;
   color: #1d3557;
+  line-height: 1.2;
 }
 
 .spell.ghost {
@@ -552,7 +589,7 @@ function shuffle(list: string[]) {
 }
 
 .play {
-  margin: 20rpx auto 0;
+  margin: 20rpx 0 0;
   width: 240rpx;
   height: 72rpx;
   line-height: 72rpx;
@@ -566,6 +603,10 @@ function shuffle(list: string[]) {
 
 .play.small {
   width: 200rpx;
+}
+
+.quiz-copy .tag {
+  margin-bottom: 12rpx;
 }
 
 .phonetic,
@@ -702,6 +743,15 @@ function shuffle(list: string[]) {
 .empty {
   text-align: center;
   padding: 48rpx 24rpx;
+}
+
+.empty-art {
+  display: block;
+  width: 100%;
+  height: 260rpx;
+  margin: 0 auto 16rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
 }
 
 .action {

@@ -1,5 +1,10 @@
 <template>
   <view class="page">
+    <view class="page-head">
+      <view class="page-back" @click="goBack" />
+      <text class="page-title">我的背包</text>
+    </view>
+
     <view class="card top">
       <text class="muted">背包 · 积分 {{ player.points }}</text>
     </view>
@@ -31,7 +36,7 @@
       </view>
     </view>
 
-    <button class="btn" @click="goRoom">进入房间查看效果</button>
+    <button class="btn room-btn" @click="goRoom">进入房间查看效果</button>
   </view>
 </template>
 
@@ -54,6 +59,15 @@ async function wear(id: string) {
 async function apply(id: string) {
   const result = await player.applyOwnedDecor(id);
   uni.showToast({ title: result.message, icon: "none" });
+}
+
+function goBack() {
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack();
+    return;
+  }
+  uni.switchTab({ url: "/pages/pet/index" });
 }
 
 function goRoom() {
@@ -98,7 +112,11 @@ onShow(() => {
   margin-top: 20rpx;
 }
 
-.btn {
+.actions .btn {
+  margin-top: 0;
+}
+
+.room-btn {
   margin-top: 24rpx;
 }
 </style>

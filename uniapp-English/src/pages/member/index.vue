@@ -1,5 +1,10 @@
 <template>
   <view class="page">
+    <view class="page-head">
+      <view class="page-back" @click="goBack" />
+      <text class="page-title">学习会员</text>
+    </view>
+
     <view class="card">
       <text class="kicker">家长付费</text>
       <view class="heading">{{ statusText }}</view>
@@ -70,6 +75,12 @@ const payHint = computed(() => {
   }
   return "尚未配置商户号：点开通会走开发模拟支付，不会真实扣款。";
 });
+
+function goBack() {
+  uni.navigateBack({
+    fail: () => uni.switchTab({ url: "/pages/parent/index" }),
+  });
+}
 
 async function load() {
   const [planResult, membership, orderResult] = await Promise.all([

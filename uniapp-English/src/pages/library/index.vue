@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <BrandBar />
     <view class="head">
       <view class="title">选一本单词书，开启新地图 ☀</view>
       <text class="muted">找到和课堂同步的内容，让每次学习更有方向</text>
@@ -11,14 +12,38 @@
     </view>
 
     <view class="filters">
-      <view class="pill" :class="{ active: stage === 'primary' }" @click="switchStage('primary')">小学</view>
-      <view class="pill" :class="{ active: stage === 'junior' }" @click="switchStage('junior')">初中</view>
+      <view class="stage-switch">
+        <view
+          class="stage-item"
+          :class="{ active: stage === 'primary' }"
+          @click="switchStage('primary')"
+        >
+          小学
+        </view>
+        <view
+          class="stage-item"
+          :class="{ active: stage === 'junior' }"
+          @click="switchStage('junior')"
+        >
+          初中
+        </view>
+      </view>
+
       <picker mode="selector" :range="gradeLabels" :value="gradePickerIndex" @change="onGrade">
-        <view class="pill">{{ gradeLabels[gradePickerIndex] || "年级" }}</view>
+        <view class="pill select">
+          <text class="pill-text">{{ gradeFilterLabel }}</text>
+          <text class="chevron">▾</text>
+        </view>
       </picker>
+
       <picker mode="selector" :range="volumes" :value="volumePickerIndex" @change="onVolume">
-        <view class="pill">{{ volumes[volumePickerIndex] || "册别" }}</view>
+        <view class="pill select">
+          <text class="pill-text">{{ volumeFilterLabel }}</text>
+          <text class="chevron">▾</text>
+        </view>
       </picker>
+
+      <text class="all-link" @click="showAllBooks">查看全部教材</text>
     </view>
 
     <view v-if="errorText" class="card">{{ errorText }}</view>
@@ -100,6 +125,7 @@ import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { fetchChildren, fetchTextbooks, fetchToday } from "../../api";
 import type { Textbook, TodayTask, UnitView } from "../../types/api";
+import BrandBar from "../../components/BrandBar.vue";
 import { ensureLogin } from "../../utils/auth";
 import { errorMessage, gradeLabel } from "../../utils/format";
 
@@ -116,9 +142,14 @@ const keyword = ref("");
 const gradeOptions = computed(() =>
   stage.value === "junior" ? [7, 8, 9] : [1, 2, 3, 4, 5, 6],
 );
-const gradeLabels = computed(() => gradeOptions.value.map((item) => gradeLabel(item)));
-const gradePickerIndex = computed(() =>
-  Math.max(0, gradeOptions.value.findIndex((item) => item === grade.value)),
+const gradeLabels = computed(() => ["全部年级", ...gradeOptions.value.map((item) => gradeLabel(item))]);
+const gradePickerIndex = computed(() => {
+  if (!grade.value) return 0;
+  const index = gradeOptions.value.findIndex((item) => item === grade.value);
+  return index >= 0 ? index + 1 : 0;
+});
+const gradeFilterLabel = computed(() =>
+  grade.value ? gradeLabel(grade.value) : "全部年级",
 );
 const filteredByStage = computed(() =>
   books.value.filter((item) =>
@@ -127,16 +158,21 @@ const filteredByStage = computed(() =>
 );
 const volumes = computed(() => {
   const set = new Set(filteredByStage.value.map((item) => item.volume).filter(Boolean));
-  return ["全部", ...set];
+  return ["全部册别", ...set];
 });
+const volumeFilterLabel = computed(() =>
+  volume.value === "全部" || volume.value === "全部册别" ? "全部册别" : volume.value,
+);
 const volumePickerIndex = computed(() =>
-  Math.max(0, volumes.value.findIndex((item) => item === volume.value)),
+  Math.max(0, volumes.value.findIndex((item) => item === volumeFilterLabel.value)),
 );
 const filtered = computed(() => {
   const q = keyword.value.trim().toLowerCase();
   return filteredByStage.value.filter((item) => {
     if (grade.value && item.grade !== grade.value) return false;
-    if (volume.value !== "全部" && item.volume !== volume.value) return false;
+    if (volume.value !== "全部" && volume.value !== "全部册别" && item.volume !== volume.value) {
+      return false;
+    }
     if (!q) return true;
     return (
       item.name.toLowerCase().includes(q) ||
@@ -168,10 +204,18 @@ function switchStage(next: "primary" | "junior") {
   volume.value = "全部";
 }
 function onGrade(event: { detail: { value: string | number } }) {
-  grade.value = gradeOptions.value[Number(event.detail.value)] || grade.value;
+  const index = Number(event.detail.value);
+  grade.value = index <= 0 ? 0 : gradeOptions.value[index - 1] || 0;
 }
 function onVolume(event: { detail: { value: string | number } }) {
-  volume.value = volumes.value[Number(event.detail.value)] || "全部";
+  const next = volumes.value[Number(event.detail.value)] || "全部册别";
+  volume.value = next === "全部册别" ? "全部" : next;
+}
+function showAllBooks() {
+  grade.value = 0;
+  volume.value = "全部";
+  keyword.value = "";
+  uni.showToast({ title: "已显示全部教材", icon: "none" });
 }
 function jumpGrade(next: number) {
   grade.value = next;
@@ -238,9 +282,88 @@ onShow(() => {
 
 .filters {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8rpx;
+  width: 100%;
   margin-bottom: 18rpx;
+  overflow: hidden;
+}
+
+.filters > picker {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 160rpx;
+}
+
+.stage-switch {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  padding: 3rpx;
+  border-radius: 999rpx;
+  background: #eef3f0;
+  border: 2rpx solid #e6eee9;
+  min-width: 0;
+}
+
+.stage-item {
+  min-width: 0;
+  height: 48rpx;
+  padding: 0 12rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7c8f;
+  font-size: 20rpx;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stage-item.active {
+  background: #2eb086;
+  color: #fff;
+}
+
+.pill.select {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  height: 52rpx;
+  padding: 0 12rpx;
+  min-width: 0;
+}
+
+.pill-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 20rpx;
+}
+
+.chevron {
+  flex: none;
+  color: #8a94a6;
+  font-size: 18rpx;
+  line-height: 1;
+}
+
+.all-link {
+  flex: 0 1 auto;
+  margin-left: 4rpx;
+  min-width: 0;
+  max-width: 160rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #249672;
+  font-size: 20rpx;
+  font-weight: 750;
 }
 
 .book-head {

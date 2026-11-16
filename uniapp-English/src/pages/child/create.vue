@@ -73,7 +73,11 @@
     </view>
 
     <view class="card pass">
-      <MascotPlace size="lg" class="mascot" />
+      <image
+        class="mascot"
+        src="/static/illustrations/child-create.png?v=20261110w"
+        mode="aspectFit"
+      />
       <view class="pass-card">
         <view class="pass-title">🏔 我的冒险通行证</view>
         <view class="pass-user">
@@ -98,7 +102,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { onShow } from "@dcloudio/uni-app";
-import MascotPlace from "../../components/MascotPlace.vue";
 import { createChild, fetchTextbooks } from "../../api";
 import type { Textbook } from "../../types/api";
 import { AVATAR_OPTIONS, avatarLetter } from "../../utils/avatar";
@@ -299,11 +302,16 @@ onShow(() => {
 
 .pass {
   text-align: center;
-  background: linear-gradient(180deg, #fff9ef 0%, #f4fbf7 100%);
+  background: #ffffff;
 }
 
 .mascot {
-  margin: 0 auto;
+  display: block;
+  width: 100%;
+  height: 280rpx;
+  margin: 0 auto 8rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
 }
 
 .pass-card {

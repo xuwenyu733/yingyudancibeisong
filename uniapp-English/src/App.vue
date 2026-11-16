@@ -28,20 +28,20 @@ onLaunch(() => {
 </script>
 
 <style>
-/* 单词闯关 · 奶油底 + 薄荷绿（对齐手机端效果图） */
+/* 单词闯关 · 插画同款淡黄底 */
 page {
-  background: #f7f4ee;
+  background: #fff9f0;
   background-image: radial-gradient(
       900rpx 420rpx at 12% -8%,
-      rgba(255, 248, 232, 0.95) 0%,
+      rgba(255, 250, 236, 0.98) 0%,
       transparent 55%
     ),
     radial-gradient(
       700rpx 360rpx at 92% 0%,
-      rgba(232, 247, 240, 0.9) 0%,
+      rgba(255, 244, 220, 0.7) 0%,
       transparent 50%
     ),
-    linear-gradient(180deg, #fbfaf6 0%, #f7f4ee 55%, #eef6ef 100%);
+    linear-gradient(180deg, #fffdf8 0%, #fff9f0 55%, #f7f1e4 100%);
   color: #1d3557;
   font-size: 28rpx;
   font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -71,6 +71,55 @@ button::after {
   padding-bottom: calc(48rpx + env(safe-area-inset-bottom, 0px));
   padding-left: 28rpx;
   box-sizing: border-box;
+}
+
+/* 子页顶栏：左箭头 + 居中标题 */
+.page-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 72rpx;
+  margin: 0 0 20rpx;
+}
+
+.page-back {
+  position: relative;
+  z-index: 1;
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 8rpx;
+  box-sizing: border-box;
+}
+
+.page-back::before {
+  content: "";
+  width: 20rpx;
+  height: 20rpx;
+  border-left: 5rpx solid #2eb086;
+  border-bottom: 5rpx solid #2eb086;
+  transform: rotate(45deg);
+}
+
+.page-back::after {
+  border: none;
+}
+
+.page-title {
+  position: absolute;
+  left: 80rpx;
+  right: 80rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #1d3557;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 /* 无正式插画时用的狐狸样式占位，避免破图 */
